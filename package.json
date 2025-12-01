@@ -1,0 +1,25 @@
+{
+  "name": "cosmic-split-agent",
+  "version": "1.0.0",
+  "description": "Cosmic拆分智能体 - 基于AI的软件功能规模度量工具",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "node server/index.js",
+    "client": "cd client && npm run dev",
+    "install-all": "npm install && cd client && npm install",
+    "build": "cd client && npm run build"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "exceljs": "^4.4.0",
+    "mammoth": "^1.6.0",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.20.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
