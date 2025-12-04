@@ -142,6 +142,7 @@ Write-Host ""
 Write-Host "[4/4] 🚀 启动应用服务..." -ForegroundColor Cyan
 Write-Host "    · Cosmic拆分：AI功能过程拆解 + Excel导出" -ForegroundColor DarkCyan
 Write-Host "    · 需求规格书：文档上传、结构化分析、Word导出" -ForegroundColor DarkCyan
+Write-Host "    · 架构图生成：AI分析 + PNG/PPT导出" -ForegroundColor DarkCyan
 Write-Host ""
 Write-Host "┌────────────────────────────────────────────────────────────┐" -ForegroundColor Magenta
 Write-Host "│  服务启动中，请稍候...                                     │" -ForegroundColor Magenta

@@ -738,24 +738,25 @@ function App() {
     return `${existing.trim()}\n\n${trimmedAddition}`.trim();
   };
 
-  // 【重构】按章节单独生成需求规格书（两阶段：生成+完善）
-  // 模板1章节配置（完整型需求规格说明书）- 14次AI调用
+  // 【重构】按章节单独生成需求规格书（优化：单次生成）
+  // 模板1章节配置（完整型需求规格说明书）- 7次AI调用（优化后）
+  // skipEnhance: true 表示该章节不需要完善阶段，一次生成即可
   const TEMPLATE1_CHAPTER_CONFIG = [
-    { key: 'chapter1_overview', name: '第1章 概述', chapterNum: 1 },
-    { key: 'chapter2_business', name: '第2章 业务需求', chapterNum: 2 },
-    { key: 'chapter3_user', name: '第3章 用户需求', chapterNum: 3 },
-    { key: 'chapter4_architecture', name: '第4章 产品功能架构', chapterNum: 4 },
-    { key: 'chapter5_functions', name: '第5章 功能需求', chapterNum: 5 },
-    { key: 'chapter6_system', name: '第6章 系统需求', chapterNum: 6 },
-    { key: 'chapter7_appendix', name: '第7章 附录', chapterNum: 7 }
+    { key: 'chapter1_overview', name: '第1章 概述', chapterNum: 1, skipEnhance: true },
+    { key: 'chapter2_business', name: '第2章 业务需求', chapterNum: 2, skipEnhance: true },
+    { key: 'chapter3_user', name: '第3章 用户需求', chapterNum: 3, skipEnhance: true },
+    { key: 'chapter4_architecture', name: '第4章 产品功能架构', chapterNum: 4, skipEnhance: true },
+    { key: 'chapter5_functions', name: '第5章 功能需求', chapterNum: 5, skipEnhance: true },
+    { key: 'chapter6_system', name: '第6章 系统需求', chapterNum: 6, skipEnhance: true },
+    { key: 'chapter7_appendix', name: '第7章 附录', chapterNum: 7, skipEnhance: true }
   ];
 
-  // 模板2章节配置（江苏移动项目需求文档格式）- 6次AI调用
+  // 模板2章节配置（江苏移动项目需求文档格式）- 5次AI调用（优化后）
   // skipEnhance: true 表示该章节不需要完善阶段
   const TEMPLATE2_CHAPTER_CONFIG = [
     { key: 't2_chapter1_overview', name: '1 系统概述', chapterNum: 1, skipEnhance: true },
     { key: 't2_chapter2_analysis', name: '2 需求分析', chapterNum: 2, skipEnhance: true },
-    { key: 't2_chapter3_functions', name: '3 功能说明', chapterNum: 3, skipEnhance: false },
+    { key: 't2_chapter3_functions', name: '3 功能说明', chapterNum: 3, skipEnhance: true },
     { key: 't2_chapter4_deploy', name: '4 部署说明', chapterNum: 4, skipEnhance: true },
     { key: 't2_chapter5_supplement', name: '5 其他补充说明', chapterNum: 5, skipEnhance: true }
   ];
@@ -790,26 +791,20 @@ function App() {
       ? '/api/requirement-spec/enhance' 
       : '/api/requirement-spec/template2/enhance';
     
-    // 计算总轮次：模板1每章2轮，模板2根据skipEnhance字段计算
+    // 计算总轮次：根据skipEnhance字段计算（优化后都是单次生成）
     const calculateTotalRounds = () => {
-      if (selectedTemplate === 1) return 14; // 7章 × 2轮
-      // 模板2：skipEnhance=true的章节1轮，否则2轮
-      return TEMPLATE2_CHAPTER_CONFIG.reduce((sum, ch) => sum + (ch.skipEnhance ? 1 : 2), 0);
+      const config = selectedTemplate === 1 ? TEMPLATE1_CHAPTER_CONFIG : TEMPLATE2_CHAPTER_CONFIG;
+      return config.reduce((sum, ch) => sum + (ch.skipEnhance ? 1 : 2), 0);
     };
-    const currentTotalRounds = calculateTotalRounds(); // 模板2: 1+1+2+1+1 = 6轮
+    const currentTotalRounds = calculateTotalRounds(); // 模板1: 7轮, 模板2: 5轮
     const templateName = selectedTemplate === 1 ? '完整型需求规格说明书' : '简洁型功能需求文档';
     
     // 根据轮次计算当前章节和阶段（支持skipEnhance）
     const getChapterAndPhase = (round) => {
-      if (selectedTemplate === 1) {
-        const chapterIndex = Math.floor((round - 1) / 2);
-        const isEnhancePhase = (round % 2 === 0);
-        return { chapterIndex, isEnhancePhase, chapterInfo: CHAPTER_CONFIG[chapterIndex] };
-      }
-      // 模板2：根据skipEnhance动态计算
+      const config = selectedTemplate === 1 ? TEMPLATE1_CHAPTER_CONFIG : TEMPLATE2_CHAPTER_CONFIG;
       let currentRound = 0;
-      for (let i = 0; i < TEMPLATE2_CHAPTER_CONFIG.length; i++) {
-        const chapter = TEMPLATE2_CHAPTER_CONFIG[i];
+      for (let i = 0; i < config.length; i++) {
+        const chapter = config[i];
         const roundsForChapter = chapter.skipEnhance ? 1 : 2;
         if (currentRound + roundsForChapter >= round) {
           const isEnhancePhase = !chapter.skipEnhance && (round - currentRound === 2);
@@ -817,7 +812,7 @@ function App() {
         }
         currentRound += roundsForChapter;
       }
-      return { chapterIndex: 0, isEnhancePhase: false, chapterInfo: TEMPLATE2_CHAPTER_CONFIG[0] };
+      return { chapterIndex: 0, isEnhancePhase: false, chapterInfo: config[0] };
     };
     
     try {

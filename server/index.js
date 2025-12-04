@@ -1932,14 +1932,15 @@ flowchart TB
 };
 
 // 章节生成顺序配置 - 模板1（完整型需求规格说明书）
+// skipEnhance: true 表示该章节不需要完善阶段，一次生成即可（优化：减少AI调用次数）
 const CHAPTER_SEQUENCE = [
-  { key: 'chapter1_overview', name: '第1章 概述', chapterNum: 1 },
-  { key: 'chapter2_business', name: '第2章 业务需求', chapterNum: 2 },
-  { key: 'chapter3_user', name: '第3章 用户需求', chapterNum: 3 },
-  { key: 'chapter4_architecture', name: '第4章 产品功能架构', chapterNum: 4 },
-  { key: 'chapter5_functions', name: '第5章 功能需求', chapterNum: 5 },
-  { key: 'chapter6_system', name: '第6章 系统需求', chapterNum: 6 },
-  { key: 'chapter7_appendix', name: '第7章 附录', chapterNum: 7 }
+  { key: 'chapter1_overview', name: '第1章 概述', chapterNum: 1, skipEnhance: true },
+  { key: 'chapter2_business', name: '第2章 业务需求', chapterNum: 2, skipEnhance: true },
+  { key: 'chapter3_user', name: '第3章 用户需求', chapterNum: 3, skipEnhance: true },
+  { key: 'chapter4_architecture', name: '第4章 产品功能架构', chapterNum: 4, skipEnhance: true },
+  { key: 'chapter5_functions', name: '第5章 功能需求', chapterNum: 5, skipEnhance: true },
+  { key: 'chapter6_system', name: '第6章 系统需求', chapterNum: 6, skipEnhance: true },
+  { key: 'chapter7_appendix', name: '第7章 附录', chapterNum: 7, skipEnhance: true }
 ];
 
 // ==================== 模板2：江苏移动项目需求文档格式 ====================
@@ -2158,11 +2159,11 @@ const TEMPLATE2_CHAPTER_PROMPTS = {
 };
 
 // 模板2章节生成顺序配置
-// skipEnhance: true 表示该章节不需要完善阶段，一次生成即可
+// skipEnhance: true 表示该章节不需要完善阶段，一次生成即可（优化：减少AI调用次数）
 const TEMPLATE2_CHAPTER_SEQUENCE = [
   { key: 't2_chapter1_overview', name: '第1章 系统概述', chapterNum: 1, skipEnhance: true },
   { key: 't2_chapter2_analysis', name: '第2章 需求分析', chapterNum: 2, skipEnhance: true },
-  { key: 't2_chapter3_functions', name: '第3章 功能说明', chapterNum: 3, skipEnhance: false },
+  { key: 't2_chapter3_functions', name: '第3章 功能说明', chapterNum: 3, skipEnhance: true },
   { key: 't2_chapter4_deploy', name: '第4章 部署说明', chapterNum: 4, skipEnhance: true },
   { key: 't2_chapter5_supplement', name: '第5章 其他补充说明', chapterNum: 5, skipEnhance: true }
 ];
@@ -2292,8 +2293,8 @@ async function analyzeImagesWithAI(client, images, documentContent) {
   }
 }
 
-// ==================== 按章节单独生成需求规格书（两阶段：生成+完善） ====================
-// 【核心思路】每个章节调用两次AI：第一次生成基础内容，第二次深度完善，共14次调用
+// ==================== 按章节单独生成需求规格书（支持skipEnhance配置） ====================
+// 【优化】根据skipEnhance配置决定是否需要完善阶段，减少AI调用次数
 
 app.post('/api/requirement-spec/enhance', async (req, res) => {
   try {
@@ -2302,7 +2303,7 @@ app.post('/api/requirement-spec/enhance', async (req, res) => {
       previousContent, 
       images = [], 
       round = 1,
-      totalRounds = 14,  // 改为14轮：7章节 × 2次（生成+完善）
+      totalRounds = 7,  // 默认7轮：7章节 × 1次（全部skipEnhance=true）
       phase = 'generate' // 'generate' 或 'enhance'
     } = req.body;
     
@@ -2318,10 +2319,31 @@ app.post('/api/requirement-spec/enhance', async (req, res) => {
     res.setHeader('X-Accel-Buffering', 'no');
 
     // 计算当前是第几个章节，以及是生成阶段还是完善阶段
-    // round 1-2: 第1章（生成+完善）, round 3-4: 第2章（生成+完善）...
-    const chapterIndex = Math.floor((round - 1) / 2);
-    const isEnhancePhase = (round % 2 === 0); // 偶数轮是完善阶段
+    // 根据skipEnhance字段动态计算轮次
+    let currentRound = 0;
+    let chapterIndex = 0;
+    let isEnhancePhase = false;
+    
+    for (let i = 0; i < CHAPTER_SEQUENCE.length; i++) {
+      const chapter = CHAPTER_SEQUENCE[i];
+      const roundsForChapter = chapter.skipEnhance ? 1 : 2;
+      
+      if (currentRound + roundsForChapter >= round) {
+        chapterIndex = i;
+        isEnhancePhase = !chapter.skipEnhance && (round - currentRound === 2);
+        break;
+      }
+      currentRound += roundsForChapter;
+    }
+    
     const chapterConfig = CHAPTER_SEQUENCE[Math.min(chapterIndex, CHAPTER_SEQUENCE.length - 1)];
+    
+    // 如果是需要跳过完善阶段的章节，且当前是完善阶段，直接跳过
+    if (chapterConfig.skipEnhance && isEnhancePhase) {
+      res.write(`data: ${JSON.stringify({ phase: 'skip_enhance', message: `${chapterConfig.name} 不需要完善阶段，跳过` })}\n\n`);
+      res.write('data: [DONE]\n\n');
+      return res.end();
+    }
 
     // 第一轮时进行深度思考分析图片
     let analyzedImages = images;

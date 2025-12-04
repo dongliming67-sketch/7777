@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import html2canvas from 'html2canvas';
+import pptxgen from 'pptxgenjs';
 import {
   Layers,
   Download,
@@ -15,7 +16,8 @@ import {
   Plus,
   Trash2,
   X,
-  Check
+  Check,
+  FileSpreadsheet
 } from 'lucide-react';
 
 /**
@@ -247,6 +249,184 @@ function ArchitectureDiagram({ documentContent, documentName }) {
     return layerColors.default;
   };
 
+  // 导出为PPT（可编辑）
+  const downloadPPT = async () => {
+    if (!architectureData) return;
+
+    try {
+      const pptx = new pptxgen();
+      pptx.layout = 'LAYOUT_WIDE'; // 16:9 宽屏
+      pptx.title = architectureData.systemName || '系统架构图';
+      pptx.author = '架构图生成器';
+
+      const slide = pptx.addSlide();
+      slide.background = { color: 'FFFFFF' };
+
+      // PPT尺寸（英寸）- LAYOUT_WIDE: 13.33 x 7.5
+      const slideWidth = 13.33;
+      const slideHeight = 7.5;
+      const margin = 0.3;
+      const labelWidth = 0.8; // 左侧层级标签宽度
+      const contentStartX = margin + labelWidth;
+      const contentWidth = slideWidth - contentStartX - margin;
+
+      // 标题
+      slide.addText(architectureData.systemName || '系统架构图', {
+        x: margin,
+        y: margin,
+        w: slideWidth - margin * 2,
+        h: 0.5,
+        fontSize: 24,
+        bold: true,
+        align: 'center',
+        color: '333333'
+      });
+
+      // 计算每层高度
+      const titleHeight = 0.7;
+      const availableHeight = slideHeight - titleHeight - margin * 2;
+      const layerCount = architectureData.layers?.length || 1;
+      const layerGap = 0.1;
+      const layerHeight = (availableHeight - layerGap * (layerCount - 1)) / layerCount;
+
+      // 颜色映射（PPT格式，不带#）
+      const pptLayerColors = {
+        '应用层': { bg: 'FFF5F5', border: 'FFCDD2', label: 'E57373' },
+        '服务层': { bg: 'FFFDE7', border: 'FFF59D', label: 'FFD54F' },
+        '数据层': { bg: 'F3E5F5', border: 'CE93D8', label: 'BA68C8' },
+        '基础设施层': { bg: 'E3F2FD', border: '90CAF9', label: '64B5F6' },
+        '数据源': { bg: 'ECEFF1', border: 'B0BEC5', label: '78909C' },
+        '接入层': { bg: 'E8F5E9', border: 'A5D6A7', label: '66BB6A' },
+        'default': { bg: 'F5F5F5', border: 'E0E0E0', label: '9E9E9E' }
+      };
+
+      const getPptColor = (layerName) => {
+        for (const key of Object.keys(pptLayerColors)) {
+          if (layerName.includes(key) || key.includes(layerName)) {
+            return pptLayerColors[key];
+          }
+        }
+        return pptLayerColors.default;
+      };
+
+      // 绘制每个层级
+      architectureData.layers?.forEach((layer, layerIdx) => {
+        const colors = getPptColor(layer.name);
+        const layerY = titleHeight + margin + layerIdx * (layerHeight + layerGap);
+
+        // 左侧层级标签
+        slide.addShape(pptx.ShapeType.rect, {
+          x: margin,
+          y: layerY,
+          w: labelWidth,
+          h: layerHeight,
+          fill: { color: colors.label },
+          line: { color: colors.border, width: 1 }
+        });
+
+        // 层级名称（竖排）
+        slide.addText(layer.name.split('').join('\n'), {
+          x: margin,
+          y: layerY,
+          w: labelWidth,
+          h: layerHeight,
+          fontSize: 11,
+          bold: true,
+          color: 'FFFFFF',
+          align: 'center',
+          valign: 'middle'
+        });
+
+        // 右侧内容区背景
+        slide.addShape(pptx.ShapeType.rect, {
+          x: contentStartX,
+          y: layerY,
+          w: contentWidth,
+          h: layerHeight,
+          fill: { color: colors.bg },
+          line: { color: colors.border, width: 1 }
+        });
+
+        // 分组
+        const groupCount = layer.groups?.length || 1;
+        const groupWidth = contentWidth / groupCount;
+        const groupHeaderHeight = 0.35;
+        const moduleAreaHeight = layerHeight - groupHeaderHeight;
+
+        layer.groups?.forEach((group, groupIdx) => {
+          const groupX = contentStartX + groupIdx * groupWidth;
+
+          // 分组标题背景
+          slide.addShape(pptx.ShapeType.rect, {
+            x: groupX,
+            y: layerY,
+            w: groupWidth,
+            h: groupHeaderHeight,
+            fill: { color: 'FFFFFF', transparency: 30 },
+            line: { color: colors.border, width: 0.5 }
+          });
+
+          // 分组标题文字
+          slide.addText(group.name, {
+            x: groupX,
+            y: layerY,
+            w: groupWidth,
+            h: groupHeaderHeight,
+            fontSize: 10,
+            bold: true,
+            color: '333333',
+            align: 'center',
+            valign: 'middle'
+          });
+
+          // 模块
+          const modules = group.modules || [];
+          const modulesPerRow = Math.ceil(Math.sqrt(modules.length * 2)); // 每行模块数
+          const moduleRows = Math.ceil(modules.length / modulesPerRow);
+          const modulePadding = 0.05;
+          const moduleWidth = (groupWidth - modulePadding * 2) / modulesPerRow - modulePadding;
+          const moduleHeight = (moduleAreaHeight - modulePadding * 2) / moduleRows - modulePadding;
+
+          modules.forEach((mod, modIdx) => {
+            const moduleName = typeof mod === 'string' ? mod : mod.name;
+            const row = Math.floor(modIdx / modulesPerRow);
+            const col = modIdx % modulesPerRow;
+            const modX = groupX + modulePadding + col * (moduleWidth + modulePadding);
+            const modY = layerY + groupHeaderHeight + modulePadding + row * (moduleHeight + modulePadding);
+
+            // 模块背景
+            slide.addShape(pptx.ShapeType.rect, {
+              x: modX,
+              y: modY,
+              w: moduleWidth,
+              h: moduleHeight,
+              fill: { color: 'FFFFFF' },
+              line: { color: colors.border, width: 0.5 }
+            });
+
+            // 模块文字
+            slide.addText(moduleName, {
+              x: modX,
+              y: modY,
+              w: moduleWidth,
+              h: moduleHeight,
+              fontSize: 8,
+              color: '333333',
+              align: 'center',
+              valign: 'middle'
+            });
+          });
+        });
+      });
+
+      // 保存文件
+      const fileName = `${documentName || 'architecture'}_架构图.pptx`;
+      await pptx.writeFile({ fileName });
+    } catch (err) {
+      setError('导出PPT失败: ' + err.message);
+    }
+  };
+
   // ========== 编辑功能 ==========
   
   // 开始编辑某个项目
@@ -468,6 +648,14 @@ function ArchitectureDiagram({ documentContent, documentName }) {
             >
               <Download className="w-4 h-4" />
               下载PNG
+            </button>
+
+            <button
+              onClick={downloadPPT}
+              className="flex items-center gap-2 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              导出PPT
             </button>
           </>
         )}
