@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Markdown表格样式 */
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  font-size: 0.875rem;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.markdown-content th {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: 600;
+}
+
+.markdown-content tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.markdown-content tr:hover {
+  background-color: #f3f4f6;
+}
+
+/* 代码块样式 */
+.markdown-content pre {
+  background-color: #1f2937;
+  color: #e5e7eb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.markdown-content code {
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.markdown-content p code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+/* 动画 */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 打字机效果 */
+@keyframes blink {
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.typing-cursor::after {
+  content: '|';
+  animation: blink 1s infinite;
+  margin-left: 2px;
+}
+
+/* Red Alert GI Watermark */
+.gi-watermark {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 9999;
+  pointer-events: none;
+  /* Let clicks pass through */
+}
+
+.gi-soldier {
+  width: 0px;
+  /* Adjusted for aspect ratio ~0.68 */
+  height: 0px;
+  background-image: url('/gi_soldier_processed.png');
+  background-repeat: no-repeat;
+  /* 4 frames horizontally */
+  background-size: 400% 100%;
+  image-rendering: pixelated;
+  animation: gi-action 2s steps(1) infinite;
+  filter: drop-shadow(2px 2px 0px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes gi-action {
+  0% {
+    background-position: 0% 0;
+  }
+
+  25% {
+    background-position: 33.333% 0;
+  }
+
+  50% {
+    background-position: 66.666% 0;
+  }
+
+  75% {
+    background-position: 100% 0;
+  }
+}
