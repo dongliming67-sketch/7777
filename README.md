@@ -11,10 +11,27 @@
 - 📋 **表格预览**: 可视化表格预览，支持数据移动类型高亮显示
 - 📈 **统计分析**: 实时显示CFP点数、E/R/W/X分布统计
 - 🆓 **免费API**: 推荐使用智谱GLM-4-Flash，完全免费、无限tokens
+- 🏗️ **架构图生成**: AI深度分析需求文档，自动生成分层架构图（使用Kroki.io免费渲染）
 
 ## 快速开始
 
-### 1. 安装依赖
+### 🚀 方法一：一键启动（推荐，最简单）
+
+**双击运行** `启动.bat` 文件即可！
+
+脚本会自动：
+- ✅ 检查Node.js环境
+- ✅ 安装所有依赖（首次运行）
+- ✅ 启动前后端服务
+- ✅ 自动打开浏览器
+
+详细说明请查看 [启动脚本使用说明.md](./启动脚本使用说明.md)
+
+---
+
+### 📝 方法二：手动启动
+
+#### 1. 安装依赖
 
 ```bash
 npm install
@@ -26,7 +43,7 @@ cd client && npm install
 npm run install-all
 ```
 
-### 2. 配置API密钥（推荐免费方案）
+#### 2. 配置API密钥（推荐免费方案)
 
 **推荐使用智谱GLM-4-Flash（免费、无限tokens、永久有效）**
 
@@ -49,7 +66,7 @@ OPENAI_MODEL=glm-4-flash
 | DeepSeek | https://api.deepseek.com/v1 | 付费 |
 | 豆包/火山方舟 | https://ark.cn-beijing.volces.com/api/v3 | 50万tokens |
 
-### 3. 启动应用
+#### 3. 启动应用
 
 ```bash
 npm run dev
