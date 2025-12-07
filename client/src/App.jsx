@@ -4,6 +4,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import mermaid from 'mermaid';
 import ArchitectureDiagram from './ArchitectureDiagram';
+import CosmicToSpec from './CosmicToSpec';
+import RequirementReview from './RequirementReview';
+import ChatAgent from './ChatAgent';
 import {
   Upload,
   FileText,
@@ -29,7 +32,9 @@ import {
   BookOpen,
   Layers,
   ArrowRight,
-  GitBranch
+  GitBranch,
+  Search,
+  MessageSquare
 } from 'lucide-react';
 
 function App() {
@@ -224,11 +229,11 @@ function App() {
     setErrorMessage('');
 
     // 检查文件类型
-    const allowedExtensions = ['.docx', '.txt', '.md'];
+    const allowedExtensions = ['.docx', '.doc', '.txt', '.md'];
     const ext = '.' + file.name.split('.').pop().toLowerCase();
 
     if (!allowedExtensions.includes(ext)) {
-      setErrorMessage(`不支持的文件格式: ${ext}。请上传 .docx, .txt 或 .md 文件`);
+      setErrorMessage(`不支持的文件格式: ${ext}。请上传 .docx, .doc, .txt 或 .md 文件`);
       return;
     }
 
@@ -1550,11 +1555,18 @@ function App() {
             <div>
               <h1 className="text-xl font-bold text-gray-800">
                 {activeModule === 'cosmic' ? 'Cosmic拆分智能体' : 
-                 activeModule === 'requirement' ? '需求规格书生成' : '架构图生成'}
+                 activeModule === 'requirement' ? '需求规格书生成' : 
+                 activeModule === 'cosmicToSpec' ? 'COSMIC转需求规格书' :
+                 activeModule === 'review' ? '需求评审智能体' :
+                 activeModule === 'chat' ? '智器云AI助手' :
+                 '架构图生成'}
               </h1>
               <p className="text-xs text-gray-500">
                 {activeModule === 'cosmic' ? '基于AI的软件功能规模度量工具' : 
                  activeModule === 'requirement' ? '基于AI的需求文档智能分析工具' :
+                 activeModule === 'cosmicToSpec' ? '将COSMIC Excel数据转换为需求规格说明书' :
+                 activeModule === 'review' ? '多维度智能需求文档评审' :
+                 activeModule === 'chat' ? '自研通用AI对话助手' :
                  '基于AI的系统架构图生成工具'}
               </p>
             </div>
@@ -1585,15 +1597,48 @@ function App() {
               需求规格书
             </button>
             <button
+              onClick={() => setActiveModule('cosmicToSpec')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeModule === 'cosmicToSpec'
+                  ? 'bg-white text-green-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <FileOutput className="w-4 h-4" />
+              COSMIC转规格书
+            </button>
+            <button
               onClick={() => setActiveModule('diagram')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeModule === 'diagram'
-                  ? 'bg-white text-green-600 shadow-sm'
+                  ? 'bg-white text-teal-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
               <GitBranch className="w-4 h-4" />
               架构图
+            </button>
+            <button
+              onClick={() => setActiveModule('review')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeModule === 'review'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              需求评审
+            </button>
+            <button
+              onClick={() => setActiveModule('chat')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeModule === 'chat'
+                  ? 'bg-white text-pink-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <MessageSquare className="w-4 h-4" />
+              AI助手
             </button>
           </div>
 
@@ -2381,6 +2426,30 @@ function App() {
             </div>
           </div>
         </div>
+        )}
+
+        {/* COSMIC转需求规格书模块 */}
+        {activeModule === 'cosmicToSpec' && (
+          <CosmicToSpec 
+            apiStatus={apiStatus} 
+            setShowSettings={setShowSettings} 
+          />
+        )}
+
+        {/* 需求评审智能体模块 */}
+        {activeModule === 'review' && (
+          <RequirementReview 
+            apiStatus={apiStatus} 
+            setShowSettings={setShowSettings} 
+          />
+        )}
+
+        {/* 智器云AI助手模块 */}
+        {activeModule === 'chat' && (
+          <ChatAgent 
+            apiStatus={apiStatus} 
+            setShowSettings={setShowSettings} 
+          />
         )}
       </main>
 

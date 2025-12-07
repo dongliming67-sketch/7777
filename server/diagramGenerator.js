@@ -282,12 +282,283 @@ title ${systemName}架构图
   return code;
 }
 
+/**
+ * 根据COSMIC数据生成HTML+CSS时序图
+ * @param {Array} dataMovements - COSMIC数据移动序列
+ * @param {string} processName - 功能过程名称
+ * @returns {string} - HTML+CSS代码
+ */
+function generateHTMLSequenceDiagram(dataMovements, processName) {
+  if (!dataMovements || dataMovements.length === 0) {
+    return '';
+  }
+  
+  // 生成唯一ID避免冲突
+  const diagramId = `seq_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  
+  let stepsHtml = '';
+  let stepNum = 1;
+  
+  dataMovements.forEach(m => {
+    const type = (m.dataMovementType || '').toUpperCase().trim();
+    const desc = m.subProcessDesc || '操作';
+    
+    let arrow = '';
+    let from = '';
+    let to = '';
+    let color = '';
+    
+    if (type === 'E') {
+      from = '用户';
+      to = '系统';
+      arrow = '→';
+      color = '#4CAF50';
+    } else if (type === 'R') {
+      from = '系统';
+      to = '数据库';
+      arrow = '→';
+      color = '#2196F3';
+    } else if (type === 'W') {
+      from = '系统';
+      to = '数据库';
+      arrow = '→';
+      color = '#FF9800';
+    } else if (type === 'X') {
+      from = '系统';
+      to = '用户';
+      arrow = '←';
+      color = '#9C27B0';
+    }
+    
+    if (from && to) {
+      stepsHtml += `
+        <div class="seq-step">
+          <div class="step-num" style="background:${color}">${stepNum}</div>
+          <div class="step-content">
+            <span class="step-from">${from}</span>
+            <span class="step-arrow" style="color:${color}">${arrow}</span>
+            <span class="step-to">${to}</span>
+            <span class="step-type" style="background:${color}">${type}</span>
+          </div>
+          <div class="step-desc">${desc}</div>
+        </div>`;
+      stepNum++;
+    }
+  });
+  
+  return `
+<div id="${diagramId}" class="sequence-diagram">
+  <style>
+    #${diagramId} {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 16px 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    #${diagramId} .seq-title {
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #ddd;
+    }
+    #${diagramId} .seq-participants {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+    #${diagramId} .participant {
+      background: #fff;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-weight: bold;
+      color: #333;
+      box-shadow: 0 2px 8px rgba(102,126,234,0.2);
+    }
+    #${diagramId} .seq-step {
+      display: flex;
+      align-items: center;
+      margin: 12px 0;
+      padding: 12px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    #${diagramId} .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      margin-right: 16px;
+    }
+    #${diagramId} .step-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 200px;
+    }
+    #${diagramId} .step-from, #${diagramId} .step-to {
+      font-weight: 500;
+      color: #555;
+    }
+    #${diagramId} .step-arrow {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #${diagramId} .step-type {
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    #${diagramId} .step-desc {
+      flex: 1;
+      color: #666;
+      font-size: 14px;
+      margin-left: 16px;
+    }
+  </style>
+  <div class="seq-title">📊 ${processName} - 操作时序图</div>
+  <div class="seq-participants">
+    <div class="participant">👤 用户</div>
+    <div class="participant">🖥️ 系统</div>
+    <div class="participant">🗄️ 数据库</div>
+  </div>
+  ${stepsHtml}
+</div>`;
+}
+
+/**
+ * 根据COSMIC数据生成HTML+CSS流程图
+ * @param {Array} dataMovements - COSMIC数据移动序列
+ * @param {string} processName - 功能过程名称
+ * @returns {string} - HTML+CSS代码
+ */
+function generateHTMLFlowchart(dataMovements, processName) {
+  if (!dataMovements || dataMovements.length === 0) {
+    return '';
+  }
+  
+  const diagramId = `flow_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  
+  let nodesHtml = '';
+  
+  dataMovements.forEach((m, idx) => {
+    const type = (m.dataMovementType || '').toUpperCase().trim();
+    const desc = m.subProcessDesc || '操作';
+    
+    let bgColor = '#e3f2fd';
+    let borderColor = '#2196F3';
+    let icon = '📋';
+    
+    if (type === 'E') {
+      bgColor = '#e8f5e9';
+      borderColor = '#4CAF50';
+      icon = '📥';
+    } else if (type === 'R') {
+      bgColor = '#e3f2fd';
+      borderColor = '#2196F3';
+      icon = '📖';
+    } else if (type === 'W') {
+      bgColor = '#fff3e0';
+      borderColor = '#FF9800';
+      icon = '📝';
+    } else if (type === 'X') {
+      bgColor = '#f3e5f5';
+      borderColor = '#9C27B0';
+      icon = '📤';
+    }
+    
+    nodesHtml += `
+      <div class="flow-node" style="background:${bgColor};border-color:${borderColor}">
+        <div class="node-icon">${icon}</div>
+        <div class="node-content">
+          <div class="node-type">${type} - ${type === 'E' ? '输入' : type === 'R' ? '读取' : type === 'W' ? '写入' : '输出'}</div>
+          <div class="node-desc">${desc}</div>
+        </div>
+      </div>
+      ${idx < dataMovements.length - 1 ? '<div class="flow-arrow">↓</div>' : ''}
+    `;
+  });
+  
+  return `
+<div id="${diagramId}" class="flowchart-diagram">
+  <style>
+    #${diagramId} {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 16px 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    #${diagramId} .flow-title {
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 24px;
+    }
+    #${diagramId} .flow-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #${diagramId} .flow-node {
+      display: flex;
+      align-items: center;
+      padding: 16px 24px;
+      border-radius: 12px;
+      border: 3px solid;
+      min-width: 300px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    #${diagramId} .node-icon {
+      font-size: 28px;
+      margin-right: 16px;
+    }
+    #${diagramId} .node-type {
+      font-weight: bold;
+      color: #333;
+      font-size: 14px;
+    }
+    #${diagramId} .node-desc {
+      color: #666;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    #${diagramId} .flow-arrow {
+      font-size: 24px;
+      color: #999;
+      margin: 8px 0;
+    }
+  </style>
+  <div class="flow-title">📊 ${processName} - 操作流程图</div>
+  <div class="flow-container">
+    ${nodesHtml}
+  </div>
+</div>`;
+}
+
 module.exports = {
   generateDiagramWithKroki,
   encodeDiagram,
   extractMermaidCode,
   generateDefaultArchitectureMermaid,
   generatePlantUMLArchitecture,
+  generateHTMLSequenceDiagram,
+  generateHTMLFlowchart,
   ARCHITECTURE_DIAGRAM_PROMPT,
   COMPONENT_ARCHITECTURE_PROMPT,
   KROKI_BASE_URL
