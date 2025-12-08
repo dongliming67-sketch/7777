@@ -7321,11 +7321,577 @@ async function parseRequirementDocument(buffer, fileExtension = '.docx') {
   };
 }
 
-// AI深度分析需求文档 - 提取结构化信息
+// ==================== 【增强版】需求文档多阶段深度分析 ====================
+// 类似于模板分析的多阶段深度思考，确保准确理解需求文档的所有内容
+
+/**
+ * 多阶段深度分析需求文档 - 动态驱动的完全理解
+ * @param {Object} client - OpenAI客户端
+ * @param {string} documentText - 文档全文
+ * @param {Array} sections - 已解析的章节结构
+ * @param {Function} progressCallback - 进度回调函数
+ * @returns {Object} 深度分析结果
+ */
+async function deepAnalyzeRequirementDocWithAI(client, documentText, sections, progressCallback = null) {
+  console.log('========== 开始需求文档多阶段深度分析 ==========');
+  const analysisStartTime = Date.now();
+  
+  try {
+    // ========== 第一阶段：整体结构和项目概览分析 ==========
+    if (progressCallback) progressCallback('phase1', '🔍 第一阶段：分析文档整体结构和项目概览...');
+    console.log('[需求文档分析] 第一阶段：整体结构分析');
+
+    const phase1Prompt = `你是资深的需求分析专家和软件架构师。请对以下需求文档进行**第一阶段深度分析**：理解文档的整体结构和项目概览。
+
+## 【需求文档内容】（前20000字）
+${documentText.slice(0, 20000)}
+
+## 【已识别的章节结构】
+${sections.slice(0, 50).map(s => `${'  '.repeat(s.level - 1)}[${s.number}] ${s.title}`).join('\n')}
+
+## 【第一阶段分析任务】
+请深入分析并提取以下信息，以JSON格式返回：
+
+\`\`\`json
+{
+  "projectOverview": {
+    "projectName": "项目名称（从文档中准确提取）",
+    "projectCode": "项目编号（如有）",
+    "version": "版本号（如有）",
+    "description": "项目描述（200字以内，概括项目的核心目标和价值）",
+    "background": "项目背景（100字以内）",
+    "objectives": ["项目目标1", "项目目标2"],
+    "scope": "系统范围和边界描述"
+  },
+  "documentStructure": {
+    "documentType": "文档类型（如：需求规格说明书、用户需求文档、产品需求文档等）",
+    "totalChapters": "章节总数",
+    "mainChapters": [
+      {"number": "章节号", "title": "章节标题", "purpose": "章节目的描述"}
+    ],
+    "functionalChapterNumber": "功能需求所在的章节编号（如：3、4、5）",
+    "hasAppendix": false,
+    "specialSections": ["特殊章节列表，如：内部逻辑文件、外部接口文件等"]
+  },
+  "stakeholders": {
+    "targetUsers": [
+      {"role": "用户角色名称", "description": "角色描述", "responsibilities": ["职责1", "职责2"]}
+    ],
+    "systemActors": ["系统参与者，如：外部系统、第三方服务"],
+    "administrators": ["管理员角色"]
+  },
+  "domainAnalysis": {
+    "businessDomain": "业务领域描述",
+    "keyTerms": [
+      {"term": "术语", "definition": "定义"}
+    ],
+    "businessProcesses": ["核心业务流程1", "核心业务流程2"]
+  }
+}
+\`\`\`
+
+请确保：
+1. 从文档中**准确提取**信息，不要臆造
+2. 识别文档的**层级结构**和**组织方式**
+3. 提取所有**关键术语**及其定义
+4. 识别**功能需求章节**的位置`;
+
+    const phase1Response = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'glm-4-flash',
+      messages: [
+        {
+          role: 'system',
+          content: '你是专业的需求分析师，擅长深度分析需求文档。请准确提取文档信息，不要添加文档中没有的内容。'
+        },
+        { role: 'user', content: phase1Prompt }
+      ],
+      temperature: 0.2,
+      max_tokens: 6000
+    });
+
+    const phase1Content = phase1Response.choices[0]?.message?.content?.trim() || '';
+    console.log('[需求文档分析] 第一阶段响应长度:', phase1Content.length);
+
+    let phase1Analysis = {};
+    const phase1Match = phase1Content.match(/```json\s*([\s\S]*?)```/) || phase1Content.match(/\{[\s\S]*\}/);
+    if (phase1Match) {
+      try {
+        phase1Analysis = JSON.parse(phase1Match[1] || phase1Match[0]);
+      } catch (e) {
+        console.error('[需求文档分析] 第一阶段JSON解析失败:', e.message);
+      }
+    }
+
+    // ========== 第二阶段：功能需求深度分析 ==========
+    if (progressCallback) progressCallback('phase2', '📋 第二阶段：深度分析功能需求...');
+    console.log('[需求文档分析] 第二阶段：功能需求深度分析');
+
+    // 找到功能需求章节的内容
+    const funcChapterNum = phase1Analysis.documentStructure?.functionalChapterNumber || '3';
+    const funcSections = sections.filter(s => s.number.startsWith(funcChapterNum + '.') || s.number === funcChapterNum);
+    
+    // 提取功能需求相关内容
+    let functionalContent = '';
+    for (const section of funcSections) {
+      if (section.content) {
+        functionalContent += `\n\n【${section.number} ${section.title}】\n${section.content}`;
+      }
+    }
+    if (!functionalContent) {
+      functionalContent = documentText.slice(0, 25000);
+    }
+
+    const phase2Prompt = `你是功能需求分析专家。请对以下功能需求内容进行**深度分析**。
+
+## 【功能需求内容】
+${functionalContent.slice(0, 25000)}
+
+## 【第二阶段分析任务】
+请深入分析每个功能需求，提取详细信息：
+
+\`\`\`json
+{
+  "functionalRequirements": [
+    {
+      "id": "功能编号（从文档提取）",
+      "name": "功能名称",
+      "category": "所属模块/子系统",
+      "description": "功能描述（详细说明该功能做什么）",
+      "priority": "优先级（高/中/低，如文档中有说明）",
+      "actors": ["涉及的用户角色"],
+      "preconditions": ["前置条件"],
+      "postconditions": ["后置条件"],
+      "mainFlow": ["主要操作步骤1", "步骤2"],
+      "alternativeFlows": ["备选流程"],
+      "exceptionFlows": ["异常流程"],
+      "businessRules": ["适用的业务规则"],
+      "dataInputs": ["输入数据项"],
+      "dataOutputs": ["输出数据项"],
+      "interfaces": {
+        "userInterface": "界面描述（如有）",
+        "systemInterface": "系统接口描述（如有）"
+      },
+      "acceptanceCriteria": ["验收标准"],
+      "constraints": ["约束条件"],
+      "dependencies": ["依赖的其他功能"]
+    }
+  ],
+  "functionalModules": [
+    {
+      "name": "模块名称",
+      "description": "模块描述",
+      "functions": ["包含的功能列表"],
+      "subModules": ["子模块（如有）"]
+    }
+  ],
+  "functionalHierarchy": {
+    "levels": 2,
+    "structure": "描述功能需求的层级结构（如：模块->功能->子功能）"
+  },
+  "crossCuttingConcerns": ["跨功能关注点，如：权限控制、日志记录"]
+}
+\`\`\`
+
+请确保：
+1. **完整提取**每个功能需求的所有细节
+2. 准确识别功能之间的**依赖关系**
+3. 提取功能的**业务规则**和**验收标准**
+4. 识别功能的**输入输出数据**`;
+
+    const phase2Response = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'glm-4-flash',
+      messages: [
+        {
+          role: 'system',
+          content: '你是功能需求分析专家，擅长提取完整的功能需求信息。请从文档中准确提取，不要遗漏任何功能。'
+        },
+        { role: 'user', content: phase2Prompt }
+      ],
+      temperature: 0.2,
+      max_tokens: 10000
+    });
+
+    const phase2Content = phase2Response.choices[0]?.message?.content?.trim() || '';
+    console.log('[需求文档分析] 第二阶段响应长度:', phase2Content.length);
+
+    let phase2Analysis = {};
+    const phase2Match = phase2Content.match(/```json\s*([\s\S]*?)```/) || phase2Content.match(/\{[\s\S]*\}/);
+    if (phase2Match) {
+      try {
+        phase2Analysis = JSON.parse(phase2Match[1] || phase2Match[0]);
+      } catch (e) {
+        console.error('[需求文档分析] 第二阶段JSON解析失败:', e.message);
+      }
+    }
+
+    // ========== 第三阶段：数据需求和接口分析 ==========
+    if (progressCallback) progressCallback('phase3', '💾 第三阶段：分析数据需求和接口...');
+    console.log('[需求文档分析] 第三阶段：数据需求和接口分析');
+
+    const phase3Prompt = `你是数据架构师和接口设计专家。请从以下需求文档中提取**数据需求**和**接口需求**。
+
+## 【文档内容】
+${documentText.slice(0, 20000)}
+
+## 【第三阶段分析任务】
+请深入分析数据和接口需求：
+
+\`\`\`json
+{
+  "dataRequirements": {
+    "dataEntities": [
+      {
+        "name": "数据实体名称",
+        "description": "描述",
+        "attributes": [
+          {"name": "属性名", "type": "数据类型", "constraints": "约束条件", "description": "描述"}
+        ],
+        "relationships": ["与其他实体的关系"]
+      }
+    ],
+    "dataFlows": [
+      {"source": "数据来源", "target": "数据目标", "data": "数据内容", "frequency": "频率"}
+    ],
+    "dataVolume": "数据量估算",
+    "dataRetention": "数据保留策略",
+    "dataSecurity": "数据安全要求"
+  },
+  "interfaceRequirements": {
+    "externalInterfaces": [
+      {
+        "name": "接口名称",
+        "type": "接口类型（API/文件/消息等）",
+        "direction": "方向（输入/输出/双向）",
+        "protocol": "协议",
+        "dataFormat": "数据格式",
+        "externalSystem": "对接的外部系统",
+        "description": "接口描述",
+        "frequency": "调用频率"
+      }
+    ],
+    "userInterfaces": [
+      {
+        "name": "界面名称",
+        "type": "界面类型（Web/移动/桌面）",
+        "description": "界面描述",
+        "mainElements": ["主要元素"],
+        "userActions": ["用户操作"]
+      }
+    ],
+    "hardwareInterfaces": ["硬件接口需求"],
+    "softwareInterfaces": ["软件接口需求"]
+  },
+  "integrationPoints": [
+    {
+      "externalSystem": "外部系统名称",
+      "integrationMethod": "集成方式",
+      "dataExchanged": ["交换的数据"],
+      "securityRequirements": "安全要求"
+    }
+  ]
+}
+\`\`\`
+
+请确保：
+1. 识别所有**数据实体**及其**属性**
+2. 提取所有**外部接口**需求
+3. 分析**数据流向**和**集成点**`;
+
+    const phase3Response = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'glm-4-flash',
+      messages: [
+        {
+          role: 'system',
+          content: '你是数据架构师，擅长分析数据需求和接口设计。请从文档中准确提取相关信息。'
+        },
+        { role: 'user', content: phase3Prompt }
+      ],
+      temperature: 0.2,
+      max_tokens: 6000
+    });
+
+    const phase3Content = phase3Response.choices[0]?.message?.content?.trim() || '';
+    console.log('[需求文档分析] 第三阶段响应长度:', phase3Content.length);
+
+    let phase3Analysis = {};
+    const phase3Match = phase3Content.match(/```json\s*([\s\S]*?)```/) || phase3Content.match(/\{[\s\S]*\}/);
+    if (phase3Match) {
+      try {
+        phase3Analysis = JSON.parse(phase3Match[1] || phase3Match[0]);
+      } catch (e) {
+        console.error('[需求文档分析] 第三阶段JSON解析失败:', e.message);
+      }
+    }
+
+    // ========== 第四阶段：业务规则和非功能需求分析 ==========
+    if (progressCallback) progressCallback('phase4', '📏 第四阶段：分析业务规则和非功能需求...');
+    console.log('[需求文档分析] 第四阶段：业务规则和非功能需求分析');
+
+    const phase4Prompt = `你是业务分析师和系统架构师。请从以下需求文档中提取**业务规则**和**非功能需求**。
+
+## 【文档内容】
+${documentText.slice(0, 20000)}
+
+## 【第四阶段分析任务】
+请深入分析业务规则和非功能需求：
+
+\`\`\`json
+{
+  "businessRules": [
+    {
+      "id": "规则编号",
+      "name": "规则名称",
+      "category": "规则分类（计算规则/验证规则/权限规则/流程规则等）",
+      "description": "规则详细描述",
+      "condition": "触发条件",
+      "action": "执行动作",
+      "priority": "优先级",
+      "relatedFunctions": ["关联的功能"]
+    }
+  ],
+  "businessProcesses": [
+    {
+      "name": "流程名称",
+      "description": "流程描述",
+      "steps": ["步骤1", "步骤2"],
+      "participants": ["参与角色"],
+      "triggers": ["触发条件"],
+      "outcomes": ["预期结果"]
+    }
+  ],
+  "nonFunctionalRequirements": {
+    "performance": {
+      "responseTime": "响应时间要求",
+      "throughput": "吞吐量要求",
+      "concurrency": "并发用户数",
+      "dataVolume": "数据处理量",
+      "specificRequirements": ["具体性能要求"]
+    },
+    "security": {
+      "authentication": "认证要求",
+      "authorization": "授权要求",
+      "dataEncryption": "数据加密要求",
+      "auditLogging": "审计日志要求",
+      "specificRequirements": ["具体安全要求"]
+    },
+    "reliability": {
+      "availability": "可用性要求（如：99.9%）",
+      "recoverability": "可恢复性要求",
+      "faultTolerance": "容错要求",
+      "backupRequirements": "备份要求"
+    },
+    "usability": {
+      "userFriendliness": "易用性要求",
+      "accessibility": "可访问性要求",
+      "localization": "本地化要求"
+    },
+    "maintainability": {
+      "modifiability": "可修改性要求",
+      "testability": "可测试性要求",
+      "documentation": "文档要求"
+    },
+    "compatibility": {
+      "browsers": ["支持的浏览器"],
+      "devices": ["支持的设备"],
+      "operatingSystems": ["支持的操作系统"],
+      "integrations": ["需要兼容的系统"]
+    }
+  },
+  "constraints": {
+    "technical": ["技术约束"],
+    "business": ["业务约束"],
+    "regulatory": ["法规约束"],
+    "resource": ["资源约束"]
+  },
+  "assumptions": ["假设条件"],
+  "dependencies": ["外部依赖"]
+}
+\`\`\`
+
+请确保：
+1. 完整提取所有**业务规则**
+2. 识别所有**非功能需求**类别
+3. 提取**约束条件**和**假设**`;
+
+    const phase4Response = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'glm-4-flash',
+      messages: [
+        {
+          role: 'system',
+          content: '你是业务分析师，擅长提取业务规则和非功能需求。请从文档中准确提取相关信息。'
+        },
+        { role: 'user', content: phase4Prompt }
+      ],
+      temperature: 0.2,
+      max_tokens: 6000
+    });
+
+    const phase4Content = phase4Response.choices[0]?.message?.content?.trim() || '';
+    console.log('[需求文档分析] 第四阶段响应长度:', phase4Content.length);
+
+    let phase4Analysis = {};
+    const phase4Match = phase4Content.match(/```json\s*([\s\S]*?)```/) || phase4Content.match(/\{[\s\S]*\}/);
+    if (phase4Match) {
+      try {
+        phase4Analysis = JSON.parse(phase4Match[1] || phase4Match[0]);
+      } catch (e) {
+        console.error('[需求文档分析] 第四阶段JSON解析失败:', e.message);
+      }
+    }
+
+    // ========== 第五阶段：生成综合分析报告 ==========
+    if (progressCallback) progressCallback('phase5', '📊 第五阶段：生成综合分析报告...');
+    console.log('[需求文档分析] 第五阶段：生成综合分析报告');
+
+    // 合并所有阶段的分析结果
+    const comprehensiveAnalysis = {
+      // 分析元数据
+      analysisVersion: '2.0-deep',
+      analysisTime: new Date().toISOString(),
+      analysisPhases: 5,
+      analysisDuration: Date.now() - analysisStartTime,
+      
+      // 第一阶段：项目概览
+      projectName: phase1Analysis.projectOverview?.projectName || '未识别项目名',
+      projectDescription: phase1Analysis.projectOverview?.description || '',
+      projectCode: phase1Analysis.projectOverview?.projectCode || '',
+      projectVersion: phase1Analysis.projectOverview?.version || '',
+      projectBackground: phase1Analysis.projectOverview?.background || '',
+      projectObjectives: phase1Analysis.projectOverview?.objectives || [],
+      systemScope: phase1Analysis.projectOverview?.scope || '',
+      
+      // 文档结构
+      documentStructure: phase1Analysis.documentStructure || {},
+      functionalChapterNumber: phase1Analysis.documentStructure?.functionalChapterNumber || '3',
+      
+      // 利益相关者
+      userRoles: (phase1Analysis.stakeholders?.targetUsers || []).map(u => u.role),
+      stakeholders: phase1Analysis.stakeholders || {},
+      
+      // 领域分析
+      domainAnalysis: phase1Analysis.domainAnalysis || {},
+      keyTerms: phase1Analysis.domainAnalysis?.keyTerms || [],
+      businessProcesses: phase1Analysis.domainAnalysis?.businessProcesses || [],
+      
+      // 第二阶段：功能需求
+      functionalRequirements: phase2Analysis.functionalRequirements || [],
+      functionalModules: phase2Analysis.functionalModules || [],
+      functionalHierarchy: phase2Analysis.functionalHierarchy || {},
+      crossCuttingConcerns: phase2Analysis.crossCuttingConcerns || [],
+      
+      // 第三阶段：数据和接口
+      dataRequirements: phase3Analysis.dataRequirements || {},
+      dataEntities: phase3Analysis.dataRequirements?.dataEntities || [],
+      interfaceRequirements: phase3Analysis.interfaceRequirements || {},
+      integrationPoints: phase3Analysis.integrationPoints || [],
+      
+      // 第四阶段：业务规则和非功能需求
+      businessRules: phase4Analysis.businessRules || [],
+      keyBusinessRules: (phase4Analysis.businessRules || []).slice(0, 10).map(r => r.description || r.name),
+      nonFunctionalRequirements: phase4Analysis.nonFunctionalRequirements || {},
+      constraints: phase4Analysis.constraints || {},
+      assumptions: phase4Analysis.assumptions || [],
+      dependencies: phase4Analysis.dependencies || [],
+      
+      // 统计摘要
+      summary: {
+        totalFunctionalRequirements: (phase2Analysis.functionalRequirements || []).length,
+        totalModules: (phase2Analysis.functionalModules || []).length,
+        totalDataEntities: (phase3Analysis.dataRequirements?.dataEntities || []).length,
+        totalExternalInterfaces: (phase3Analysis.interfaceRequirements?.externalInterfaces || []).length,
+        totalBusinessRules: (phase4Analysis.businessRules || []).length,
+        totalUserRoles: (phase1Analysis.stakeholders?.targetUsers || []).length,
+        hasNonFunctionalRequirements: Object.keys(phase4Analysis.nonFunctionalRequirements || {}).length > 0,
+        analysisQuality: calculateAnalysisQuality(phase1Analysis, phase2Analysis, phase3Analysis, phase4Analysis)
+      }
+    };
+
+    // 打印分析摘要
+    console.log('========== 需求文档深度分析完成 ==========');
+    console.log('分析用时:', comprehensiveAnalysis.analysisDuration, 'ms');
+    console.log('项目名称:', comprehensiveAnalysis.projectName);
+    console.log('功能需求数:', comprehensiveAnalysis.summary.totalFunctionalRequirements);
+    console.log('功能模块数:', comprehensiveAnalysis.summary.totalModules);
+    console.log('数据实体数:', comprehensiveAnalysis.summary.totalDataEntities);
+    console.log('业务规则数:', comprehensiveAnalysis.summary.totalBusinessRules);
+    console.log('分析质量评分:', comprehensiveAnalysis.summary.analysisQuality);
+
+    return comprehensiveAnalysis;
+
+  } catch (error) {
+    console.error('[需求文档分析] 深度分析失败:', error.message);
+    // 返回降级结果
+    return {
+      analysisVersion: '2.0-deep-fallback',
+      analysisTime: new Date().toISOString(),
+      error: error.message,
+      projectName: '分析失败',
+      projectDescription: '',
+      userRoles: [],
+      functionalModules: [],
+      functionalRequirements: [],
+      dataEntities: [],
+      businessRules: [],
+      nonFunctionalRequirements: {},
+      summary: {
+        totalFunctionalRequirements: 0,
+        analysisQuality: 'failed'
+      }
+    };
+  }
+}
+
+/**
+ * 计算分析质量评分
+ */
+function calculateAnalysisQuality(phase1, phase2, phase3, phase4) {
+  let score = 0;
+  let maxScore = 0;
+
+  // 第一阶段评分
+  if (phase1.projectOverview?.projectName) score += 10;
+  if (phase1.projectOverview?.description) score += 5;
+  if (phase1.stakeholders?.targetUsers?.length > 0) score += 10;
+  if (phase1.documentStructure?.mainChapters?.length > 0) score += 10;
+  maxScore += 35;
+
+  // 第二阶段评分
+  const funcCount = phase2.functionalRequirements?.length || 0;
+  if (funcCount > 0) score += Math.min(20, funcCount * 2);
+  if (phase2.functionalModules?.length > 0) score += 10;
+  maxScore += 30;
+
+  // 第三阶段评分
+  if (phase3.dataRequirements?.dataEntities?.length > 0) score += 10;
+  if (phase3.interfaceRequirements?.externalInterfaces?.length > 0) score += 10;
+  maxScore += 20;
+
+  // 第四阶段评分
+  if (phase4.businessRules?.length > 0) score += 10;
+  if (Object.keys(phase4.nonFunctionalRequirements || {}).length > 0) score += 5;
+  maxScore += 15;
+
+  const percentage = Math.round((score / maxScore) * 100);
+  
+  if (percentage >= 80) return 'excellent';
+  if (percentage >= 60) return 'good';
+  if (percentage >= 40) return 'fair';
+  return 'poor';
+}
+
+// 保留原有的简单分析函数作为后备
 async function analyzeRequirementDocWithAI(client, documentText, sections) {
+  // 如果文档足够大，使用深度分析
+  if (documentText.length > 500) {
+    console.log('[需求文档分析] 文档内容充足，启用多阶段深度分析');
+    return await deepAnalyzeRequirementDocWithAI(client, documentText, sections);
+  }
+  
+  // 否则使用简化版分析
+  console.log('[需求文档分析] 文档较短，使用简化分析');
   const prompt = `你是一名资深需求分析专家。请深度分析以下需求文档，提取结构化信息。
 
-## 文档内容（前15000字）：
+## 文档内容：
 ${documentText.slice(0, 15000)}
 
 ## 已识别的章节结构：
@@ -7371,7 +7937,6 @@ ${sections.slice(0, 30).map(s => `${'  '.repeat(s.level - 1)}${s.number} ${s.tit
     });
 
     const responseText = completion.choices[0]?.message?.content || '';
-    // 提取JSON
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
@@ -7383,7 +7948,7 @@ ${sections.slice(0, 30).map(s => `${'  '.repeat(s.level - 1)}${s.number} ${s.tit
   }
 }
 
-// 上传并解析需求文档（Word格式）
+// 上传并解析需求文档（Word格式）- 流式深度分析
 app.post('/api/cosmic-to-spec/parse-requirement-doc', uploadMultiple.single('file'), handleMulterError, async (req, res) => {
   try {
     if (!req.file) {
@@ -7397,10 +7962,91 @@ app.post('/api/cosmic-to-spec/parse-requirement-doc', uploadMultiple.single('fil
 
     console.log(`解析需求文档: ${req.file.originalname}, 大小: ${req.file.size} bytes`);
 
+    // 检查是否请求流式响应
+    const useStream = req.query.stream === 'true';
+
     // 深度解析文档
     const result = await parseRequirementDocument(req.file.buffer, ext);
 
-    // 如果有API密钥，进行AI深度分析
+    // 如果使用流式响应
+    if (useStream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+
+      // 发送基础解析结果
+      res.write(`data: ${JSON.stringify({
+        phase: 'parsing_complete',
+        message: '📄 文档解析完成',
+        progress: 10,
+        basicResult: {
+          filename: req.file.originalname,
+          fileSize: req.file.size,
+          sectionCount: result.sectionCount,
+          functionalRequirementsCount: result.functionalRequirements?.length || 0
+        }
+      })}\n\n`);
+
+      // 如果有API密钥，进行AI深度分析
+      const client = getOpenAIClient();
+      if (client && result.fullText.length > 100) {
+        console.log('开始AI多阶段深度分析需求文档...');
+        
+        const progressCallback = (phaseId, message) => {
+          const progressMap = {
+            'phase1': 20,
+            'phase2': 40,
+            'phase3': 60,
+            'phase4': 80,
+            'phase5': 95
+          };
+          res.write(`data: ${JSON.stringify({
+            phase: phaseId,
+            message: message,
+            progress: progressMap[phaseId] || 50
+          })}\n\n`);
+        };
+
+        const aiAnalysis = await deepAnalyzeRequirementDocWithAI(client, result.fullText, result.sections, progressCallback);
+        
+        // 发送完成消息
+        res.write(`data: ${JSON.stringify({
+          phase: 'analysis_complete',
+          message: '✅ 需求文档深度分析完成',
+          progress: 100,
+          result: {
+            success: true,
+            filename: req.file.originalname,
+            fileSize: req.file.size,
+            documentType: 'requirement',
+            ...result,
+            aiAnalysis
+          }
+        })}\n\n`);
+      } else {
+        // 无API密钥，直接返回基础结果
+        res.write(`data: ${JSON.stringify({
+          phase: 'analysis_complete',
+          message: '⚠️ 未配置API密钥，跳过AI分析',
+          progress: 100,
+          result: {
+            success: true,
+            filename: req.file.originalname,
+            fileSize: req.file.size,
+            documentType: 'requirement',
+            ...result,
+            aiAnalysis: null
+          }
+        })}\n\n`);
+      }
+
+      res.write('data: [DONE]\n\n');
+      res.end();
+      return;
+    }
+
+    // 非流式响应（保持向后兼容）
     let aiAnalysis = null;
     const client = getOpenAIClient();
     if (client && result.fullText.length > 100) {
@@ -7425,7 +8071,7 @@ app.post('/api/cosmic-to-spec/parse-requirement-doc', uploadMultiple.single('fil
   }
 });
 
-// 根据需求文档和模板生成需求规格说明书
+// 根据需求文档和模板生成需求规格说明书 - 增强版：与Excel模式一致的模板驱动
 app.post('/api/cosmic-to-spec/generate-from-doc', async (req, res) => {
   try {
     const { requirementDoc, templateId } = req.body;
@@ -7445,45 +8091,63 @@ app.post('/api/cosmic-to-spec/generate-from-doc', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
 
-    // 获取模板信息
+    // 获取模板信息和深度分析结果
     let templateText = '';
     let templateAnalysis = null;
     let savedAnalysis = null;
+    let fullProcessExample = '';
 
     if (templateId) {
+      // 首先检查是否有已保存的深度分析结果
       const analysisPath = path.join(TEMPLATES_DIR, `${templateId}_analysis.json`);
       if (fs.existsSync(analysisPath)) {
         try {
           savedAnalysis = JSON.parse(fs.readFileSync(analysisPath, 'utf-8'));
           templateText = savedAnalysis.originalTemplateText || '';
-          console.log('使用已保存的模板分析结果');
+          fullProcessExample = savedAnalysis.fullProcessExample || '';
+          console.log('【Word模式】使用已保存的深度分析结果');
         } catch (e) {
           console.log('读取分析结果失败，将重新分析');
         }
       }
 
+      // 如果没有分析结果，从缓存或文件获取模板
       if (!templateText) {
-        let templatePath = path.join(TEMPLATES_DIR, `${templateId}.docx`);
-        let ext = '.docx';
-        if (!fs.existsSync(templatePath)) {
-          templatePath = path.join(TEMPLATES_DIR, `${templateId}.doc`);
-          ext = '.doc';
-        }
-        if (fs.existsSync(templatePath)) {
-          const buffer = fs.readFileSync(templatePath);
-          const parsed = await parseWordTemplate(buffer, ext);
-          templateText = parsed.fullText;
+        const templateInfo = specTemplatesCache.get(templateId);
+        if (templateInfo) {
+          templateText = templateInfo.fullText || '';
+          fullProcessExample = templateInfo.functionalExampleContent || '';
+        } else {
+          let templatePath = path.join(TEMPLATES_DIR, `${templateId}.docx`);
+          let ext = '.docx';
+          if (!fs.existsSync(templatePath)) {
+            templatePath = path.join(TEMPLATES_DIR, `${templateId}.doc`);
+            ext = '.doc';
+          }
+          if (fs.existsSync(templatePath)) {
+            const buffer = fs.readFileSync(templatePath);
+            const parsed = await parseWordTemplate(buffer, ext);
+            templateText = parsed.fullText;
+            fullProcessExample = parsed.functionalExampleContent || '';
+          }
         }
       }
     }
 
-    // 提取功能需求列表
-    const functionalReqs = requirementDoc.functionalRequirements || [];
+    // 提取功能需求列表（优先使用AI深度分析的结果）
+    let functionalReqs = [];
+    if (requirementDoc.aiAnalysis?.functionalRequirements?.length > 0) {
+      functionalReqs = requirementDoc.aiAnalysis.functionalRequirements;
+    } else if (requirementDoc.functionalRequirements?.length > 0) {
+      functionalReqs = requirementDoc.functionalRequirements;
+    }
+    
     const totalFunctions = functionalReqs.length;
     const BATCH_SIZE = 3;
     const totalBatches = Math.ceil(totalFunctions / BATCH_SIZE);
 
-    console.log(`开始从需求文档生成规格书: ${totalFunctions} 个功能需求, 分 ${totalBatches + 2} 批处理`);
+    console.log(`【Word模式】开始生成规格书: ${totalFunctions} 个功能需求, 分 ${totalBatches + 3} 批处理`);
+    console.log(`【Word模式】模板示例长度: ${fullProcessExample?.length || 0} 字符`);
 
     // ========== 第一阶段：分析模板 ==========
     res.write(`data: ${JSON.stringify({
@@ -7514,15 +8178,50 @@ app.post('/api/cosmic-to-spec/generate-from-doc', async (req, res) => {
       }
     }
 
+    // ========== 第1.5阶段：分析模板层级结构（和Excel模式一致）==========
+    // 【核心修复】获取功能需求章节编号 - 多种方式尝试
+    let funcChapterNum = 
+      savedAnalysis?.functionalChapterNumber || 
+      templateAnalysis?.functionalChapterNumber || 
+      templateAnalysis?.functionalChapter?.number;
+    
+    // 如果上述方式都没有获取到，从 sections 中自动检测
+    const sectionsForAnalysis = savedAnalysis?.sections || templateAnalysis?.sections || templateAnalysis?.allChapters || [];
+    if (!funcChapterNum) {
+      const funcSection = sectionsForAnalysis.find(s => 
+        s.title?.includes('功能需求') || s.title?.includes('功能要求')
+      );
+      if (funcSection) {
+        funcChapterNum = funcSection.number.split('.')[0];
+        console.log(`【Word模式】从sections中检测到功能需求章节: ${funcSection.number} ${funcSection.title}`);
+      }
+    }
+    funcChapterNum = funcChapterNum || '5';
+    console.log(`【Word模式】功能需求章节编号: ${funcChapterNum}`);
+
+    // 【核心修复】分析模板层级深度
+    let templateHierarchyLevels = analyzeTemplateHierarchyLevels(sectionsForAnalysis, funcChapterNum);
+    if (templateAnalysis?.functionalChapter?.hierarchyLevels) {
+      console.log(`AI分析的层级深度: ${templateAnalysis.functionalChapter.hierarchyLevels}, 代码分析的层级深度: ${templateHierarchyLevels}`);
+    }
+    const useSimpleStructure = templateHierarchyLevels <= 2;
+    console.log(`【Word模式】模板层级深度: ${templateHierarchyLevels}, 使用简单结构: ${useSimpleStructure}`);
+
+    // 【核心修复】从模板中提取功能过程子节结构
+    const extractedProcessTemplate = extractFunctionalProcessSectionsFromTemplate(sectionsForAnalysis, funcChapterNum);
+    if (extractedProcessTemplate) {
+      console.log(`【Word模式】从模板中提取到功能过程子节: ${extractedProcessTemplate.sections.join('、')}`);
+    }
+
     // ========== 第二阶段：分析需求文档 ==========
     res.write(`data: ${JSON.stringify({
       phase: 'analyzing_document',
       message: '📄 深度分析需求文档...',
       currentStep: 2,
-      totalSteps: totalBatches + 3
+      totalSteps: totalBatches + 4
     })}\n\n`);
 
-    // 构建功能模块概览
+    // 构建功能模块概览（用于生成前置章节）
     let functionalOverview = '';
     if (requirementDoc.aiAnalysis && requirementDoc.aiAnalysis.functionalModules) {
       const modules = requirementDoc.aiAnalysis.functionalModules;
@@ -7531,7 +8230,7 @@ app.post('/api/cosmic-to-spec/generate-from-doc', async (req, res) => {
         return `${idx + 1}. ${m.name}\n${m.description || ''}\n${funcs}`;
       }).join('\n\n');
     } else {
-      functionalOverview = functionalReqs.map((f, idx) => `${idx + 1}. ${f.title}`).join('\n');
+      functionalOverview = functionalReqs.map((f, idx) => `${idx + 1}. ${f.title || f.name}`).join('\n');
     }
 
     res.write(`data: ${JSON.stringify({
@@ -7549,10 +8248,9 @@ app.post('/api/cosmic-to-spec/generate-from-doc', async (req, res) => {
       phase: 'generating_header',
       message: '📝 生成文档前置章节...',
       currentStep: 3,
-      totalSteps: totalBatches + 3
+      totalSteps: totalBatches + 4
     })}\n\n`);
 
-    const funcChapterNum = templateAnalysis?.functionalChapter?.number || '5';
     const allChapters = templateAnalysis?.allChapters || [];
     const funcChapterIndex = allChapters.findIndex(c =>
       c.title?.includes('功能') || c.number === funcChapterNum
@@ -7617,7 +8315,47 @@ ${headerChaptersList || '1. 概述\n2. 业务需求\n3. 用户需求\n4. 产品�
       }
     }
 
-    // ========== 第四阶段：分批生成功能需求 ==========
+    // ========== 第四阶段：分批生成功能需求（与Excel模式一致的模板驱动） ==========
+    
+    // 【核心修复】获取功能过程子节结构 - 与Excel模式完全一致
+    let finalSectionsForGenerate = [];
+    
+    // 优先级1: 从提取的模板结构中获取
+    if (extractedProcessTemplate && extractedProcessTemplate.sections.length > 0) {
+      finalSectionsForGenerate = extractedProcessTemplate.sections;
+    }
+    // 优先级2: 从 savedAnalysis 的 processContentTemplate 获取
+    else if (savedAnalysis?.processContentTemplate?.sections) {
+      finalSectionsForGenerate = savedAnalysis.processContentTemplate.sections.map(s => s.name || s);
+    }
+    // 优先级3: 从 templateAnalysis 的 processContentTemplate 获取
+    else if (templateAnalysis?.processContentTemplate?.sections) {
+      finalSectionsForGenerate = templateAnalysis.processContentTemplate.sections.map(s => s.name || s);
+    }
+    // 优先级4: 从 functionalChapter.processContentTemplate 获取
+    else if (templateAnalysis?.functionalChapter?.processContentTemplate?.sections) {
+      finalSectionsForGenerate = templateAnalysis.functionalChapter.processContentTemplate.sections.map(s => s.name || s);
+    }
+    // 最终默认值
+    if (finalSectionsForGenerate.length === 0) {
+      finalSectionsForGenerate = ['功能说明', '业务规则、模型和算法', '处理数据', '接口', '界面', '验收标准'];
+    }
+    
+    console.log(`【Word模式】最终使用的功能过程子节: ${finalSectionsForGenerate.join('、')}`);
+
+    // 构建模板示例内容（与Excel模式一致）
+    let templateExampleContent = '';
+    if (fullProcessExample) {
+      templateExampleContent = `
+
+## 【模板格式示例 - 必须严格参照】
+以下是模板中功能需求的示例格式，你生成的每个功能都必须**完全按照**这个格式和结构：
+\`\`\`
+${fullProcessExample.slice(0, 6000)}
+\`\`\`
+`;
+    }
+
     for (let batchIdx = 0; batchIdx < totalBatches; batchIdx++) {
       const batchStart = batchIdx * BATCH_SIZE;
       const batchEnd = Math.min(batchStart + BATCH_SIZE, totalFunctions);
@@ -7627,7 +8365,7 @@ ${headerChaptersList || '1. 概述\n2. 业务需求\n3. 用户需求\n4. 产品�
         phase: 'generating_functions',
         message: `🔄 生成功能需求 (${batchStart + 1}-${batchEnd}/${totalFunctions})...`,
         currentStep: batchIdx + 4,
-        totalSteps: totalBatches + 3,
+        totalSteps: totalBatches + 4,
         batchInfo: {
           start: batchStart + 1,
           end: batchEnd,
@@ -7635,39 +8373,57 @@ ${headerChaptersList || '1. 概述\n2. 业务需求\n3. 用户需求\n4. 产品�
         }
       })}\n\n`);
 
-      // 构建当前批次的详细信息
+      // 构建当前批次的详细信息（包含更多原始需求细节）
       const batchDetails = batchReqs.map((req, idx) => {
         const globalIdx = batchStart + idx + 1;
-        return `【功能 ${funcChapterNum}.${globalIdx}】${req.title}
+        const reqContent = req.content || req.description || '';
+        const businessRules = req.businessRules ? `\n业务规则: ${JSON.stringify(req.businessRules)}` : '';
+        const acceptanceCriteria = req.acceptanceCriteria ? `\n验收标准: ${JSON.stringify(req.acceptanceCriteria)}` : '';
+        
+        return `【功能 ${funcChapterNum}.${globalIdx}】${req.title || req.name}
 原始需求内容：
-${req.content.slice(0, 2000)}`;
+${reqContent.slice(0, 3000)}${businessRules}${acceptanceCriteria}`;
       }).join('\n\n---\n\n');
 
-      // 获取功能过程子节结构
-      let sectionsToGenerate = ['功能说明', '业务规则', '处理数据', '接口', '界面', '验收标准'];
-      if (templateAnalysis?.functionalChapter?.processContentTemplate?.sections) {
-        sectionsToGenerate = templateAnalysis.functionalChapter.processContentTemplate.sections.map(s => s.name);
-      }
+      // 构建子节结构说明
+      const sectionsDescription = finalSectionsForGenerate.map((s, i) => `${funcChapterNum}.X.${i + 1}. ${s}`).join('\n');
 
-      const functionPrompt = `请为以下功能需求生成详细的需求规格说明。
+      const functionPrompt = `你是资深需求规格说明书撰写专家。请根据原始需求内容，为以下功能生成**完整、详细、专业**的需求规格说明。
+${templateExampleContent}
 
-## 【功能需求详情】
+## 【待生成的功能需求】
 ${batchDetails}
 
-## 【每个功能必须包含的子节】
-${sectionsToGenerate.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+## 【每个功能必须包含的子节结构】（严格按此顺序和格式）
+${sectionsDescription}
 
-## 【生成要求】
-1. 每个功能使用三级标题 ### ${funcChapterNum}.X 功能名称
-2. 每个子节使用四级标题 #### ${funcChapterNum}.X.Y 子节名称
-3. 功能说明：300字以上，包含业务背景、使用场景、操作流程
-4. 业务规则：至少5条具体规则，使用表格格式
-5. 处理数据：使用表格列出字段名、类型、长度、必填、说明
-6. 接口：包含请求参数表和响应参数表
-7. 界面：描述页面布局和交互
-8. 验收标准：至少5条测试用例
+## 【格式要求 - 必须严格遵守】
+1. 每个功能使用二级标题: ## ${funcChapterNum}.X ${useSimpleStructure ? '功能名称' : '功能名称（功能编号）'}
+2. 每个子节使用三级标题: ### ${funcChapterNum}.X.Y 子节名称
+3. **功能说明**：至少300字，必须包含：
+   - 功能背景和目的
+   - 使用场景和用户角色
+   - 详细操作流程（步骤1、2、3...）
+   - 前置条件和后置条件
+4. **业务规则**：必须使用表格格式，至少5条规则：
+   | 规则编号 | 规则名称 | 规则描述 | 触发条件 | 执行动作 |
+   |---------|---------|---------|---------|---------|
+5. **处理数据**：必须使用表格格式，列出所有数据字段：
+   | 字段名 | 数据类型 | 长度 | 是否必填 | 说明 |
+   |-------|---------|------|---------|------|
+6. **接口**：包含请求参数表和响应参数表，必须有具体的参数定义
+7. **界面**：描述页面布局、交互元素、操作按钮等
+8. **验收标准**：至少5条测试用例，使用表格格式：
+   | 用例编号 | 测试场景 | 前置条件 | 操作步骤 | 预期结果 |
+   |---------|---------|---------|---------|---------|
 
-请开始生成：`;
+## 【禁止事项】
+- ❌ 不要使用"XXX"、"待定"、"..."等占位符
+- ❌ 不要输出空白内容或只有标题
+- ❌ 不要使用"请参考"、"详见"等推诿表述
+- ❌ 表格数据不能少于3行
+
+请直接开始输出，不要有任何解释或说明：`;
 
       const functionStream = await client.chat.completions.create({
         model: process.env.OPENAI_MODEL || 'glm-4-flash',
@@ -7693,8 +8449,8 @@ ${sectionsToGenerate.map((s, i) => `${i + 1}. ${s}`).join('\n')}
     res.write(`data: ${JSON.stringify({
       phase: 'generating_footer',
       message: '📝 生成文档后置章节...',
-      currentStep: totalBatches + 3,
-      totalSteps: totalBatches + 3
+      currentStep: totalBatches + 4,
+      totalSteps: totalBatches + 4
     })}\n\n`);
 
     const footerChapters = funcChapterIndex >= 0 ? allChapters.slice(funcChapterIndex + 1) : [];
@@ -7703,20 +8459,30 @@ ${sectionsToGenerate.map((s, i) => `${i + 1}. ${s}`).join('\n')}
       footerChaptersList = footerChapters.map(c => `${c.number} ${c.title}`).join('\n');
     }
 
+    // 从需求文档的深度分析中获取非功能需求信息
+    const nonFuncReqs = requirementDoc.aiAnalysis?.nonFunctionalRequirements || {};
+    const dataEntities = requirementDoc.aiAnalysis?.dataEntities || [];
+    const integrationPoints = requirementDoc.aiAnalysis?.integrationPoints || [];
+
     const footerPrompt = `请生成需求规格说明书的后置章节。
 
 ## 【项目信息】
 - 项目名称：${projectInfo.projectName || '待定'}
-- 非功能需求：${JSON.stringify(projectInfo.nonFunctionalRequirements || {})}
-- 技术约束：${(projectInfo.technicalConstraints || []).join('、')}
+- 非功能需求：${JSON.stringify(nonFuncReqs)}
+- 数据实体：${dataEntities.map(e => e.name || e).join('、') || '无'}
+- 外部集成：${integrationPoints.map(i => i.name || i.systemName || i).join('、') || '无'}
+- 技术约束：${(projectInfo.technicalConstraints || []).join('、') || '无'}
 
-## 【后置章节结构】
+## 【后置章节结构】（严格按照模板章节生成）
 ${footerChaptersList || '6. 系统需求\n7. 附录'}
 
 ## 【生成要求】
-1. 包含性能需求、安全需求、可用性需求等
-2. 包含术语表、参考文献等附录内容
-3. 内容要具体，不要使用占位符
+1. 严格按照上面的后置章节结构生成，每个章节都要有实际内容
+2. 性能需求：具体的响应时间、并发用户数、数据量等指标
+3. 安全需求：身份认证、权限控制、数据加密等
+4. 可用性需求：系统可用性指标、故障恢复时间等
+5. 附录：术语表、参考文献、修订记录等
+6. 所有内容必须具体，禁止使用占位符
 
 请开始生成：`;
 

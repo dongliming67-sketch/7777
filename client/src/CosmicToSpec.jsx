@@ -71,6 +71,12 @@ function CosmicToSpec({ apiStatus, setShowSettings }) {
   const [copied, setCopied] = useState(false);
   const [showDataPreview, setShowDataPreview] = useState(false);
   
+  // 需求文档深度分析状态
+  const [isAnalyzingDoc, setIsAnalyzingDoc] = useState(false);
+  const [docAnalysisPhase, setDocAnalysisPhase] = useState('');
+  const [docAnalysisProgress, setDocAnalysisProgress] = useState(0);
+  const [docAnalysisMessage, setDocAnalysisMessage] = useState('');
+  
   const excelInputRef = useRef(null);
   const wordInputRef = useRef(null);
   const templateInputRef = useRef(null);
@@ -144,7 +150,7 @@ function CosmicToSpec({ apiStatus, setShowSettings }) {
     }
   };
 
-  // 上传Word需求文档
+  // 上传Word需求文档 - 使用流式深度分析
   const handleWordUpload = async (file) => {
     if (!file) return;
     
@@ -155,20 +161,95 @@ function CosmicToSpec({ apiStatus, setShowSettings }) {
     }
     
     setErrorMessage('');
+    setIsAnalyzingDoc(true);
+    setDocAnalysisPhase('parsing');
+    setDocAnalysisProgress(5);
+    setDocAnalysisMessage('📄 正在解析文档...');
+    setRequirementDoc(null);
+    setRequirementFilename(file.name);
+    
     const formData = new FormData();
     formData.append('file', file);
     
     try {
-      const res = await axios.post('/api/cosmic-to-spec/parse-requirement-doc', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      // 使用流式API进行深度分析
+      const response = await fetch('/api/cosmic-to-spec/parse-requirement-doc?stream=true', {
+        method: 'POST',
+        body: formData
       });
-      
-      if (res.data.success) {
-        setRequirementDoc(res.data);
-        setRequirementFilename(res.data.filename);
+
+      if (!response.ok) {
+        throw new Error('解析请求失败');
       }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              continue;
+            }
+            try {
+              const parsed = JSON.parse(data);
+              
+              // 更新进度状态
+              if (parsed.phase) {
+                setDocAnalysisPhase(parsed.phase);
+              }
+              if (parsed.progress !== undefined) {
+                setDocAnalysisProgress(parsed.progress);
+              }
+              if (parsed.message) {
+                setDocAnalysisMessage(parsed.message);
+              }
+              
+              // 如果分析完成，设置结果
+              if (parsed.phase === 'analysis_complete' && parsed.result) {
+                setRequirementDoc(parsed.result);
+                setRequirementFilename(parsed.result.filename);
+              }
+            } catch (e) {
+              console.log('解析SSE数据失败:', e);
+            }
+          }
+        }
+      }
+      
+      setIsAnalyzingDoc(false);
+      setDocAnalysisPhase('');
+      setDocAnalysisProgress(0);
+      setDocAnalysisMessage('');
+      
     } catch (error) {
-      setErrorMessage('解析需求文档失败: ' + (error.response?.data?.error || error.message));
+      console.error('流式解析失败，尝试普通请求:', error);
+      // 降级到普通请求
+      try {
+        const res = await axios.post('/api/cosmic-to-spec/parse-requirement-doc', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        
+        if (res.data.success) {
+          setRequirementDoc(res.data);
+          setRequirementFilename(res.data.filename);
+        }
+      } catch (e) {
+        setErrorMessage('解析需求文档失败: ' + (e.response?.data?.error || e.message));
+      }
+      setIsAnalyzingDoc(false);
+      setDocAnalysisPhase('');
+      setDocAnalysisProgress(0);
+      setDocAnalysisMessage('');
     }
   };
 
@@ -659,9 +740,77 @@ function CosmicToSpec({ apiStatus, setShowSettings }) {
                   <p className="text-gray-700 font-medium">点击或拖拽上传文件</p>
                   <p className="text-sm text-gray-400 mt-1">支持 .docx / .doc 格式</p>
                 </div>
+                
+                {/* 深度分析进度展示 */}
+                {isAnalyzingDoc && (
+                  <div className="mt-5 p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                      <span className="text-sm font-semibold text-blue-700">{docAnalysisMessage || '正在分析...'}</span>
+                    </div>
+                    
+                    {/* 进度条 */}
+                    <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${docAnalysisProgress}%` }}
+                      />
+                    </div>
+                    
+                    {/* 阶段指示器 */}
+                    <div className="flex flex-wrap gap-2">
+                      <div className={`text-xs px-2.5 py-1 rounded-lg ${
+                        docAnalysisPhase === 'parsing' || docAnalysisPhase === 'parsing_complete' 
+                          ? 'bg-blue-500 text-white' 
+                          : docAnalysisProgress > 10 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        📄 解析文档
+                      </div>
+                      <div className={`text-xs px-2.5 py-1 rounded-lg ${
+                        docAnalysisPhase === 'phase1' 
+                          ? 'bg-blue-500 text-white' 
+                          : docAnalysisProgress > 20 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        🔍 结构分析
+                      </div>
+                      <div className={`text-xs px-2.5 py-1 rounded-lg ${
+                        docAnalysisPhase === 'phase2' 
+                          ? 'bg-blue-500 text-white' 
+                          : docAnalysisProgress > 40 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        📋 功能分析
+                      </div>
+                      <div className={`text-xs px-2.5 py-1 rounded-lg ${
+                        docAnalysisPhase === 'phase3' 
+                          ? 'bg-blue-500 text-white' 
+                          : docAnalysisProgress > 60 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        💾 数据分析
+                      </div>
+                      <div className={`text-xs px-2.5 py-1 rounded-lg ${
+                        docAnalysisPhase === 'phase4' 
+                          ? 'bg-blue-500 text-white' 
+                          : docAnalysisProgress > 80 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        📏 规则分析
+                      </div>
+                      <div className={`text-xs px-2.5 py-1 rounded-lg ${
+                        docAnalysisPhase === 'phase5' || docAnalysisPhase === 'analysis_complete'
+                          ? 'bg-blue-500 text-white' 
+                          : docAnalysisProgress > 95 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        📊 生成报告
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs text-gray-500 mt-3">
+                      🧠 正在进行5阶段多维度深度分析，确保准确理解文档内容...
+                    </p>
+                  </div>
+                )}
             
                 {/* 已上传的Word文档 */}
-                {requirementDoc && (
+                {!isAnalyzingDoc && requirementDoc && (
                   <div className="mt-5 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -692,25 +841,108 @@ function CosmicToSpec({ apiStatus, setShowSettings }) {
                       </button>
                     </div>
                     
-                    {/* AI分析结果 */}
+                    {/* AI深度分析结果 */}
                     {requirementDoc.aiAnalysis && (
                       <div className="mt-4 pt-4 border-t border-blue-100">
-                        <p className="text-xs text-gray-500 mb-2 font-medium">AI深度分析结果：</p>
-                        <div className="space-y-1.5">
+                        {/* 分析版本标识 */}
+                        {requirementDoc.aiAnalysis.analysisVersion && (
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              requirementDoc.aiAnalysis.analysisVersion.includes('deep') 
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                                : 'bg-gray-200 text-gray-600'
+                            }`}>
+                              {requirementDoc.aiAnalysis.analysisVersion.includes('deep') ? '🧠 5阶段深度分析' : '基础分析'}
+                            </span>
+                            {requirementDoc.aiAnalysis.summary?.analysisQuality && (
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                requirementDoc.aiAnalysis.summary.analysisQuality === 'excellent' ? 'bg-green-100 text-green-700' :
+                                requirementDoc.aiAnalysis.summary.analysisQuality === 'good' ? 'bg-blue-100 text-blue-700' :
+                                requirementDoc.aiAnalysis.summary.analysisQuality === 'fair' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                质量: {
+                                  requirementDoc.aiAnalysis.summary.analysisQuality === 'excellent' ? '优秀' :
+                                  requirementDoc.aiAnalysis.summary.analysisQuality === 'good' ? '良好' :
+                                  requirementDoc.aiAnalysis.summary.analysisQuality === 'fair' ? '一般' : '较弱'
+                                }
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        
+                        <p className="text-xs text-gray-500 mb-2 font-medium">📊 AI深度分析结果：</p>
+                        
+                        {/* 项目概览 */}
+                        <div className="space-y-1.5 mb-3">
                           <p className="text-xs text-blue-700">
-                            <span className="font-medium">项目：</span> {requirementDoc.aiAnalysis.projectName || '未识别'}
+                            <span className="font-medium">📌 项目：</span> {requirementDoc.aiAnalysis.projectName || '未识别'}
                           </p>
-                          {requirementDoc.aiAnalysis.userRoles && requirementDoc.aiAnalysis.userRoles.length > 0 && (
-                            <p className="text-xs text-blue-600">
-                              <span className="font-medium">用户角色：</span> {requirementDoc.aiAnalysis.userRoles.slice(0, 3).join('、')}
-                            </p>
-                          )}
-                          {requirementDoc.aiAnalysis.functionalModules && (
-                            <p className="text-xs text-blue-600">
-                              <span className="font-medium">功能模块：</span> {requirementDoc.aiAnalysis.functionalModules.length} 个
+                          {requirementDoc.aiAnalysis.projectDescription && (
+                            <p className="text-xs text-gray-600 pl-4">
+                              {requirementDoc.aiAnalysis.projectDescription.slice(0, 100)}
+                              {requirementDoc.aiAnalysis.projectDescription.length > 100 ? '...' : ''}
                             </p>
                           )}
                         </div>
+                        
+                        {/* 统计摘要 */}
+                        {requirementDoc.aiAnalysis.summary && (
+                          <div className="grid grid-cols-3 gap-2 mb-3">
+                            <div className="bg-blue-50 rounded-lg p-2 text-center">
+                              <p className="text-lg font-bold text-blue-600">
+                                {requirementDoc.aiAnalysis.summary.totalFunctionalRequirements || 0}
+                              </p>
+                              <p className="text-xs text-blue-500">功能需求</p>
+                            </div>
+                            <div className="bg-purple-50 rounded-lg p-2 text-center">
+                              <p className="text-lg font-bold text-purple-600">
+                                {requirementDoc.aiAnalysis.summary.totalModules || 0}
+                              </p>
+                              <p className="text-xs text-purple-500">功能模块</p>
+                            </div>
+                            <div className="bg-green-50 rounded-lg p-2 text-center">
+                              <p className="text-lg font-bold text-green-600">
+                                {requirementDoc.aiAnalysis.summary.totalBusinessRules || 0}
+                              </p>
+                              <p className="text-xs text-green-500">业务规则</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* 详细信息 */}
+                        <div className="space-y-1.5">
+                          {requirementDoc.aiAnalysis.userRoles && requirementDoc.aiAnalysis.userRoles.length > 0 && (
+                            <p className="text-xs text-blue-600">
+                              <span className="font-medium">👥 用户角色：</span> {requirementDoc.aiAnalysis.userRoles.slice(0, 4).join('、')}
+                              {requirementDoc.aiAnalysis.userRoles.length > 4 ? ` 等${requirementDoc.aiAnalysis.userRoles.length}个` : ''}
+                            </p>
+                          )}
+                          {requirementDoc.aiAnalysis.functionalModules && requirementDoc.aiAnalysis.functionalModules.length > 0 && (
+                            <p className="text-xs text-purple-600">
+                              <span className="font-medium">📦 功能模块：</span> {requirementDoc.aiAnalysis.functionalModules.slice(0, 3).map(m => m.name || m).join('、')}
+                              {requirementDoc.aiAnalysis.functionalModules.length > 3 ? ` 等${requirementDoc.aiAnalysis.functionalModules.length}个` : ''}
+                            </p>
+                          )}
+                          {requirementDoc.aiAnalysis.dataEntities && requirementDoc.aiAnalysis.dataEntities.length > 0 && (
+                            <p className="text-xs text-green-600">
+                              <span className="font-medium">💾 数据实体：</span> {requirementDoc.aiAnalysis.dataEntities.slice(0, 3).map(e => e.name || e).join('、')}
+                              {requirementDoc.aiAnalysis.dataEntities.length > 3 ? ` 等${requirementDoc.aiAnalysis.dataEntities.length}个` : ''}
+                            </p>
+                          )}
+                          {requirementDoc.aiAnalysis.integrationPoints && requirementDoc.aiAnalysis.integrationPoints.length > 0 && (
+                            <p className="text-xs text-orange-600">
+                              <span className="font-medium">🔗 集成点：</span> {requirementDoc.aiAnalysis.integrationPoints.length}个外部系统集成
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* 分析耗时 */}
+                        {requirementDoc.aiAnalysis.analysisDuration && (
+                          <p className="text-xs text-gray-400 mt-2">
+                            ⏱️ 分析耗时: {(requirementDoc.aiAnalysis.analysisDuration / 1000).toFixed(1)}秒
+                          </p>
+                        )}
                       </div>
                     )}
                     
