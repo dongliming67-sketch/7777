@@ -14,16 +14,49 @@ require('dotenv').config();
 const wordExtractor = new WordExtractor();
 
 // 导入图表生成模块
-const { generateHTMLSequenceDiagram, generateHTMLFlowchart } = require('./diagramGenerator');
+const { 
+  generateHTMLSequenceDiagram, 
+  generateHTMLFlowchart,
+  generateHTMLUseCaseDiagram,
+  generateHTMLDataFlowDiagram,
+  generatePriorityQuadrantDiagram,
+  generateFunctionArchitectureDiagram,
+  // 基于AI分析的增强版
+  generateUseCaseDiagramFromAnalysis,
+  generateQuadrantDiagramFromAnalysis,
+  generateArchitectureDiagramFromAnalysis,
+  extractDiagramJSON,
+  extractUseCaseJSON,
+  htmlToImage,
+  bufferToDataUrl,
+  // 深度分析提示词
+  USE_CASE_THINKING_PROMPT,
+  USE_CASE_DIAGRAM_PROMPT,
+  QUADRANT_THINKING_PROMPT,
+  QUADRANT_DIAGRAM_PROMPT,
+  ARCHITECTURE_THINKING_PROMPT,
+  ARCHITECTURE_DIAGRAM_PROMPT_V2
+} = require('./diagramGenerator');
 
 // 导入深度理解系统模块
 const { deepAnalyzeTemplate } = require('./deepUnderstanding');
-const { intelligentReasoningForFunction, analyzeDataFlow } = require('./intelligentReasoning');
+const { intelligentReasoningForFunction, analyzeDataFlow, reasonFunctionDescriptionEnhanced, reasonBusinessRulesEnhanced } = require('./intelligentReasoning');
 const { comprehensiveQualityCheck } = require('./qualityCheck');
 const { enhancedGenerateRequirementSpec } = require('./enhancedGenerator');
+// 导入深度思考引擎 - 动态驱动的深度思考，生成更全面丰富的内容
+const { deepThinkForFunction, quickDeepThink, synthesizeThinkingResults } = require('./deepThinkingEngine');
 
 // 导入需求评审智能体模块
 const { reviewRequirementDocument, quickReview, compareReview, REVIEW_DIMENSIONS, SEVERITY_LEVELS } = require('./reviewAgent');
+
+// 导入编程智能体模块 - 代码生成（增强版：大纲驱动 + 10步分模块生成）
+const { 
+  generateCode, modifyCode, parseCodeBlocks, buildFullReactCode, getQuickTemplate, 
+  multiRoundGenerate, streamMultiRoundGenerate, streamHtmlGenerate,
+  analyzeRequirementForData, buildHtmlPrompt, parseUploadedHtml,
+  generateStepContent, getStepPrompts, extractCodeFromResponse, manualIntegrateModules,
+  GENERATION_CONFIG, HTML_SYSTEM_PROMPT, CODE_GENERATOR_SYSTEM_PROMPT 
+} = require('./codeGeneratorAgent');
 
 // 导入智器云通用对话智能体（旧版，调用外部API）
 // const { chat, chatSync, quickAsk, documentQA, generateCode, summarize, translate, conversationManager, PRESET_ROLES } = require('./chatAgent');
@@ -176,65 +209,90 @@ const COSMIC_SYSTEM_PROMPT = `你是一个Cosmic拆分专家。你的任务是�
 
 请尽可能多地识别文档中的功能过程并拆分，确保命名具体且数据组/数据属性不重复，数据属性要三个以上，并且确保不重复！！同一功能过程内的数据组可通过拼接“功能过程名称+子过程动作”进行具体分析来保持唯一性。`;
 
-// 需求规格书生成系统提示词 - 优化版
+// 需求规格书生成系统提示词 - 深度增强版V3
 const REQUIREMENT_SPEC_SYSTEM_PROMPT = `# 角色定位
-你是一名资深软件需求分析专家，专注于生成高质量、结构清晰、内容充实的软件需求规格说明书。
+你是一名拥有20年经验的资深软件需求分析专家，专注于生成**企业级高质量**、结构清晰、内容充实、可直接用于开发的软件需求规格说明书。
 
-# 核心输出原则
+# 核心输出原则（必须严格遵守）
 
 ## 1. 结构规范
-- 严格按照章节编号顺序输出（1→2→3→4→5→6→7）
-- 每个章节必须有明确的标题层级（#、##、###）
-- 章节之间保持逻辑连贯性
+- 严格按照章节编号顺序输出，不能遗漏任何章节
+- 每个章节必须有明确的标题层级（#、##、###、####）
+- 章节之间保持逻辑连贯性和专业性
+- 标题格式必须与模板完全一致
 
-## 2. 内容充实度要求（必须严格遵守）
-| 内容类型 | 最低要求 | 必含元素 |
-|----------|----------|----------|
-| 功能说明 | 300字以上 | 业务背景、使用场景、操作流程、核心价值、异常处理 |
-| 业务规则 | 5条以上 | 规则编号、规则名称、触发条件、处理逻辑、异常处理 |
-| 处理数据 | 8行以上 | 字段名、类型、长度、必填、校验规则、说明 |
-| 接口设计 | 完整结构 | 接口编号、请求方式、URL、请求参数表(5行+)、响应参数表(5行+)、错误码表 |
-| 界面设计 | 详细描述 | 页面布局(顶部/侧边/主体/底部)、组件列表、交互流程、状态说明 |
-| 验收标准 | 5条以上 | 编号、测试场景、前置条件、操作步骤、预期结果 |
+## 2. 内容充实度要求（高标准）
+| 内容类型 | 最低要求 | 必含元素 | 质量标准 |
+|----------|----------|----------|----------|
+| 功能说明 | 400字以上 | 业务背景、3+使用场景、详细操作流程(5+步骤)、核心价值、前置/后置条件、用户角色 | 描述具体、可操作 |
+| 业务规则 | 8条以上 | 规则编号、规则名称、规则类型、触发条件、处理逻辑、异常处理 | 规则明确、可验证 |
+| 处理数据 | 12行以上 | 字段名、类型、长度、必填、校验规则、默认值、说明、来源 | 字段完整、约束清晰 |
+| 接口设计 | 完整结构 | 请求参数表(8行+)、响应参数表(8行+)、错误码表(5行+)、示例 | 参数详细、可对接 |
+| 界面设计 | 详细描述 | 页面布局、交互元素(8+)、操作按钮、状态说明、响应式要求 | 布局清晰、交互完整 |
+| 验收标准 | 10条以上 | 用例编号、场景类型、前置条件、操作步骤(3+)、预期结果、优先级 | 覆盖全面、可执行 |
 
-## 3. 表格规范
+## 3. 表格规范（高标准）
 - 所有表格必须使用标准Markdown格式：|列1|列2|列3|
 - 表头与数据行之间必须有分隔行：|---|---|---|
-- 每个表格至少5行有效数据
-- **禁止使用占位符**：不允许出现"XXX"、"待定"、"..."、"略"等
+- 业务规则表：至少8行
+- 数据字段表：至少12行
+- 接口参数表：至少8行
+- 验收标准表：至少10行
+- **绝对禁止占位符**：不允许出现"XXX"、"待定"、"..."、"略"、"暂无"、"同上"等
 
-## 4. Mermaid图表规范
+## 4. 内容深度要求
+### 功能说明必须包含：
+- **业务背景**：为什么需要这个功能（2-3句）
+- **业务价值**：带来什么效益（2-3句）
+- **使用场景**：至少3个具体场景，每个场景包含触发条件、参与角色、操作流程
+- **详细操作流程**：步骤1、步骤2...至少5个步骤，每个步骤要有具体操作和系统响应
+- **前置条件**：执行该功能需要满足的条件
+- **后置条件**：功能执行后系统状态的变化
+- **涉及角色**：哪些用户角色可以使用
+
+### 业务规则必须分类：
+- 数据校验规则（至少3条）：输入验证、格式检查、范围校验
+- 权限控制规则（至少2条）：角色权限、操作限制
+- 业务逻辑规则（至少2条）：状态转换、计算逻辑、关联关系
+- 异常处理规则（至少1条）：错误情况的处理方式
+
+### 验收标准必须覆盖：
+- 正常流程测试（至少4条）：功能正常执行的各种场景
+- 异常流程测试（至少3条）：错误输入、权限不足等异常场景
+- 边界条件测试（至少2条）：极限值、临界条件
+- 性能测试要点（至少1条）：响应时间、并发等
+
+## 5. Mermaid图表规范
 - 使用正确的Mermaid语法，确保可直接渲染
-- 节点名称必须来自实际业务对象，禁止使用"示例"、"Example"、"Placeholder"
-- 图表类型选择：
-  - 流程图：flowchart TD
-  - 架构图：graph TB + subgraph
-  - 用例图：graph LR + 圆形节点((角色))
-  - ER图：erDiagram（实体名必须用英文，如User、Order）
-  - 时序图：sequenceDiagram
+- 节点名称必须来自实际业务对象
+- 时序图适用于：有多方交互的功能
+- 流程图适用于：有复杂判断逻辑的功能
 
-## 5. 标注规则
-- **[知识库补全]**：AI基于行业最佳实践补充的内容
-- **[待业务确认]**：需要业务方确认的内容
-- **[假设数据]**：假设性数据，需根据实际调整
-
-## 6. 严格禁止
-- ❌ 输出空白章节或只有标题没有内容的章节
-- ❌ 使用"请参考"、"详见"、"同上"等推诿性表述
-- ❌ 在正文中出现"深度完善"、"扩展内容"、"完善要求"等元描述
+## 6. 严格禁止（违反将视为不合格）
+- ❌ 输出空白章节或只有标题没有内容
+- ❌ 使用"请参考"、"详见"、"同上"、"略"等推诿性表述
+- ❌ 使用"XXX"、"待定"、"..."、"暂无"等占位符
+- ❌ 功能说明少于300字
+- ❌ 表格数据少于指定的最小行数
+- ❌ 内容泛泛而谈、缺乏具体细节
 - ❌ 重复输出相同内容
-- ❌ 使用不完整的表格（缺少列或行）
-- ❌ 功能说明少于100字
-- ❌ 表格数据少于3行
+- ❌ 遗漏任何子节结构
 
-## 7. 质量自检
-生成内容前，确保：
-✓ 每个功能模块都有完整的6个小节（功能说明、业务规则、处理数据、接口、界面、验收标准）
-✓ 所有表格数据具体、真实、可执行
-✓ 接口设计包含完整的请求/响应参数
-✓ 业务规则可验证、可测试
-✓ 验收标准覆盖正常和异常场景
-✓ 内容专业、正式，像真正的需求规格说明书`;
+## 7. 质量自检清单（生成内容前必须确认）
+✓ 每个功能都有完整的子节结构（功能说明、业务规则、处理数据、接口、界面、验收标准）
+✓ 功能说明包含业务背景、使用场景、操作流程、前置/后置条件
+✓ 业务规则表至少8行，涵盖校验、权限、逻辑、异常4类规则
+✓ 数据字段表至少12行，每个字段有完整的类型、长度、校验规则说明
+✓ 接口设计包含请求参数(8+)、响应参数(8+)、错误码(5+)
+✓ 验收标准表至少10行，覆盖正常、异常、边界场景
+✓ 内容专业、正式，像真正的企业级需求规格说明书
+✓ 所有内容都是具体的、可执行的、可验证的
+
+## 8. 输出风格
+- 使用专业、正式的技术文档语言
+- 避免口语化表述
+- 每个描述都要具体、可量化、可验证
+- 表格数据要真实合理，符合业务逻辑`;
 
 // API路由
 
@@ -2967,6 +3025,17 @@ function markdownToWordHtml(markdown) {
 </div>`;
   });
 
+  // 1.5 处理Markdown图片语法 ![alt](url) - 支持base64 dataUrl
+  let imgCount = 0;
+  html = html.replace(/!\[([^\]]*)\]\((data:image\/[^)]+)\)/g, (match, alt, dataUrl) => {
+    imgCount++;
+    return `
+<div style="text-align:center;margin:20pt 0;page-break-inside:avoid;">
+  <img src="${dataUrl}" alt="${alt || '图片' + imgCount}" style="max-width:500px;width:90%;height:auto;border:1px solid #ddd;"/>
+  <p style="font-size:10pt;color:#666;margin-top:8pt;">${alt || '图 ' + imgCount}</p>
+</div>`;
+  });
+
   // 2. 处理Markdown表格 - 增强版（支持多种格式，自适应内容）
 
   // 预处理：修复被换行打断的分隔行
@@ -3504,6 +3573,281 @@ app.post('/api/export-word', async (req, res) => {
   } catch (error) {
     console.error('导出Word失败:', error);
     res.status(500).json({ error: '导出Word失败: ' + error.message });
+  }
+});
+
+// ========== 图表生成API - AI生成HTML+CSS图表并转换为图片 ==========
+
+/**
+ * 生成用例图API
+ * POST /api/generate-diagram/usecase
+ * Body: { functions: [{name, description}], systemName, returnType: 'html' | 'image' }
+ */
+app.post('/api/generate-diagram/usecase', async (req, res) => {
+  try {
+    const { functions = [], systemName = '系统', returnType = 'html', actors: providedActors } = req.body;
+    
+    console.log(`📊 [用例图生成] 功能数量: ${functions.length}, 返回类型: ${returnType}`);
+    
+    const client = getOpenAIClient();
+    
+    let actors = providedActors;
+    let useCases = [];
+    
+    // 如果没有提供actors，调用AI分析
+    if (!actors || actors.length === 0) {
+      if (client) {
+        // 调用AI分析用例结构
+        const prompt = `${USE_CASE_DIAGRAM_PROMPT}
+
+## 功能列表
+${functions.map((f, i) => `${i + 1}. ${f.name || f.title}: ${f.description || ''}`).join('\n')}
+
+## 系统名称
+${systemName}`;
+
+        const completion = await client.chat.completions.create({
+          model: process.env.OPENAI_MODEL || 'glm-4-flash',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 2000
+        });
+
+        const aiResponse = completion.choices[0].message.content;
+        const parsed = extractUseCaseJSON(aiResponse);
+        
+        if (parsed) {
+          actors = parsed.actors || [];
+          useCases = parsed.useCases || [];
+        }
+      }
+      
+      // 如果AI分析失败，使用默认值
+      if (!actors || actors.length === 0) {
+        actors = [
+          { name: '管理员', description: '系统管理人员' },
+          { name: '普通用户', description: '系统使用者' }
+        ];
+        useCases = functions.map(f => ({
+          name: f.name || f.title,
+          actor: '普通用户',
+          description: f.description || ''
+        }));
+      }
+    } else {
+      // 使用提供的actors，从functions生成useCases
+      useCases = functions.map(f => ({
+        name: f.name || f.title,
+        actor: actors[0]?.name || '用户',
+        description: f.description || ''
+      }));
+    }
+    
+    // 生成HTML用例图
+    const htmlDiagram = generateHTMLUseCaseDiagram(actors, useCases, systemName);
+    
+    if (returnType === 'image') {
+      // 转换为图片
+      const imageBuffer = await htmlToImage(htmlDiagram, { width: 900, height: 700 });
+      
+      if (imageBuffer) {
+        const dataUrl = bufferToDataUrl(imageBuffer);
+        res.json({
+          success: true,
+          type: 'image',
+          dataUrl,
+          html: htmlDiagram,
+          actors,
+          useCases
+        });
+      } else {
+        // 如果转换失败，返回HTML
+        res.json({
+          success: true,
+          type: 'html',
+          html: htmlDiagram,
+          message: 'Puppeteer未安装，返回HTML格式。安装命令: npm install puppeteer',
+          actors,
+          useCases
+        });
+      }
+    } else {
+      // 直接返回HTML
+      res.json({
+        success: true,
+        type: 'html',
+        html: htmlDiagram,
+        actors,
+        useCases
+      });
+    }
+    
+  } catch (error) {
+    console.error('用例图生成失败:', error);
+    res.status(500).json({ error: '用例图生成失败: ' + error.message });
+  }
+});
+
+/**
+ * 生成流程图API
+ * POST /api/generate-diagram/flowchart
+ * Body: { dataMovements: [...], processName, returnType: 'html' | 'image' }
+ */
+app.post('/api/generate-diagram/flowchart', async (req, res) => {
+  try {
+    const { dataMovements = [], processName = '功能过程', returnType = 'html' } = req.body;
+    
+    console.log(`📊 [流程图生成] 数据移动数量: ${dataMovements.length}`);
+    
+    const htmlDiagram = generateHTMLFlowchart(dataMovements, processName);
+    
+    if (returnType === 'image') {
+      const imageBuffer = await htmlToImage(htmlDiagram, { width: 600, height: 800 });
+      
+      if (imageBuffer) {
+        const dataUrl = bufferToDataUrl(imageBuffer);
+        res.json({ success: true, type: 'image', dataUrl, html: htmlDiagram });
+      } else {
+        res.json({ success: true, type: 'html', html: htmlDiagram, message: 'Puppeteer未安装，返回HTML格式' });
+      }
+    } else {
+      res.json({ success: true, type: 'html', html: htmlDiagram });
+    }
+    
+  } catch (error) {
+    console.error('流程图生成失败:', error);
+    res.status(500).json({ error: '流程图生成失败: ' + error.message });
+  }
+});
+
+/**
+ * 生成时序图API
+ * POST /api/generate-diagram/sequence
+ * Body: { dataMovements: [...], processName, returnType: 'html' | 'image' }
+ */
+app.post('/api/generate-diagram/sequence', async (req, res) => {
+  try {
+    const { dataMovements = [], processName = '功能过程', returnType = 'html' } = req.body;
+    
+    console.log(`📊 [时序图生成] 数据移动数量: ${dataMovements.length}`);
+    
+    const htmlDiagram = generateHTMLSequenceDiagram(dataMovements, processName);
+    
+    if (returnType === 'image') {
+      const imageBuffer = await htmlToImage(htmlDiagram, { width: 700, height: 600 });
+      
+      if (imageBuffer) {
+        const dataUrl = bufferToDataUrl(imageBuffer);
+        res.json({ success: true, type: 'image', dataUrl, html: htmlDiagram });
+      } else {
+        res.json({ success: true, type: 'html', html: htmlDiagram, message: 'Puppeteer未安装，返回HTML格式' });
+      }
+    } else {
+      res.json({ success: true, type: 'html', html: htmlDiagram });
+    }
+    
+  } catch (error) {
+    console.error('时序图生成失败:', error);
+    res.status(500).json({ error: '时序图生成失败: ' + error.message });
+  }
+});
+
+/**
+ * 批量生成多种图表
+ * POST /api/generate-diagram/batch
+ * Body: { functions, dataMovements, systemName, diagramTypes: ['usecase', 'flowchart', 'sequence'] }
+ */
+app.post('/api/generate-diagram/batch', async (req, res) => {
+  try {
+    const { 
+      functions = [], 
+      dataMovements = [], 
+      systemName = '系统',
+      processName = '功能过程',
+      diagramTypes = ['usecase'],
+      returnType = 'html'
+    } = req.body;
+    
+    console.log(`📊 [批量图表生成] 类型: ${diagramTypes.join(', ')}`);
+    
+    const results = {};
+    
+    for (const type of diagramTypes) {
+      try {
+        if (type === 'usecase') {
+          // 生成用例图
+          const client = getOpenAIClient();
+          let actors = [{ name: '用户', description: '系统使用者' }];
+          let useCases = functions.map(f => ({
+            name: f.name || f.title,
+            actor: '用户'
+          }));
+          
+          if (client && functions.length > 0) {
+            const prompt = `${USE_CASE_DIAGRAM_PROMPT}\n\n## 功能列表\n${functions.map((f, i) => `${i + 1}. ${f.name || f.title}`).join('\n')}\n\n## 系统名称\n${systemName}`;
+            const completion = await client.chat.completions.create({
+              model: process.env.OPENAI_MODEL || 'glm-4-flash',
+              messages: [{ role: 'user', content: prompt }],
+              temperature: 0.3,
+              max_tokens: 2000
+            });
+            const parsed = extractUseCaseJSON(completion.choices[0].message.content);
+            if (parsed) {
+              actors = parsed.actors || actors;
+              useCases = parsed.useCases || useCases;
+            }
+          }
+          
+          const html = generateHTMLUseCaseDiagram(actors, useCases, systemName);
+          
+          if (returnType === 'image') {
+            const imageBuffer = await htmlToImage(html, { width: 900, height: 700 });
+            results.usecase = {
+              type: 'usecase',
+              html,
+              dataUrl: imageBuffer ? bufferToDataUrl(imageBuffer) : null
+            };
+          } else {
+            results.usecase = { type: 'usecase', html };
+          }
+          
+        } else if (type === 'flowchart') {
+          const html = generateHTMLFlowchart(dataMovements, processName);
+          if (returnType === 'image') {
+            const imageBuffer = await htmlToImage(html, { width: 600, height: 800 });
+            results.flowchart = {
+              type: 'flowchart',
+              html,
+              dataUrl: imageBuffer ? bufferToDataUrl(imageBuffer) : null
+            };
+          } else {
+            results.flowchart = { type: 'flowchart', html };
+          }
+          
+        } else if (type === 'sequence') {
+          const html = generateHTMLSequenceDiagram(dataMovements, processName);
+          if (returnType === 'image') {
+            const imageBuffer = await htmlToImage(html, { width: 700, height: 600 });
+            results.sequence = {
+              type: 'sequence',
+              html,
+              dataUrl: imageBuffer ? bufferToDataUrl(imageBuffer) : null
+            };
+          } else {
+            results.sequence = { type: 'sequence', html };
+          }
+        }
+      } catch (typeError) {
+        console.error(`生成${type}图表失败:`, typeError.message);
+        results[type] = { type, error: typeError.message };
+      }
+    }
+    
+    res.json({ success: true, diagrams: results });
+    
+  } catch (error) {
+    console.error('批量图表生成失败:', error);
+    res.status(500).json({ error: '批量图表生成失败: ' + error.message });
   }
 });
 
@@ -4478,15 +4822,26 @@ async function parseWordTemplate(buffer, fileExtension = '.docx') {
   // 分析模板结构
   const sections = [];
   const lines = text.split('\n');
+  const seenNumbers = new Set(); // 用于去重
 
-  // 更严格的章节标题识别模式 - 排除日期等误识别
-  // 章节编号应该是 1, 1.1, 1.1.1 这样的格式，且后面跟的是章节标题而不是数字
-  const sectionPattern = /^(\d{1,2}(?:\.\d{1,3})*)\s*[、.．\s]\s*([^\d\t][^\t]*?)(?:\t.*)?$/;
+  // 【增强】多种章节标题识别模式
+  const sectionPatterns = [
+    // 标准格式：1.1 标题 或 1.1. 标题
+    /^(\d{1,2}(?:\.\d{1,3})*)\s*[、.．]\s*(.+?)$/,
+    // 空格分隔：1.1 标题
+    /^(\d{1,2}(?:\.\d{1,3})*)\s+([^\d\t].+?)$/,
+    // 带括号或冒号：1.1)标题 或 1.1:标题
+    /^(\d{1,2}(?:\.\d{1,3})*)[)）:：]\s*(.+?)$/,
+    // 紧密格式：1.1标题（编号后直接跟中文）
+    /^(\d{1,2}(?:\.\d{1,3})*)([\u4e00-\u9fa5].{1,50})$/,
+  ];
 
   // 存储每个章节的内容
   const sectionContents = new Map();
   let currentSection = null;
   let currentContent = [];
+
+  console.log(`[parseWordTemplate] 开始解析，总行数: ${lines.length}`);
 
   lines.forEach((line, idx) => {
     const trimmed = line.trim();
@@ -4495,20 +4850,37 @@ async function parseWordTemplate(buffer, fileExtension = '.docx') {
       return;
     }
 
-    const match = trimmed.match(sectionPattern);
+    // 尝试所有模式匹配
+    let match = null;
+    for (const pattern of sectionPatterns) {
+      match = trimmed.match(pattern);
+      if (match) break;
+    }
+
     if (match) {
-      // 验证章节编号的合理性
-      const numParts = match[1].split('.');
+      const number = match[1];
+      // 【修复】清理标题末尾的页码数字（如 "业务规则、模型和算法 10" -> "业务规则、模型和算法"）
+      const title = match[2].trim().replace(/\s+\d{1,4}\s*$/, '').trim();
+      
+      // 验证章节编号的合理性（允许从0开始，如 0.前言）
+      const numParts = number.split('.');
       const isValidSection = numParts.every(part => {
         const num = parseInt(part);
-        return num >= 1 && num <= 99; // 合理的章节编号范围
+        return num >= 0 && num <= 99;
       });
 
-      // 额外验证：标题不应该太短（排除误识别）
-      const title = match[2].trim();
-      const isValidTitle = title.length >= 2 && !/^\d+$/.test(title);
+      // 验证标题有效性
+      const isValidTitle = title.length >= 2 && 
+                           title.length <= 100 && 
+                           !/^\d+$/.test(title) &&
+                           !/^[-=_]{3,}$/.test(title);
 
-      if (isValidSection && isValidTitle) {
+      // 去重检查
+      const isDuplicate = seenNumbers.has(number);
+
+      if (isValidSection && isValidTitle && !isDuplicate) {
+        seenNumbers.add(number);
+        
         // 保存上一个章节的内容
         if (currentSection) {
           sectionContents.set(currentSection.number, currentContent.join('\n').trim());
@@ -4516,13 +4888,18 @@ async function parseWordTemplate(buffer, fileExtension = '.docx') {
 
         const level = numParts.length;
         currentSection = {
-          number: match[1],
+          number: number,
           title: title,
           level,
           lineIndex: idx
         };
         sections.push(currentSection);
         currentContent = [];
+        
+        // 打印前20个章节用于调试
+        if (sections.length <= 20) {
+          console.log(`[parseWordTemplate] 识别章节 ${sections.length}: ${number} ${title} (Level ${level})`);
+        }
         return;
       }
     }
@@ -4532,6 +4909,8 @@ async function parseWordTemplate(buffer, fileExtension = '.docx') {
       currentContent.push(trimmed);
     }
   });
+  
+  console.log(`[parseWordTemplate] 解析完成，共识别 ${sections.length} 个章节`);
 
   // 保存最后一个章节的内容
   if (currentSection) {
@@ -4792,8 +5171,13 @@ app.post('/api/cosmic-to-spec/analyze-template', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
 
-    // 获取模板
-    const templatePath = path.join(TEMPLATES_DIR, `${templateId}.docx`);
+    // 【修复】获取模板 - 支持 .docx 和 .doc 两种格式
+    let templatePath = path.join(TEMPLATES_DIR, `${templateId}.docx`);
+    let ext = '.docx';
+    if (!fs.existsSync(templatePath)) {
+      templatePath = path.join(TEMPLATES_DIR, `${templateId}.doc`);
+      ext = '.doc';
+    }
     if (!fs.existsSync(templatePath)) {
       res.write(`data: ${JSON.stringify({ error: '模板文件不存在' })}\n\n`);
       res.end();
@@ -4801,11 +5185,14 @@ app.post('/api/cosmic-to-spec/analyze-template', async (req, res) => {
     }
 
     const buffer = fs.readFileSync(templatePath);
+    console.log(`[模板分析] 读取模板文件: ${templatePath}, 大小: ${buffer.length} 字节`);
 
     res.write(`data: ${JSON.stringify({ phase: 'parsing', message: '📄 正在解析模板文件...' })}\n\n`);
 
-    // 增强版模板解析
-    const templateInfo = await parseWordTemplate(buffer);
+    // 增强版模板解析 - 传入文件扩展名
+    const templateInfo = await parseWordTemplate(buffer, ext);
+    console.log(`[模板分析] 解析完成: 识别到 ${templateInfo.sectionCount} 个章节`);
+    console.log(`[模板分析] 章节列表:`, templateInfo.sections?.slice(0, 10).map(s => `${s.number} ${s.title}`));
 
     res.write(`data: ${JSON.stringify({
       phase: 'parsed',
@@ -4853,33 +5240,44 @@ app.post('/api/cosmic-to-spec/analyze-template', async (req, res) => {
   }
 });
 
-// 多轮深度分析模板
+// 多轮深度分析模板 - 增强版：3轮深度分析，彻底理解模板结构
 async function deepAnalyzeTemplateMultiRound(client, templateInfo) {
   const { fullText, sections, sectionContents, functionalExampleContent } = templateInfo;
 
+  console.log('[模板深度分析] 开始3轮深度分析...');
+
   try {
     // ========== 第一轮：整体结构分析 ==========
-    const round1Prompt = `你是专业的需求文档分析师。请分析以下需求规格说明书模板的整体结构。
+    console.log('[模板深度分析] 第1轮：整体结构分析');
+    const round1Prompt = `你是专业的需求文档分析师。请【彻底分析】以下需求规格说明书模板的整体结构。
 
-## 模板内容（前10000字符）：
-${fullText.slice(0, 10000)}
+## 模板完整内容：
+${fullText.slice(0, 15000)}
 
 ## 已识别的章节结构：
 ${sections.map(s => `${'  '.repeat(s.level - 1)}${s.number} ${s.title}`).join('\n')}
 
-## 任务：
-1. 确认章节结构是否准确
-2. 识别文档的整体风格（正式程度、详细程度等）
-3. 识别各章节的主要内容类型
+## 【重要任务】你必须精确分析：
+1. 确认所有章节的编号格式（如：1、1.1、1.1.1 还是 1.、1.1.、1.1.1.）
+2. 确认所有章节标题的精确文字（一字不差）
+3. 识别哪个章节是功能需求章节（通常包含"功能"字样）
+4. 识别功能需求章节之前的所有章节（前置章节）
+5. 识别功能需求章节之后的所有章节（后置章节）
 
 请输出JSON格式：
 \`\`\`json
 {
   "documentStyle": "文档风格描述",
-  "mainChapters": [
-    {"number": "1", "title": "引言", "purpose": "章节目的", "contentType": "text/table/mixed"}
+  "numberFormat": "章节编号格式，如: X.X.X 或 X.X.X.",
+  "titleSeparator": "编号与标题之间的分隔符，如: 空格、点、顿号",
+  "allChaptersDetailed": [
+    {"number": "1", "title": "精确的章节标题", "level": 1, "purpose": "章节目的"},
+    {"number": "1.1", "title": "子章节标题", "level": 2, "purpose": "子章节目的"}
   ],
-  "functionalChapterNumber": "功能需求章节编号（如3）",
+  "functionalChapterNumber": "功能需求章节的精确编号",
+  "functionalChapterTitle": "功能需求章节的精确标题",
+  "headerChapters": ["功能需求之前的章节编号列表"],
+  "footerChapters": ["功能需求之后的章节编号列表"],
   "specialFeatures": ["文档特殊特征列表"]
 }
 \`\`\``;
@@ -4887,21 +5285,28 @@ ${sections.map(s => `${'  '.repeat(s.level - 1)}${s.number} ${s.title}`).join('\
     const round1Response = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'glm-4-flash',
       messages: [
-        { role: 'system', content: '你是专业的需求文档分析师。请精确分析文档结构。' },
+        { role: 'system', content: '你是专业的需求文档分析师。请精确分析文档结构，所有章节标题必须与原文完全一致。' },
         { role: 'user', content: round1Prompt }
       ],
       temperature: 0.1,
-      max_tokens: 4000
+      max_tokens: 6000
     });
 
     let round1Result = {};
     const round1Match = round1Response.choices[0].message.content.match(/```json\s*([\s\S]*?)```/);
     if (round1Match) {
-      round1Result = JSON.parse(round1Match[1]);
+      try {
+        round1Result = JSON.parse(round1Match[1]);
+        console.log('[模板深度分析] 第1轮完成：识别到', round1Result.allChaptersDetailed?.length || 0, '个章节');
+      } catch (e) {
+        console.log('[模板深度分析] 第1轮JSON解析失败，使用默认值');
+      }
     }
 
     // ========== 第二轮：功能需求章节深度分析 ==========
-    const funcChapterNum = round1Result.functionalChapterNumber || '3';
+    console.log('[模板深度分析] 第2轮：功能需求章节深度分析');
+    const funcChapterNum = round1Result.functionalChapterNumber || '5';
+    const funcChapterTitle = round1Result.functionalChapterTitle || '功能需求';
 
     // 找到功能需求章节的内容
     let funcContent = '';
@@ -4911,36 +5316,46 @@ ${sections.map(s => `${'  '.repeat(s.level - 1)}${s.number} ${s.title}`).join('\
       }
     }
 
-    const round2Prompt = `你是专业的需求文档分析师。请深度分析功能需求章节的格式和内容模式。
+    const round2Prompt = `你是专业的需求文档分析师。请【深度分析】功能需求章节的结构和内容模式。
 
-## 功能需求章节内容：
-${funcContent.slice(0, 8000) || fullText.slice(0, 8000)}
+## 功能需求章节内容（编号: ${funcChapterNum}）：
+${funcContent.slice(0, 10000) || fullText.slice(0, 10000)}
 
 ## 模板中的完整功能过程示例：
-${functionalExampleContent || '（未找到完整示例）'}
+${functionalExampleContent || '（请从上面的内容中提取）'}
 
-## 任务：
-1. 识别功能需求的层级结构（子系统→功能模块→功能过程）
-2. 提取每个功能过程应该包含的内容项（如：功能描述、操作流程、数据表等）
-3. 提取表格的表头格式
-4. 识别是否需要时序图/流程图
-5. 【重要】提取一个完整的功能过程示例，包括其全部内容
+## 【重要任务】你必须精确分析：
+1. 功能需求的层级深度（2层、3层还是4层？）
+   - 2层：功能需求→功能过程（如：5.1 XXX功能）
+   - 3层：功能需求→功能模块→功能过程（如：5.1 XXX模块→5.1.1 XXX功能）
+   - 4层：功能需求→子系统→功能模块→功能过程
+2. 每个功能过程下面的子节结构（最重要！）
+   - 子节的精确名称（如：功能说明、业务规则、处理数据等）
+   - 子节的编号格式（如：5.1.1、5.1.2）
+   - 子节的内容要求（文本描述、表格、列表等）
+3. 表格的表头格式（如果有）
+4. 提取一个完整的功能过程示例
 
 请输出JSON格式：
 \`\`\`json
 {
+  "hierarchyLevels": 2,
   "hierarchyStructure": {
-    "level1": {"name": "子系统", "example": "3.1 营销管理子系统"},
-    "level2": {"name": "功能模块", "example": "3.1.1 媒介精细化管理"},
-    "level3": {"name": "功能过程", "example": "3.1.1.1 新增媒介"}
+    "level1": {"name": "功能需求", "numberFormat": "5"},
+    "level2": {"name": "功能过程", "numberFormat": "5.1"},
+    "level3": {"name": "子节", "numberFormat": "5.1.1"}
   },
   "processContentTemplate": {
-    "sections": ["功能描述", "操作流程", "业务规则", "数据项说明", "接口说明"],
+    "sections": ["功能说明", "业务规则", "处理数据", "接口", "界面", "验收标准"],
+    "sectionsDetailed": [
+      {"name": "功能说明", "purpose": "描述功能的业务背景和使用场景", "format": "text"},
+      {"name": "业务规则", "purpose": "描述业务逻辑和约束条件", "format": "list"},
+      {"name": "处理数据", "purpose": "描述涉及的数据字段", "format": "table"}
+    ],
     "dataTableHeaders": ["字段名", "类型", "长度", "说明", "是否必填"],
-    "needsSequenceDiagram": true,
-    "needsFlowchart": false
+    "numberSeparator": "."
   },
-  "fullProcessExample": "完整的功能过程内容示例（Markdown格式）",
+  "fullProcessExample": "完整的功能过程内容示例（保持原始格式）",
   "writingGuidelines": "写作风格指南"
 }
 \`\`\``;
@@ -4948,46 +5363,160 @@ ${functionalExampleContent || '（未找到完整示例）'}
     const round2Response = await client.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'glm-4-flash',
       messages: [
-        { role: 'system', content: '你是专业的需求文档分析师。请深度分析功能需求的格式。' },
+        { role: 'system', content: '你是专业的需求文档分析师。请深度分析功能需求的格式，子节名称必须与模板完全一致。' },
         { role: 'user', content: round2Prompt }
       ],
       temperature: 0.1,
-      max_tokens: 6000
+      max_tokens: 8000
     });
 
     let round2Result = {};
     const round2Match = round2Response.choices[0].message.content.match(/```json\s*([\s\S]*?)```/);
     if (round2Match) {
-      round2Result = JSON.parse(round2Match[1]);
+      try {
+        round2Result = JSON.parse(round2Match[1]);
+        console.log('[模板深度分析] 第2轮完成：识别到', round2Result.processContentTemplate?.sections?.length || 0, '个子节');
+      } catch (e) {
+        console.log('[模板深度分析] 第2轮JSON解析失败，使用默认值');
+      }
+    }
+
+    // ========== 第三轮：子节结构精确提取 ==========
+    console.log('[模板深度分析] 第3轮：子节结构精确提取');
+    const round3Prompt = `你是专业的需求文档分析师。请【精确提取】功能过程的子节结构。
+
+## 这是模板中功能需求章节的内容：
+${funcContent.slice(0, 12000) || fullText.slice(0, 12000)}
+
+## 第二轮分析识别到的子节：
+${JSON.stringify(round2Result.processContentTemplate?.sections || [], null, 2)}
+
+## 【最重要的任务】请精确提取每个子节的：
+1. 精确名称（必须与模板原文完全一致，一字不差！）
+2. 编号格式（如：5.1.1、5.1.2 还是 5.1.1.、5.1.2.）
+3. 内容格式要求（文本、表格、列表、混合）
+4. 示例内容（从模板中提取真实示例）
+
+**请仔细检查模板原文，子节名称可能是：**
+- 功能说明 / 功能描述 / 功能概述
+- 业务规则 / 业务规则、模型和算法
+- 处理数据 / 数据项说明 / 数据字段
+- 接口 / 接口说明 / 外部接口
+- 界面 / 界面要求 / 用户界面
+- 验收标准 / 验收条件 / 测试要点
+
+请输出JSON格式：
+\`\`\`json
+{
+  "extractedSections": [
+    {
+      "name": "精确的子节名称（从模板复制）",
+      "purpose": "子节的目的",
+      "format": "text/table/list/mixed",
+      "sampleContent": "从模板提取的示例内容（前200字）"
+    }
+  ],
+  "sectionNumberFormat": "子节编号格式，如 X.X.X",
+  "sectionNumberSeparator": "编号分隔符，如 . 或 、",
+  "confidence": "high/medium/low",
+  "notes": "任何需要注意的特殊情况"
+}
+\`\`\``;
+
+    const round3Response = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'glm-4-flash',
+      messages: [
+        { role: 'system', content: '你是专业的需求文档分析师。请精确提取子节结构，名称必须与模板原文完全一致！' },
+        { role: 'user', content: round3Prompt }
+      ],
+      temperature: 0.1,
+      max_tokens: 6000
+    });
+
+    let round3Result = {};
+    const round3Match = round3Response.choices[0].message.content.match(/```json\s*([\s\S]*?)```/);
+    if (round3Match) {
+      try {
+        round3Result = JSON.parse(round3Match[1]);
+        console.log('[模板深度分析] 第3轮完成：精确提取到', round3Result.extractedSections?.length || 0, '个子节');
+      } catch (e) {
+        console.log('[模板深度分析] 第3轮JSON解析失败，使用第2轮结果');
+      }
     }
 
     // ========== 合并分析结果 ==========
-    // 构建 functionalChapter 对象，确保前端和后端都能正确读取
+    console.log('[模板深度分析] 合并3轮分析结果...');
+    
+    // 使用第3轮更精确的子节结果，如果没有则回退到第2轮
+    // 【修复】清理子节名称末尾的页码数字
+    const finalSections = (round3Result.extractedSections?.map(s => s.name) || 
+                          round2Result.processContentTemplate?.sections || [])
+                          .map(s => typeof s === 'string' ? s.replace(/\s+\d{1,4}\s*$/, '').trim() : s);
+    const finalSectionsDetailed = (round3Result.extractedSections || 
+                                   round2Result.processContentTemplate?.sectionsDetailed || [])
+                                   .map(s => ({...s, name: s.name?.replace(/\s+\d{1,4}\s*$/, '').trim()}));
+
+    // 合并章节信息
+    const allChaptersFromAI = round1Result.allChaptersDetailed || [];
+    const mergedChapters = allChaptersFromAI.length > 0 ? allChaptersFromAI : sections;
+    
+    // 为章节添加level信息（如果AI没有提供），同时清理标题末尾的页码
+    mergedChapters.forEach(c => {
+      if (!c.level && c.number) {
+        c.level = c.number.split('.').filter(Boolean).length;
+      }
+      // 【修复】清理标题末尾的页码数字
+      if (c.title) {
+        c.title = c.title.replace(/\s+\d{1,4}\s*$/, '').trim();
+      }
+    });
+
+    // 构建 functionalChapter 对象
     const functionalChapter = {
       number: funcChapterNum,
-      title: sections.find(s => s.number === funcChapterNum)?.title || '功能需求',
-      hierarchyLevels: round2Result.hierarchyStructure?.levels || 2,
-      processContentTemplate: round2Result.processContentTemplate || {}
+      title: funcChapterTitle,
+      hierarchyLevels: round2Result.hierarchyLevels || 2,
+      processContentTemplate: {
+        sections: finalSections,
+        sectionsDetailed: finalSectionsDetailed,
+        dataTableHeaders: round2Result.processContentTemplate?.dataTableHeaders || [],
+        numberSeparator: round3Result.sectionNumberSeparator || round2Result.processContentTemplate?.numberSeparator || '.'
+      }
     };
     
-    return {
+    const result = {
       documentStyle: round1Result.documentStyle || '正式、详细',
-      mainChapters: round1Result.mainChapters || [],
-      functionalChapterNumber: funcChapterNum, // 保留兼容
-      functionalChapter: functionalChapter, // 新增：结构化的功能需求章节信息
+      numberFormat: round1Result.numberFormat || 'X.X.X',
+      titleSeparator: round1Result.titleSeparator || ' ',
+      mainChapters: round1Result.allChaptersDetailed || [],
+      functionalChapterNumber: funcChapterNum,
+      functionalChapterTitle: funcChapterTitle,
+      functionalChapter: functionalChapter,
+      headerChapterNumbers: round1Result.headerChapters || [],
+      footerChapterNumbers: round1Result.footerChapters || [],
       specialFeatures: round1Result.specialFeatures || [],
+      hierarchyLevels: round2Result.hierarchyLevels || 2,
       hierarchyStructure: round2Result.hierarchyStructure || {},
-      processContentTemplate: round2Result.processContentTemplate || {},
+      processContentTemplate: functionalChapter.processContentTemplate,
       fullProcessExample: round2Result.fullProcessExample || functionalExampleContent || '',
       writingGuidelines: round2Result.writingGuidelines || '',
       originalTemplateText: fullText,
-      sections: sections,
-      allChapters: sections, // 添加 allChapters 字段
-      analysisTime: new Date().toISOString()
+      sections: mergedChapters.length > sections.length ? mergedChapters : sections,
+      allChapters: mergedChapters.length > sections.length ? mergedChapters : sections,
+      analysisTime: new Date().toISOString(),
+      analysisVersion: '3.0'
     };
 
+    console.log('[模板深度分析] 完成！');
+    console.log(`  - 章节总数: ${result.allChapters.length}`);
+    console.log(`  - 功能需求章节: ${funcChapterNum} ${funcChapterTitle}`);
+    console.log(`  - 子节结构: ${finalSections.join('、')}`);
+    console.log(`  - 层级深度: ${result.hierarchyLevels}`);
+
+    return result;
+
   } catch (error) {
-    console.error('多轮分析失败:', error);
+    console.error('[模板深度分析] 失败:', error);
     return null;
   }
 }
@@ -5165,7 +5694,7 @@ ${funcProcessExample}
 
     // 保存原始模板文本到分析结果中，供后续生成使用
     analysis.originalTemplateText = templateText;
-    analysis.analysisVersion = '2.0'; // 标记为增强版分析
+    analysis.analysisVersion = '3.0'; // 标记为深度增强版分析
     analysis.analysisTime = new Date().toISOString();
 
     // ========== 【核心修复】确保 allChapters 和 functionalChapterNumber 被正确设置 ==========
@@ -5208,6 +5737,45 @@ ${funcProcessExample}
     );
     if (funcChapterInfo) {
       analysis.functionalChapter.title = funcChapterInfo.title;
+    }
+
+    // ========== 第四阶段（新增）：章节完整性验证与补全 ==========
+    if (progressCallback) progressCallback('phase4', '正在进行第四阶段：章节完整性验证...');
+    
+    // 使用正则从原文中提取所有章节标题进行交叉验证
+    const textChapters = parseChaptersFromTextEnhanced(templateText);
+    const aiChapterNumbers = new Set(analysis.allChapters.map(c => c.number));
+    const missingChapters = textChapters.filter(c => !aiChapterNumbers.has(c.number));
+    
+    if (missingChapters.length > 0) {
+      console.log(`[章节验证] 发现 ${missingChapters.length} 个AI遗漏的章节，正在补充...`);
+      // 合并遗漏的章节
+      analysis.allChapters = mergeAndSortChapters(analysis.allChapters, missingChapters);
+      analysis.sections = analysis.allChapters;
+      console.log(`[章节验证] 补充后章节总数: ${analysis.allChapters.length}`);
+    }
+
+    // ========== 第五阶段（新增）：功能过程子节深度验证 ==========
+    if (progressCallback) progressCallback('phase5', '正在进行第五阶段：功能过程子节深度验证...');
+    
+    // 从模板文本中直接提取功能过程的子节结构
+    const extractedSubSections = extractFunctionalSubSectionsFromText(templateText, analysis.functionalChapterNumber);
+    
+    // 如果AI分析的子节结构不完整，使用文本提取的结果补充
+    const aiSubSections = analysis.functionalChapter?.processContentTemplate?.sections || [];
+    const aiSubSectionNames = new Set(aiSubSections.map(s => typeof s === 'string' ? s : (s.name || '')));
+    
+    if (extractedSubSections.length > aiSubSectionNames.size) {
+      console.log(`[子节验证] AI识别 ${aiSubSectionNames.size} 个子节，文本提取 ${extractedSubSections.length} 个子节`);
+      analysis.functionalChapter = analysis.functionalChapter || {};
+      analysis.functionalChapter.processContentTemplate = analysis.functionalChapter.processContentTemplate || {};
+      analysis.functionalChapter.processContentTemplate.sections = extractedSubSections.map(s => ({
+        name: s.title,
+        number: s.number,
+        format: s.hasTable ? 'table' : (s.hasList ? 'list' : 'text'),
+        titleFormat: s.titleFormat || `### ${s.number}. ${s.title}`
+      }));
+      console.log(`[子节验证] 已更新功能过程子节结构:`, extractedSubSections.map(s => s.title));
     }
 
     console.log('模板深度分析完成:', {
@@ -5256,6 +5824,1284 @@ function parseChaptersFromText(templateText) {
   
   console.log(`[parseChaptersFromText] 从文本中解析出 ${chapters.length} 个章节`);
   return chapters;
+}
+
+/**
+ * 【增强版】从模板文本中解析章节结构 - 使用多种正则模式提高识别率
+ */
+function parseChaptersFromTextEnhanced(templateText) {
+  const lines = templateText.split('\n');
+  const chapters = [];
+  const seenNumbers = new Set();
+  
+  // 多种章节编号格式的正则表达式
+  const patterns = [
+    /^(\d+(?:\.\d+)*)[.\s、]+(.+?)$/,                    // 1. 标题 或 1.1 标题
+    /^(\d+(?:\.\d+)*)\s+([^\d\t][^\t]{1,50})$/,          // 1.1 标题（中间空格）
+    /^第(\d+)章\s*(.+?)$/,                               // 第1章 标题
+    /^(\d+(?:\.\d+)*)[、．.]\s*(.+?)$/,                  // 1、标题 或 1．标题
+    /^##+\s*(\d+(?:\.\d+)*)[.\s、]*(.+?)$/,              // ## 1.1 标题（Markdown格式）
+  ];
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.length < 2) continue;
+    
+    for (const pattern of patterns) {
+      const match = trimmed.match(pattern);
+      if (match) {
+        let number = match[1];
+        let title = match[2].trim();
+        
+        // 处理"第X章"格式
+        if (pattern.source.includes('第')) {
+          number = match[1]; // 只是数字
+        }
+        
+        // 排除无效标题
+        if (title.length < 2 || title.length > 60) continue;
+        if (/^\d+$/.test(title)) continue; // 标题不能是纯数字
+        if (/^[-=_]{3,}$/.test(title)) continue; // 排除分隔线
+        
+        const level = number.split('.').length;
+        if (level > 6) continue; // 层级不能太深
+        
+        // 去重
+        if (!seenNumbers.has(number)) {
+          seenNumbers.add(number);
+          chapters.push({
+            number,
+            title,
+            level
+          });
+        }
+        break; // 匹配成功后跳出内层循环
+      }
+    }
+  }
+  
+  // 按编号排序
+  chapters.sort((a, b) => {
+    const aParts = a.number.split('.').map(Number);
+    const bParts = b.number.split('.').map(Number);
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aVal = aParts[i] || 0;
+      const bVal = bParts[i] || 0;
+      if (aVal !== bVal) return aVal - bVal;
+    }
+    return 0;
+  });
+  
+  console.log(`[parseChaptersFromTextEnhanced] 从文本中解析出 ${chapters.length} 个章节`);
+  return chapters;
+}
+
+/**
+ * 合并并排序章节列表
+ */
+function mergeAndSortChapters(existingChapters, newChapters) {
+  const merged = [...existingChapters];
+  const existingNumbers = new Set(existingChapters.map(c => c.number));
+  
+  for (const chapter of newChapters) {
+    if (!existingNumbers.has(chapter.number)) {
+      merged.push(chapter);
+      existingNumbers.add(chapter.number);
+    }
+  }
+  
+  // 按编号排序
+  merged.sort((a, b) => {
+    const aParts = a.number.split('.').map(Number);
+    const bParts = b.number.split('.').map(Number);
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aVal = aParts[i] || 0;
+      const bVal = bParts[i] || 0;
+      if (aVal !== bVal) return aVal - bVal;
+    }
+    return 0;
+  });
+  
+  return merged;
+}
+
+/**
+ * 【新增】从模板文本中直接提取功能过程的子节结构
+ * 这个函数会找到功能需求章节下第一个功能过程的子节，并提取其标题
+ */
+function extractFunctionalSubSectionsFromText(templateText, funcChapterNum = '5') {
+  const lines = templateText.split('\n');
+  const subSections = [];
+  let inFunctionalSection = false;
+  let foundFirstProcess = false;
+  let firstProcessNumber = null;
+  
+  // 构建正则表达式
+  const funcStartRegex = new RegExp(`^${funcChapterNum}[.\\s、]`);
+  const processRegex = new RegExp(`^(${funcChapterNum}\\.\\d+)[.\\s、]+(.+)`);
+  const subSectionRegex = new RegExp(`^(${funcChapterNum}\\.\\d+\\.\\d+)[.\\s、]+(.+)`);
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    
+    // 检测功能需求章节开始
+    if (funcStartRegex.test(trimmed) && trimmed.includes('功能')) {
+      inFunctionalSection = true;
+      continue;
+    }
+    
+    if (!inFunctionalSection) continue;
+    
+    // 检测功能过程（如 5.1 XXX功能）
+    const processMatch = trimmed.match(processRegex);
+    if (processMatch && !foundFirstProcess) {
+      foundFirstProcess = true;
+      firstProcessNumber = processMatch[1];
+      continue;
+    }
+    
+    // 如果已经找到第一个功能过程，检测其子节
+    if (foundFirstProcess && firstProcessNumber) {
+      const expectedSubSectionPrefix = firstProcessNumber + '.';
+      
+      // 如果遇到下一个功能过程（如 5.2），停止收集
+      const nextProcessMatch = trimmed.match(processRegex);
+      if (nextProcessMatch && nextProcessMatch[1] !== firstProcessNumber) {
+        break;
+      }
+      
+      // 检测子节（如 5.1.1 功能说明）
+      const subSectionMatch = trimmed.match(subSectionRegex);
+      if (subSectionMatch && subSectionMatch[1].startsWith(expectedSubSectionPrefix)) {
+        const number = subSectionMatch[1];
+        const title = subSectionMatch[2].trim();
+        
+        // 检测格式特征
+        const nextLines = lines.slice(lines.indexOf(line) + 1, lines.indexOf(line) + 10).join('\n');
+        const hasTable = nextLines.includes('|') && nextLines.split('|').length > 3;
+        const hasList = /^[\-\*\d]+[\.、\)]\s/.test(nextLines);
+        
+        subSections.push({
+          number,
+          title,
+          level: number.split('.').length,
+          hasTable,
+          hasList,
+          titleFormat: `### ${number}. ${title}`
+        });
+      }
+    }
+    
+    // 检测是否离开功能需求章节
+    const nextChapterMatch = trimmed.match(/^(\d+)[.\s、]/);
+    if (nextChapterMatch && parseInt(nextChapterMatch[1]) > parseInt(funcChapterNum)) {
+      break;
+    }
+  }
+  
+  console.log(`[extractFunctionalSubSectionsFromText] 提取到 ${subSections.length} 个子节:`, 
+    subSections.map(s => s.title).join('、'));
+  return subSections;
+}
+
+/**
+ * 【核心修复】修正AI输出中的错误子节编号
+ * AI经常忽略正确的编号要求，输出如 5.1.1 而不是 5.7.1
+ * 这个函数会检测并修正所有错误的子节编号
+ * 
+ * @param {string} content - AI生成的内容
+ * @param {string} correctPrefix - 正确的功能过程编号前缀（如 "5.7"）
+ * @param {string} separator - 编号分隔符（如 "."）
+ * @param {Array} expectedSections - 期望的子节名称列表
+ * @returns {string} 修正后的内容
+ */
+function fixSubSectionNumbers(content, correctPrefix, separator, expectedSections) {
+  if (!content || !correctPrefix || !expectedSections || expectedSections.length === 0) {
+    return content;
+  }
+  
+  let fixedContent = content;
+  let fixCount = 0;
+  
+  // 提取正确前缀的各部分
+  const prefixParts = correctPrefix.split('.');
+  const baseChapterNum = prefixParts[0]; 
+  const correctProcessNum = prefixParts[1];
+  
+  // 遍历每个期望的子节，强制修正其编号
+  expectedSections.forEach((sectionName, idx) => {
+    const subSectionNum = idx + 1;
+    const correctSectionNum = `${correctPrefix}${separator}${subSectionNum}`;
+    
+    // 提取核心名称
+    const coreName = sectionName.replace(/[（(][^）)]*[）)]/g, '').trim();
+    const escapedName = coreName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // 匹配任何类似的标题： 5.X.Y 核心名称
+    // 宽松匹配：允许中间有任意数字，允许名称前后有其他字符
+    const pattern = new RegExp(
+      `(#{2,6}\\s*)${baseChapterNum}\\s*[.．]\\s*\\d+\\s*[.．]\\s*\\d+([.．、\\s]+.*${escapedName})`,
+      'gi'
+    );
+    
+    fixedContent = fixedContent.replace(pattern, (match, prefix, suffix) => {
+      const corrected = `${prefix}${correctSectionNum}${suffix}`;
+      if (match !== corrected) {
+        fixCount++;
+        return corrected;
+      }
+      return match;
+    });
+  });
+  
+  // 额外通用修正：修正单纯的 5.1.1 格式 (如果它显然是错误的)
+  // 仅当明确知道它应该是第几个子节时才修正 (基于位置或顺序很难确定，这里保守处理)
+  
+  if (fixCount > 0) {
+    console.log(`[fixSubSectionNumbers] 修正了 ${fixCount} 处错误的子节编号，正确前缀: ${correctPrefix}`);
+  }
+  
+  return fixedContent;
+}
+
+/**
+ * 【核心修复】重组AI输出的内容，确保子节标题和内容匹配
+ * AI经常把内容放错位置，这个函数会根据内容特征重新组织
+ * 
+ * 问题场景：AI生成的内容整体错位，例如：
+ * - 5.6.4 接口 → 显示的是业务规则内容
+ * - 5.6.5 界面 → 显示的是接口表格
+ * - 5.6.6 验收标准 → 显示的是界面内容
+ * 
+ * 解决方案：基于内容特征智能匹配，而不是仅依赖编号
+ * 
+ * @param {string} content - AI生成的内容
+ * @param {string} prefix - 功能过程编号前缀（如 "5.4"）
+ * @param {Array} expectedSections - 期望的子节名称列表
+ * @param {string} separator - 编号分隔符
+ * @returns {string} 重组后的内容
+ */
+function reorganizeContent(content, prefix, expectedSections, separator = '.') {
+  if (!content || !prefix || !expectedSections || expectedSections.length === 0) {
+    return content;
+  }
+  
+  console.log(`[reorganizeContent] 开始重组内容，前缀: ${prefix}, 子节数: ${expectedSections.length}`);
+  
+  // 【关键修复】定义每种子节类型的内容特征关键词
+  // 用于智能识别内容应该属于哪个子节
+  // 增强版：优化关键词以避免冲突，提高识别准确率
+  const sectionContentFeatures = {
+    '功能说明': {
+      // 【修复】收窄关键词范围，避免误吸收其他子节内容
+      // 【关键修复】操作流程应该属于功能说明，不应被重新分配
+      keywords: [
+        '使用场景', '功能目的', '功能描述', '业务背景', '前置条件', '后置条件',
+        '功能概述', '功能目标', '业务价值', '用户故事', '功能旨在'
+      ],
+      patterns: [
+        /功能[用于是旨]/, /本功能.*[允许支持实现]/, /该功能.*[用于实现]/, /功能目的[：:]/,
+        /操作流程[：:]/, /步骤\d+[：:.]/, /用户.*[进入输入点击选择]/, /系统.*[显示提示返回]/
+      ],
+      weight: 0.9,  // 降低权重，避免误吸收
+      // 排他性关键词：如果出现这些，则不是功能说明
+      excludePatterns: [/验收标准\d+/, /请求参数[：:]/, /响应参数[：:]/, /规则\d+[：:]/, /标准\d+[：:]/, /\|\s*字段[名]?\s*\|/]
+    },
+    '业务规则': {
+      keywords: ['规则1', '规则2', '规则3', '规则4', '规则5', '规则：', '校验规则', '权限控制', '数据校验', '业务约束', '约束条件', '限制条件', '业务逻辑', '模型', '算法'],
+      patterns: [/规则\d+[：:．.\s]/, /[•·-]\s*规则\d*[：:]/, /必须[满足符合]/, /不[能允许得]超过/, /需要[验证校验]/, /BR-\d+/],
+      weight: 1.5,  // 提高权重
+      excludePatterns: [/验收标准\d+/]
+    },
+    '处理数据': {
+      keywords: ['字段名', '字段说明', '数据字典', '主键', '外键', '是否必填', '数据类型', '数据项', '数据表'],
+      patterns: [/\|\s*字段[名]?\s*\|/, /\|\s*类型\s*\|/, /\|\s*长度\s*\|/, /\|\s*\w+\s*\|\s*(int|Integer|String|VARCHAR|TEXT|DATETIME)/i, /\|\s*说明\s*\|/],
+      weight: 1.6,  // 表格特征非常明显，权重最高
+      excludePatterns: [/请求参数/, /响应参数/]
+    },
+    '接口': {
+      keywords: ['请求参数', '响应参数', '接口地址', 'API', 'URL', 'HTTP', 'POST', 'GET', '错误码', '状态码', '返回值', '请求方法', '响应结果', '接口说明', '入参', '出参', '生成请求接口', '数据读取接口', '数据写入接口', '报告输出接口'],
+      patterns: [/请求参数[：:]/, /响应参数[：:]/, /错误码[：:]/, /\d{3}[：:]\s*[操作请求]/, /200[：:]\s*[操作成功]/, /400[：:]\s*[请求参数]/, /接口[：:]/],
+      weight: 1.5,
+      excludePatterns: []
+    },
+    '界面': {
+      // 增加界面特有关键词，包括界面操作描述
+      keywords: ['界面布局', '页面元素', '交互元素', '按钮', '输入框', '下拉框', '表单', '弹窗', '页面设计', '界面设计', '用户界面', 'UI', '交互设计', '编辑页面', '列表页面', '详情页面', '管理界面', '登录界面', '管理员界面', '简单的页面', '后台管理界面', '界 供'],
+      patterns: [/界面[包含显示提供]/, /页面[布局设计包含]/, /用户[点击输入选择进入].*[按钮页面界面]/, /显示.*[信息列表]/, /界面.*[遵循风格]/, /[登录编辑详情管理].*界面/, /界\s*供/, /管理员界面/],
+      weight: 1.4,
+      excludePatterns: [/验收标准\d+/, /规则\d+[：:]/]
+    },
+    '验收标准': {
+      // 验收标准有非常明确的格式特征
+      keywords: ['验收标准', '测试用例', '预期结果', '边界条件', '用例编号', '测试场景', '验收条件', '通过标准', '功能验收', '验收标准1', '验收标准2', '验收标准3', '验收标准4', '验收标准5', '标准1', '标准2', '标准3', '标准4', '标准5', '功能正常执行', '数据正确保存'],
+      patterns: [/验收标准\d+[：:]/, /[•·-]\s*验收标准\d+/, /验收\d+[：:]/, /测试[用例场景][：:]/, /预期[结果输出][：:]/, /标准\d+[：:]/, /功能正常执行/],
+      weight: 1.7,  // 验收标准格式最明确，权重最高
+      excludePatterns: []
+    }
+  };
+  
+  // 解析内容，提取每个子节的标题和内容
+  // 【增强】支持多种标题格式，包括被截断的标题
+  // 构建灵活的前缀正则 (允许 5. 1 这种空格)
+  const flexiblePrefix = prefix.split('.').join('\\s*\\.\\s*');
+  
+  const sectionPatterns = [
+    // Standard format: ### 5.1.1 功能说明
+    new RegExp(
+      `(#{2,6}\\s*${flexiblePrefix}\\s*\\.\\s*(\\d+)[.．、\\s]+([^\\n]+))\\n([\\s\\S]*?)(?=#{2,6}\\s*${flexiblePrefix}\\s*\\.\\s*\\d+|$)`,
+      'g'
+    ),
+    // No # format: 5.1.1 功能说明 or 5.1.1. 功能说明
+    new RegExp(
+      `((?:^|\\n)\\s*${flexiblePrefix}\\s*\\.\\s*(\\d+)[.．、\\s]+([^\\n]+))\\n([\\s\\S]*?)(?=(?:^|\\n)\\s*${flexiblePrefix}\\s*\\.\\s*\\d+|$)`,
+      'gm'
+    )
+  ];
+  
+  const parsedSections = [];
+  let match;
+  
+  // 尝试多种模式匹配
+  for (const sectionPattern of sectionPatterns) {
+    let loopCount = 0;
+    while ((match = sectionPattern.exec(content)) !== null && loopCount++ < 50) {
+      const sectionNum = parseInt(match[2]);
+      // 【修改】Allow duplicate additions, merge later
+      parsedSections.push({
+        fullTitle: match[1].trim(),
+        sectionNum: sectionNum,
+        sectionName: match[3].trim(),
+        content: match[4].trim(),
+        originalIndex: parsedSections.length
+      });
+    }
+    if (parsedSections.length > 0) break; // 如果找到了就不用尝试其他模式
+  }
+  
+  // 按子节编号排序
+  parsedSections.sort((a, b) => a.sectionNum - b.sectionNum);
+
+  // 【健壮性】过滤/合并异常的短标题（如 "验"），避免错位
+  if (parsedSections.length > 0) {
+    const cleaned = [];
+    parsedSections.forEach((p, idx) => {
+      const name = (p.sectionName || '').trim();
+      // 判断标题是否有效：长度>=2 且 与期望子节至少部分匹配
+      const maybeMatchesExpected = expectedSections.some(sec => {
+        if (!sec) return false;
+        const secClean = sec.replace(/\s+/g, '');
+        const nameClean = name.replace(/\s+/g, '');
+        return (
+          sec.includes(nameClean) ||
+          nameClean.includes(secClean.slice(0, 2)) ||
+          secClean.includes(nameClean)
+        );
+      });
+
+      if (name.length >= 2 && maybeMatchesExpected) {
+        cleaned.push(p);
+      } else {
+        // 将异常标题的内容合并到前一个合法子节，避免生成孤立段
+        if (cleaned.length > 0) {
+          cleaned[cleaned.length - 1].content += '\n\n' + p.content;
+        } else {
+          // 如果没有前一个，就保留但标记为默认名称，防止后续崩溃
+          p.sectionName = name || '内容';
+          cleaned.push(p);
+        }
+      }
+    });
+    parsedSections.length = 0;
+    parsedSections.push(...cleaned);
+  }
+
+  // 【新增】按编号强制校正标题文本，与期望子节对齐，避免残缺标题如“验”
+  if (parsedSections.length > 0) {
+    parsedSections.forEach(p => {
+      const expectedName = expectedSections[p.sectionNum - 1];
+      if (!expectedName) return;
+      const expectedClean = expectedName.replace(/\s+/g, '');
+      const nameClean = (p.sectionName || '').replace(/\s+/g, '');
+      const similar =
+        nameClean.length >= 2 &&
+        (nameClean.includes(expectedClean.slice(0, 2)) || expectedClean.includes(nameClean));
+      if (!similar) {
+        p.sectionName = expectedName;
+        // 同步更新 fullTitle 中的标题文本（保留编号和#级别）
+        p.fullTitle = p.fullTitle.replace(/(\d+\s*[.．、\s]+\s*)(.+)$/, `$1${expectedName}`);
+      }
+    });
+  }
+
+  if (parsedSections.length === 0) {
+    // console.log(`[reorganizeContent] 未能解析出子节，返回原内容`);
+    return content;
+  }
+  
+  console.log(`[reorganizeContent] 解析出 ${parsedSections.length} 个子节: ${parsedSections.map(p => `${p.sectionNum}:${p.sectionName.slice(0,4)}`).join(', ')}`);
+  
+  // 【核心逻辑】基于内容特征检测每个子节的内容是否正确
+  // 计算每个解析出的内容与每个期望子节的匹配分数
+  function calculateMatchScore(contentText, sectionType) {
+    if (!contentText || !sectionType) return 0;
+    
+    let score = 0;
+    // const contentLower = contentText.toLowerCase();
+    
+    // 遍历所有子节类型，找到最匹配的
+    for (const [typeName, features] of Object.entries(sectionContentFeatures)) {
+      if (sectionType.includes(typeName) || typeName.includes(sectionType.replace(/[、，,]/g, '').slice(0, 4))) {
+        // 关键词匹配
+        for (const keyword of features.keywords) {
+          if (contentText.includes(keyword)) {
+            score += 10;
+          }
+        }
+        // 正则模式匹配
+        for (const pattern of features.patterns) {
+          if (pattern.test(contentText)) {
+            score += 15;
+          }
+        }
+        break;
+      }
+    }
+    
+    return score;
+  }
+  
+  // 【关键函数】检测内容的实际类型
+  // 基于内容特征关键词和模式，返回最匹配的子节类型名称
+  function detectActualSectionType(contentText, expectedSections = []) {
+    if (!contentText || contentText.trim().length === 0) return null;
+    
+    // 仅在期望子节列表范围内做识别，降低误判
+    const allTypes = Object.keys(sectionContentFeatures);
+    const candidateTypes = (expectedSections || [])
+      .map(name => {
+        const clean = (name || '').replace(/[．.\s]/g, '');
+        return allTypes.find(type =>
+          (name && name.includes(type)) ||
+          (clean && type.includes(clean.slice(0, 4))) ||
+          (clean && clean.includes(type.replace(/[、，,]/g, '').slice(0, 4)))
+        );
+      })
+      .filter(Boolean);
+    const typePool = candidateTypes.length > 0 ? Array.from(new Set(candidateTypes)) : allTypes;
+    
+    let bestMatch = null;
+    let bestScore = 0;
+    let secondScore = 0;
+    
+    for (const typeName of typePool) {
+      const features = sectionContentFeatures[typeName];
+      let score = 0;
+      
+      // 检查排他性模式
+      let excluded = false;
+      if (features.excludePatterns) {
+        for (const pattern of features.excludePatterns) {
+          if (pattern.test(contentText)) {
+            excluded = true;
+            break;
+          }
+        }
+      }
+      if (excluded) continue;
+      
+      // 关键词匹配
+      for (const keyword of features.keywords) {
+        if (contentText.includes(keyword)) {
+          score += 10;
+        }
+      }
+      
+      // 正则模式匹配
+      for (const pattern of features.patterns) {
+        if (pattern.test(contentText)) {
+          score += 15;
+        }
+      }
+      
+      // 应用权重
+      score *= (features.weight || 1.0);
+      
+      if (score > bestScore) {
+        secondScore = bestScore;
+        bestScore = score;
+        bestMatch = typeName;
+      } else if (score > secondScore) {
+        secondScore = score;
+      }
+    }
+    
+    // 【关键修复】大幅提高阈值，避免误判导致内容重新分配
+    // 只有在非常确定内容类型错误时才进行重组
+    const strongEnough = bestScore >= 40;            // 大幅提高基础可信度阈值
+    const clearMargin = bestScore - secondScore >= 20; // 大幅提高领先幅度要求
+    
+    // 【修复】对"功能说明"类型禁用自动检测，避免误判
+    // 功能说明内容多样化，容易误判，不应该被自动重新分配
+    if (bestMatch === '功能说明') {
+      return null; // 禁用功能说明的自动检测，避免误判
+    }
+    
+    return strongEnough && clearMargin ? bestMatch : null;
+  }
+  
+  // 【增强】检查子节名称是否与内容类型匹配
+  // 支持复合名称如 "业务规则、模型和算法"
+  function sectionNameMatchesType(sectionName, contentType) {
+    if (!sectionName || !contentType) return false;
+    
+    // 直接包含检查
+    if (sectionName.includes(contentType)) return true;
+    if (contentType.includes(sectionName.slice(0, 4))) return true;
+    
+    // 特殊映射：处理复合名称
+    const typeAliases = {
+      '业务规则': ['规则', '模型', '算法', '业务逻辑'],
+      '处理数据': ['数据', '字段', '数据表'],
+      '功能说明': ['说明', '描述', '概述'],
+      '接口': ['接口', 'API', '服务'],
+      '界面': ['界面', 'UI', '页面', '交互'],
+      '验收标准': ['验收', '标准', '测试', '用例']
+    };
+    
+    const aliases = typeAliases[contentType] || [];
+    for (const alias of aliases) {
+      if (sectionName.includes(alias)) return true;
+    }
+    
+    return false;
+  }
+  
+  // 【关键修复】大幅提高内容错位检测的阈值，避免误判
+  // 只有在非常明确的情况下才进行内容重组
+  let hasContentMismatch = false;
+  const contentMapping = new Map(); // 存储内容应该属于哪个子节
+  let mismatchCount = 0;
+  
+  parsedSections.forEach((parsed, idx) => {
+    const expectedSectionName = expectedSections[parsed.sectionNum - 1] || '';
+    const actualType = detectActualSectionType(parsed.content, expectedSections);
+    
+    // 【修复】只有当检测到明确的内容类型且与标题完全不匹配时才标记为错位
+    if (actualType) {
+      const titleMatchesContent = sectionNameMatchesType(expectedSectionName, actualType);
+      
+      if (!titleMatchesContent) {
+        mismatchCount++;
+        console.log(`[reorganizeContent] 检测到可能的内容错位: 子节 ${parsed.sectionNum} "${expectedSectionName}" 的内容可能是 "${actualType}" 类型`);
+        
+        // 找到这个内容应该属于哪个子节
+        for (let i = 0; i < expectedSections.length; i++) {
+          const targetSection = expectedSections[i];
+          if (sectionNameMatchesType(targetSection, actualType)) {
+            contentMapping.set(parsed.content, i + 1); // 存储正确的子节编号
+            break;
+          }
+        }
+      }
+    }
+  });
+  
+  // 【关键修复】只有当大部分子节都错位时才进行重组（至少50%以上）
+  // 避免因为个别误判导致整体内容被错误重组
+  if (mismatchCount > 0 && mismatchCount >= parsedSections.length * 0.5) {
+    hasContentMismatch = true;
+    console.log(`[reorganizeContent] 检测到严重的内容错位（${mismatchCount}/${parsedSections.length}个子节），将进行智能重组`);
+  } else if (mismatchCount > 0) {
+    console.log(`[reorganizeContent] 检测到少量可能的错位（${mismatchCount}/${parsedSections.length}个子节），但不足以触发重组，保持原有结构`);
+  }
+  
+  // 【修复】只有在检测到严重内容错位时才进行智能重组
+  if (hasContentMismatch) {
+    console.log(`[reorganizeContent] 检测到内容错位，开始智能重组...`);
+    
+    // 【新增】构建用于清理内容中残留子节标题的正则
+    const flexPrefixForClean = prefix.split('.').join('\\s*\\.\\s*');
+    const subSectionTitlePattern = new RegExp(
+      `#{2,6}\\s*${flexPrefixForClean}\\s*\\.\\s*\\d+[.．、\\s]+[^\\n]*\\n?`,
+      'g'
+    );
+    
+    // 创建一个新的内容映射，基于内容特征而不是编号
+    const reorganizedContents = new Array(expectedSections.length).fill('');
+    const processedIndices = new Set(); // 记录已处理的parsedSections索引
+    
+    // 1. 基于内容特征的智能分配
+    parsedSections.forEach((parsed, pIdx) => {
+      const actualType = detectActualSectionType(parsed.content, expectedSections);
+      let matched = false;
+      
+      if (actualType) {
+        for (let i = 0; i < expectedSections.length; i++) {
+          const targetSection = expectedSections[i];
+          if (sectionNameMatchesType(targetSection, actualType)) {
+            // 【修复】清理内容中残留的子节标题，避免重复输出
+            const cleanedContent = parsed.content.replace(subSectionTitlePattern, '').trim();
+            reorganizedContents[i] += (reorganizedContents[i] ? '\n\n' : '') + cleanedContent;
+            processedIndices.add(pIdx);
+            matched = true;
+            break;
+          }
+        }
+      }
+    });
+    
+    // 2. 对于没有匹配到的内容，按原编号放置（兜底）
+    parsedSections.forEach((parsed, pIdx) => {
+      if (!processedIndices.has(pIdx) && parsed.sectionNum <= expectedSections.length) {
+        const targetIdx = parsed.sectionNum - 1;
+        // 【修复】清理内容中残留的子节标题
+        const cleanedContent = parsed.content.replace(subSectionTitlePattern, '').trim();
+        reorganizedContents[targetIdx] += (reorganizedContents[targetIdx] ? '\n\n' : '') + cleanedContent;
+      }
+    });
+    
+    // 3. 构建最终输出
+    let reorganized = '';
+    const dotCount = (prefix.match(/\./g) || []).length;
+    const headingLevel = Math.min(dotCount + 3, 6);
+    const hashes = '#'.repeat(headingLevel);
+    
+    expectedSections.forEach((section, idx) => {
+      const sectionNum = `${prefix}${separator}${idx + 1}`;
+      reorganized += `${hashes} ${sectionNum} ${section}\n\n`;
+      
+      if (reorganizedContents[idx]) {
+        reorganized += reorganizedContents[idx] + '\n\n';
+      } else {
+        reorganized += generateDefaultContent(section, '') + '\n\n';
+      }
+    });
+    
+    console.log(`[reorganizeContent] 智能重组完成`);
+    return reorganized;
+  }
+  
+  // 【关键修复】禁用funcDescMarkers逻辑，避免误判导致内容错位
+  // 操作流程等内容应该保留在原位置，不应被强制移动到功能说明
+  // 如果没有检测到错位，直接使用原有逻辑，不进行额外的内容重分配
+  
+  // 重组内容 - 保持原有结构，不进行内容重分配
+  let reorganized = '';
+  const dotCount = (prefix.match(/\./g) || []).length;
+  const headingLevel = Math.min(dotCount + 3, 6);
+  const hashes = '#'.repeat(headingLevel);
+  
+  // 【修复】构建用于清理内容中残留子节标题的正则
+  const flexPrefixForClean = prefix.split('.').join('\\s*\\.\\s*');
+  const subSectionTitlePattern = new RegExp(
+    `#{2,6}\\s*${flexPrefixForClean}\\s*\\.\\s*\\d+[.．、\\s]+[^\\n]*\\n?`,
+    'g'
+  );
+  
+  expectedSections.forEach((section, idx) => {
+    const sectionNum = `${prefix}${separator}${idx + 1}`;
+    reorganized += `${hashes} ${sectionNum} ${section}\n\n`;
+    
+    const matchedParsed = parsedSections.find(p => p.sectionNum === idx + 1);
+    
+    if (matchedParsed && matchedParsed.content) {
+      // 【修复】清理内容中残留的子节标题，避免重复输出
+      const cleanedContent = matchedParsed.content.replace(subSectionTitlePattern, '').trim();
+      reorganized += cleanedContent + '\n\n';
+    } else {
+      reorganized += generateDefaultContent(section, '') + '\n\n';
+    }
+  });
+  
+  console.log(`[reorganizeContent] 重组完成`);
+  return reorganized;
+}
+
+/**
+ */
+function generateDefaultContent(sectionName, processName) {
+  if (sectionName.includes('功能说明') || sectionName.includes('功能描述')) {
+    return `本功能用于${processName || '相关操作'}。\n\n**操作流程：**\n1. 用户进入功能界面\n2. 执行相关操作\n3. 系统处理并返回结果`;
+  } else if (sectionName.includes('业务规则') || sectionName.includes('规则')) {
+    return `- 规则1：数据必须符合系统要求\n- 规则2：操作需要相应权限`;
+  } else if (sectionName.includes('处理数据') || sectionName.includes('数据')) {
+    return `| 字段名 | 类型 | 说明 |\n|--------|------|------|\n| id | Integer | 主键ID |`;
+  } else if (sectionName.includes('接口')) {
+    return `本功能涉及的接口将在详细设计阶段定义。`;
+  } else if (sectionName.includes('界面')) {
+    return `界面设计遵循系统统一风格。`;
+  } else if (sectionName.includes('验收') || sectionName.includes('标准')) {
+    return `- 功能正常执行，无报错\n- 数据正确保存和展示`;
+  }
+  return `（${sectionName}内容待完善）`;
+}
+
+/**
+ * 【核心修复】移除AI输出中错误的功能过程标题
+ * AI经常在生成5.9的内容时，错误地输出5.1的标题
+ * 这个函数会检测并移除所有与当前功能过程编号不匹配的功能过程标题
+ * 
+ * @param {string} content - AI生成的内容
+ * @param {string} correctPrefix - 正确的功能过程编号（如 "5.9"）
+ * @param {string} funcChapterNum - 功能需求章节编号（如 "5"）
+ * @returns {string} 清理后的内容
+ */
+function removeWrongProcessTitles(content, correctPrefix, funcChapterNum) {
+  if (!content || !correctPrefix || !funcChapterNum) {
+    return content;
+  }
+  
+  let fixedContent = content;
+  let removeCount = 0;
+  
+  // 提取正确的功能过程编号
+  const correctProcessNum = correctPrefix.split('.')[1]; // 如 "9"
+  const flexibleFuncChapter = funcChapterNum.split('').join('\\s*');
+  
+  // 匹配所有功能过程级别的标题（如 5.1、5.2 等，但不是 5.1.1 这样的子节）
+  // 格式：### 5.1 XXX功能 或 5.1 XXX功能
+  const wrongProcessPattern = new RegExp(
+    `(^|\\n)(\\s*#{1,4}\\s*)?${flexibleFuncChapter}\\s*[.．]\\s*(\\d+)(?!\\s*[.．]\\s*\\d)([.．、\\s]+[^\\n]*)(\\n|$)`,
+    'gm'
+  );
+  
+  fixedContent = fixedContent.replace(wrongProcessPattern, (match, lineStart, hashes, processNum, rest, lineEnd) => {
+    // 如果是错误的功能过程编号，移除整行
+    if (processNum !== correctProcessNum) {
+      removeCount++;
+      console.log(`[removeWrongProcessTitles] 移除错误的功能过程标题: ${funcChapterNum}.${processNum}${rest.trim().substring(0, 30)}...`);
+      return lineStart || ''; // 保留换行符
+    }
+    return match;
+  });
+  
+  // 额外处理：移除错误的子节标题（如在5.9内容中出现5.1.1）
+  // 匹配 5.X.Y 格式，其中 X 不等于正确的功能过程编号
+  const wrongSubSectionPattern = new RegExp(
+    `(^|\\n)(\\s*#{1,6}\\s*)?${flexibleFuncChapter}\\s*[.．]\\s*(\\d+)\\s*[.．]\\s*(\\d+)([.．、\\s]+[^\\n]*)(\\n|$)`,
+    'gm'
+  );
+  
+  fixedContent = fixedContent.replace(wrongSubSectionPattern, (match, lineStart, hashes, processNum, subNum, rest, lineEnd) => {
+    // 如果是错误的功能过程编号下的子节，移除整行
+    if (processNum !== correctProcessNum) {
+      removeCount++;
+      console.log(`[removeWrongProcessTitles] 移除错误的子节标题: ${funcChapterNum}.${processNum}.${subNum}${rest.trim().substring(0, 20)}...`);
+      return lineStart || '';
+    }
+    return match;
+  });
+  
+  // 处理更深层级的错误编号（如 5.1.1.1）
+  const wrongDeepPattern = new RegExp(
+    `(^|\\n)(\\s*#{1,6}\\s*)?${flexibleFuncChapter}\\s*[.．]\\s*(\\d+)\\s*[.．]\\s*\\d+\\s*[.．]\\s*\\d+([.．、\\s]+[^\\n]*)(\\n|$)`,
+    'gm'
+  );
+  
+  fixedContent = fixedContent.replace(wrongDeepPattern, (match, lineStart, hashes, processNum, rest, lineEnd) => {
+    if (processNum !== correctProcessNum) {
+      removeCount++;
+      console.log(`[removeWrongProcessTitles] 移除错误的深层子节标题`);
+      return lineStart || '';
+    }
+    return match;
+  });
+  
+  if (removeCount > 0) {
+    console.log(`[removeWrongProcessTitles] 共移除了 ${removeCount} 处错误的标题，正确前缀: ${correctPrefix}`);
+  }
+  
+  return fixedContent;
+}
+
+/**
+ * 【核心修复】移除AI输出中的重复子节
+ * AI有时会输出重复的子节内容，需要检测并移除
+ * 
+ * @param {string} content - AI生成的内容
+ * @param {string} prefix - 功能过程编号前缀（如 "5.11"）
+ * @param {Array} expectedSections - 期望的子节名称列表
+ * @returns {string} 去重后的内容
+ */
+function removeDuplicateSections(content, prefix, expectedSections) {
+  if (!content || !prefix || !expectedSections || expectedSections.length === 0) {
+    return content;
+  }
+  
+  let fixedContent = content;
+  let removeCount = 0;
+  
+  // 构建灵活的前缀正则 (允许 5. 1 这种空格)
+  const flexiblePrefix = prefix.split('.').join('\\s*\\.\\s*');
+  
+  // 检测每个子节是否出现了多次
+  expectedSections.forEach((sectionName, idx) => {
+    const sectionNum = idx + 1;
+    // 提取核心名称，避免符号影响匹配
+    const coreName = sectionName.replace(/[（(][^）)]*[）)]/g, '').trim();
+    const escapedSectionName = coreName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const flexibleName = escapedSectionName.split('').join('\\s*');
+    
+    // 构建匹配子节标题的正则表达式 (更宽容)
+    const sectionPattern = new RegExp(
+      `(#{2,6}\\s*${flexiblePrefix}\\s*\\.\\s*${sectionNum}[.．、\\s]+.*${flexibleName}.*[\\s\\n]+)`,
+      'gi'
+    );
+    
+    const matches = fixedContent.match(sectionPattern);
+    if (matches && matches.length > 1) {
+      console.log(`[去重] 检测到子节 ${prefix}.${sectionNum} ${sectionName} 出现了 ${matches.length} 次`);
+      
+      // 找到每个匹配的位置
+      let positions = [];
+      let searchStart = 0;
+      for (let i = 0; i < matches.length; i++) {
+        const pos = fixedContent.indexOf(matches[i], searchStart);
+        if (pos !== -1) {
+          positions.push({ start: pos, match: matches[i] });
+          searchStart = pos + matches[i].length;
+        }
+      }
+      
+      // 保留第一次出现，移除后续重复的标题行
+      if (positions.length > 1) {
+        // 从后往前移除
+        for (let i = positions.length - 1; i >= 1; i--) {
+          const currentPos = positions[i];
+          const matchLength = currentPos.match.length;
+          
+          // 只移除标题行，不移除后面的内容（除非是纯空白）
+          fixedContent = fixedContent.slice(0, currentPos.start) + fixedContent.slice(currentPos.start + matchLength);
+          removeCount++;
+          console.log(`[去重] 移除了重复的子节标题 ${prefix}.${sectionNum} ${sectionName}`);
+        }
+      }
+    }
+  });
+  
+  // 额外检测：移除连续重复的子节模式
+  // 例如：5.11.1 -> 5.11.2 -> 5.11.1 -> 5.11.2 这种模式
+  // 【修复】只匹配行首的子节标题，避免误匹配内容中的引用
+  const allSectionPattern = new RegExp(
+    `(^|\\n)(#{2,6}\\s*${flexiblePrefix}\\s*\\.\\s*(\\d+)[.．、\\s]+[^\\n]+)`,
+    'gm'
+  );
+  
+  const allMatches = [...fixedContent.matchAll(allSectionPattern)];
+  // 【修复】只有当检测到的子节数量明显超过期望数量时才进行去重（允许一定的误差）
+  if (allMatches.length > expectedSections.length * 1.5) {
+    console.log(`[去重] 检测到子节总数 ${allMatches.length} 明显超过期望数量 ${expectedSections.length}`);
+    
+    // 记录每个子节编号的首次出现位置
+    const firstOccurrence = new Map();
+    const toRemoveRanges = [];
+    
+    for (let i = 0; i < allMatches.length; i++) {
+      const match = allMatches[i];
+      const sectionNum = match[3]; // 【修复】调整捕获组索引
+      const fullMatch = match[2]; // 完整的标题行
+      
+      // 【修复】只处理真正的子节标题（以#开头的行），跳过内容中的引用
+      if (!fullMatch.trim().startsWith('#')) {
+        continue;
+      }
+      
+      if (firstOccurrence.has(sectionNum)) {
+        // 这是重复的子节，标记为需要移除
+        const startPos = match.index + (match[1]?.length || 0); // 跳过换行符
+        let endPos = fixedContent.length;
+        
+        // 找到下一个子节的位置作为结束点
+        if (i + 1 < allMatches.length) {
+          endPos = allMatches[i + 1].index + (allMatches[i + 1][1]?.length || 0);
+        }
+        
+        toRemoveRanges.push({ start: startPos, end: endPos });
+      } else {
+        firstOccurrence.set(sectionNum, match.index);
+      }
+    }
+    
+    // 从后往前移除
+    toRemoveRanges.reverse().forEach(range => {
+      fixedContent = fixedContent.slice(0, range.start) + fixedContent.slice(range.end);
+      removeCount++;
+    });
+  }
+  
+  if (removeCount > 0) {
+    console.log(`[removeDuplicateSections] 共移除了 ${removeCount} 处重复的子节`);
+  }
+  
+  return fixedContent;
+}
+
+/**
+ * 【核心修复】移除子节标题下方的重复文本标题
+ * AI有时会在Markdown标题后面又输出一个纯文本形式的标题（可能带空格）
+ * 例如：### 5.2.1 功能说明 后面跟着 "5.2.1    功 能 说 明" 这样的文本
+ * 
+ * @param {string} content - AI生成的内容
+ * @param {string} prefix - 功能过程编号前缀（如 "5.2"）
+ * @param {Array} expectedSections - 期望的子节名称列表
+ * @returns {string} 清理后的内容
+ */
+function removeTextDuplicateTitles(content, prefix, expectedSections) {
+  if (!content || !prefix || !expectedSections || expectedSections.length === 0) {
+    return content;
+  }
+  
+  let fixedContent = content;
+  let removeCount = 0;
+  
+  // 遍历每个子节，检查是否有重复的文本标题
+  expectedSections.forEach((sectionName, idx) => {
+    const sectionNum = idx + 1;
+    const fullSectionNum = `${prefix}.${sectionNum}`;
+    
+    // 构建匹配子节名称的正则（支持名称中间有空格的情况）
+    // 例如："功能说明" 可能被写成 "功 能 说 明"
+    const sectionChars = sectionName.split('');
+    const spacedPattern = sectionChars.map(c => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s*');
+    
+    // 匹配模式：在Markdown标题行之后，紧跟着一个纯文本形式的编号+标题
+    // 例如：### 5.2.1 功能说明\n5.2.1    功 能 说 明\n
+    const patterns = [
+      // 模式1：编号 + 带空格的标题（如 "5.2.1    功 能 说 明"）
+      new RegExp(
+        `(#{2,6}\\s*${fullSectionNum.replace(/\./g, '\\.')}[.．、\\s]+${sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^\n]*\n)` +
+        `(\\s*${fullSectionNum.replace(/\./g, '\\.')}[\\s　]+${spacedPattern}[：:]*\\s*\n)`,
+        'gi'
+      ),
+      // 模式2：编号 + 原标题（如 "5.2.1 功能说明："）
+      new RegExp(
+        `(#{2,6}\\s*${fullSectionNum.replace(/\./g, '\\.')}[.．、\\s]+${sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^\n]*\n)` +
+        `(\\s*${fullSectionNum.replace(/\./g, '\\.')}[.．、\\s]+${sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[：:]*\\s*\n)`,
+        'gi'
+      ),
+      // 模式3：只有带空格的标题（如 "功 能 说 明："）
+      new RegExp(
+        `(#{2,6}\\s*${fullSectionNum.replace(/\./g, '\\.')}[.．、\\s]+${sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^\n]*\n)` +
+        `(\\s*${spacedPattern}[：:]*\\s*\n)`,
+        'gi'
+      ),
+      // 模式4：只有原标题（如 "功能说明："）- 紧跟在Markdown标题后
+      new RegExp(
+        `(#{2,6}\\s*${fullSectionNum.replace(/\./g, '\\.')}[.．、\\s]+${sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^\n]*\n)` +
+        `(\\s*${sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[：:]+\\s*\n)`,
+        'gi'
+      )
+    ];
+    
+    patterns.forEach(pattern => {
+      const matches = fixedContent.match(pattern);
+      if (matches) {
+        fixedContent = fixedContent.replace(pattern, '$1');
+        removeCount++;
+        console.log(`[文本标题去重] 移除了子节 ${fullSectionNum} ${sectionName} 下的重复文本标题`);
+      }
+    });
+  });
+  
+  // 额外处理：移除任何紧跟在Markdown标题后的纯编号行
+  // 例如：### 5.2.1 功能说明\n5.2.1\n
+  const numberOnlyPattern = new RegExp(
+    `(#{2,6}\\s*${prefix.replace(/\./g, '\\.')}\\.(\\d+)[^\n]+\n)(\\s*${prefix.replace(/\./g, '\\.')}\\.(\\d+)\\s*\n)`,
+    'gi'
+  );
+  
+  let match;
+  while ((match = numberOnlyPattern.exec(fixedContent)) !== null) {
+    if (match[2] === match[4]) { // 编号相同
+      fixedContent = fixedContent.replace(match[0], match[1]);
+      removeCount++;
+      console.log(`[文本标题去重] 移除了重复的编号行: ${prefix}.${match[2]}`);
+    }
+  }
+  
+  if (removeCount > 0) {
+    console.log(`[removeTextDuplicateTitles] 共移除了 ${removeCount} 处重复的文本标题`);
+  }
+  
+  return fixedContent;
+}
+
+/**
+ * 【核心修复】移除子节内容中出现的错位子节标题
+ * AI有时会在一个子节的内容区域输出另一个子节的标题（通常是前一个子节）
+ * 例如：在 "5.1.4 接口" 的内容中输出 "5.1.3 处理数据" 的标题
+ * 
+ * 这个函数会检测并移除这些错位的标题行
+ * 
+ * @param {string} content - AI生成的内容
+ * @param {string} prefix - 功能过程编号前缀（如 "5.1"）
+ * @param {Array} expectedSections - 期望的子节名称列表
+ * @returns {string} 清理后的内容
+ */
+function removeMisplacedSectionTitles(content, prefix, expectedSections) {
+  if (!content || !prefix || !expectedSections || expectedSections.length === 0) {
+    return content;
+  }
+  
+  let fixedContent = content;
+  let removeCount = 0;
+  
+  // 首先，找到所有子节标题的位置
+  const sectionPositions = [];
+  
+  for (let idx = 0; idx < expectedSections.length; idx++) {
+    const sectionNum = idx + 1;
+    const sectionName = expectedSections[idx];
+    const fullSectionNum = `${prefix}.${sectionNum}`;
+    const escapedSectionName = sectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // 匹配Markdown标题格式的子节
+    const mdPattern = new RegExp(
+      `#{2,6}\\s*${fullSectionNum.replace(/\./g, '\\.')}[.．、\\s]+${escapedSectionName}`,
+      'gi'
+    );
+    
+    let match;
+    while ((match = mdPattern.exec(fixedContent)) !== null) {
+      sectionPositions.push({
+        idx: idx,
+        sectionNum: sectionNum,
+        sectionName: sectionName,
+        fullSectionNum: fullSectionNum,
+        position: match.index,
+        length: match[0].length,
+        isMarkdown: true
+      });
+    }
+  }
+  
+  // 按位置排序
+  sectionPositions.sort((a, b) => a.position - b.position);
+  
+  // 检查每个子节区域内是否有其他子节的标题（非Markdown格式）
+  for (let i = 0; i < sectionPositions.length; i++) {
+    const currentSection = sectionPositions[i];
+    const nextSection = sectionPositions[i + 1];
+    
+    // 当前子节的内容区域
+    const contentStart = currentSection.position + currentSection.length;
+    const contentEnd = nextSection ? nextSection.position : fixedContent.length;
+    const sectionContent = fixedContent.slice(contentStart, contentEnd);
+    
+    // 检查这个区域内是否有任何子节的纯文本标题（包括当前子节自己的重复标题）
+    for (let j = 0; j < expectedSections.length; j++) {
+      const otherSectionNum = j + 1;
+      const otherSectionName = expectedSections[j];
+      const otherFullSectionNum = `${prefix}.${otherSectionNum}`;
+      const escapedOtherName = otherSectionName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      // 匹配纯文本格式的子节标题（不是Markdown标题）
+      // 例如：5.1.3 处理数据 或 5.1.3. 处理数据
+      const textTitlePatterns = [
+        // 编号 + 标题（行首）
+        new RegExp(
+          `(^|\\n)(\\s*)${otherFullSectionNum.replace(/\./g, '\\.')}[.．、\\s]+${escapedOtherName}[：:]*\\s*(?=\\n|$)`,
+          'gim'
+        ),
+        // 编号 + 标题（带表格标记）
+        new RegExp(
+          `(^|\\n)(\\s*)${otherFullSectionNum.replace(/\./g, '\\.')}[.．、\\s]+${escapedOtherName}[：:]*\\s*\\n\\s*\\|`,
+          'gim'
+        )
+      ];
+      
+      for (const pattern of textTitlePatterns) {
+        const matches = sectionContent.match(pattern);
+        if (matches) {
+          // 找到了错位的标题，需要移除
+          for (const matchStr of matches) {
+            // 计算在原内容中的位置
+            const posInSection = sectionContent.indexOf(matchStr);
+            if (posInSection !== -1) {
+              const absolutePos = contentStart + posInSection;
+              
+              // 检查这不是一个Markdown标题（避免误删）
+              const lineStart = fixedContent.lastIndexOf('\n', absolutePos) + 1;
+              const lineContent = fixedContent.slice(lineStart, absolutePos + matchStr.length);
+              
+              if (!lineContent.trim().startsWith('#')) {
+                // 这是一个纯文本标题，需要移除
+                // 只移除标题行，保留后面的内容
+                const titleEndPos = absolutePos + matchStr.length;
+                const beforeTitle = fixedContent.slice(0, absolutePos);
+                const afterTitle = fixedContent.slice(titleEndPos);
+                
+                // 保留换行符
+                const preserveNewline = matchStr.startsWith('\n') ? '\n' : '';
+                fixedContent = beforeTitle + preserveNewline + afterTitle;
+                
+                removeCount++;
+                const isSameSection = (j === currentSection.idx);
+                const logType = isSameSection ? '重复标题移除' : '错位标题移除';
+                console.log(`[${logType}] 在子节 ${currentSection.fullSectionNum} ${currentSection.sectionName} 中移除了${isSameSection ? '重复' : '错位'}的标题: ${otherFullSectionNum} ${otherSectionName}`);
+                
+                // 更新后续位置（因为内容变短了）
+                const removedLength = matchStr.length - preserveNewline.length;
+                for (let k = i + 1; k < sectionPositions.length; k++) {
+                  if (sectionPositions[k].position > absolutePos) {
+                    sectionPositions[k].position -= removedLength;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // 额外检查：移除内容中出现的任何与当前子节编号不匹配的子节标题行
+  // 这是一个更激进的清理，只处理明显错误的情况
+  const allSectionTitlePattern = new RegExp(
+    `(^|\\n)(\\s*)(${prefix.replace(/\./g, '\\.')}\\.(\\d+))[.．、\\s]+([^\\n|#]+?)(?=\\n|$)`,
+    'gm'
+  );
+  
+  // 收集所有匹配
+  const allMatches = [...fixedContent.matchAll(allSectionTitlePattern)];
+  
+  // 检查每个匹配是否在正确的位置
+  for (let i = allMatches.length - 1; i >= 0; i--) {
+    const match = allMatches[i];
+    const matchedSectionNum = parseInt(match[4]);
+    const matchedTitle = match[5].trim();
+    const matchPosition = match.index;
+    
+    // 检查这个标题行前面是否有一个Markdown标题
+    const lineStart = fixedContent.lastIndexOf('\n', matchPosition) + 1;
+    const lineContent = fixedContent.slice(lineStart, matchPosition + match[0].length);
+    
+    // 如果这行以#开头，跳过（这是正确的Markdown标题）
+    if (lineContent.trim().startsWith('#')) {
+      continue;
+    }
+    
+    // 找到这个位置属于哪个子节
+    let belongsToSection = -1;
+    for (let j = 0; j < sectionPositions.length; j++) {
+      const sectionStart = sectionPositions[j].position;
+      const sectionEnd = sectionPositions[j + 1]?.position || fixedContent.length;
+      
+      if (matchPosition >= sectionStart && matchPosition < sectionEnd) {
+        belongsToSection = sectionPositions[j].sectionNum;
+        break;
+      }
+    }
+    
+    // 如果这个标题的编号与它所在的子节不匹配，移除它
+    if (belongsToSection !== -1 && matchedSectionNum !== belongsToSection) {
+      // 检查标题内容是否与期望的子节名称匹配
+      const expectedName = expectedSections[matchedSectionNum - 1];
+      if (expectedName && matchedTitle.includes(expectedName.slice(0, 4))) {
+        // 这确实是一个错位的子节标题，移除它
+        const fullMatch = match[0];
+        const preserveNewline = fullMatch.startsWith('\n') ? '\n' : '';
+        fixedContent = fixedContent.slice(0, matchPosition) + preserveNewline + fixedContent.slice(matchPosition + fullMatch.length);
+        removeCount++;
+        console.log(`[错位标题移除] 移除了位置错误的子节标题: ${prefix}.${matchedSectionNum} ${matchedTitle} (应在子节${belongsToSection}中)`);
+      }
+    }
+  }
+  
+  if (removeCount > 0) {
+    console.log(`[removeMisplacedSectionTitles] 共移除了 ${removeCount} 处错位的子节标题`);
+  }
+  
+  return fixedContent;
+}
+
+/**
+ * 【核心修复】修正前置章节中AI输出的错误编号
+ * AI经常输出错误的编号格式，如 "1." 而不是 "2.1"
+ * 
+ * @param {string} content - AI生成的内容
+ * @param {string} chapterNumber - 当前章节编号（如 "2"）
+ * @param {Array} subChapters - 期望的子章节列表
+ * @returns {string} 修正后的内容
+ */
+function fixHeaderChapterNumbers(content, chapterNumber, subChapters) {
+  if (!content || !chapterNumber || !subChapters || subChapters.length === 0) {
+    return content;
+  }
+  
+  let fixedContent = content;
+  let fixCount = 0;
+  
+  // 遍历每个期望的子章节
+  subChapters.forEach((subChapter, idx) => {
+    const correctNumber = subChapter.number; // 如 "2.1"
+    const subChapterTitle = subChapter.title;
+    const escapedTitle = subChapterTitle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // 构建匹配错误编号的正则表达式
+    const wrongPatterns = [
+      // 匹配 ### 1. 标题 这样的格式（错误的编号）
+      new RegExp(`(#{2,6}\\s*)(\\d+)[.．、\\s]+(${escapedTitle})`, 'gi'),
+      // 匹配 1. 标题 这样的格式（纯文本）
+      new RegExp(`(^|\\n)(\\s*)(\\d+)[.．、\\s]+(${escapedTitle})`, 'gi'),
+    ];
+    
+    wrongPatterns.forEach((pattern, patternIdx) => {
+      fixedContent = fixedContent.replace(pattern, (match, ...groups) => {
+        let wrongNum;
+        if (patternIdx === 0) {
+          wrongNum = groups[1]; // 第二个捕获组是错误的编号
+        } else {
+          wrongNum = groups[2]; // 第三个捕获组是错误的编号
+        }
+        
+        // 检查是否是错误的编号（不包含点号的简单数字）
+        if (!wrongNum.includes('.') && wrongNum !== correctNumber) {
+          // 替换为正确的编号
+          const corrected = match.replace(
+            new RegExp(`(\\d+)([.．、\\s]+)(${escapedTitle})`),
+            `${correctNumber}$2${subChapterTitle}`
+          );
+          if (match !== corrected) {
+            fixCount++;
+          }
+          return corrected;
+        }
+        return match;
+      });
+    });
+  });
+  
+  // 额外处理：修正任何简单数字编号为正确的层级编号
+  // 例如将 "1. 重保容量管理" 修正为 "2.1 重保容量管理"
+  const simpleNumberPattern = new RegExp(
+    `(#{2,6}\\s*|^|\\n)(\\s*)(\\d+)[.．、]\\s*([^\\n]+)`,
+    'gm'
+  );
+  
+  fixedContent = fixedContent.replace(simpleNumberPattern, (match, prefix, space, num, title) => {
+    // 检查是否是简单数字编号（1-99）且标题匹配某个子章节
+    const matchingSubChapter = subChapters.find(sc => 
+      sc.title && title.trim().startsWith(sc.title.trim().substring(0, 10))
+    );
+    
+    if (matchingSubChapter && !num.includes('.')) {
+      const corrected = `${prefix}${space}${matchingSubChapter.number} ${title}`;
+      if (match !== corrected) {
+        fixCount++;
+      }
+      return corrected;
+    }
+    return match;
+  });
+  
+  if (fixCount > 0) {
+    console.log(`[fixHeaderChapterNumbers] 修正了 ${fixCount} 处错误的章节编号，章节: ${chapterNumber}`);
+  }
+  
+  return fixedContent;
 }
 
 // 从模板文本中提取功能过程示例
@@ -5381,18 +7227,19 @@ function extractFunctionalProcessSectionsFromTemplate(sections, funcChapterNum =
     return null;
   }
 
-  const sectionNames = subSections.map(s => s.title);
+  // 【修复】清理子节标题末尾的页码数字
+  const sectionNames = subSections.map(s => s.title.replace(/\s+\d{1,4}\s*$/, '').trim());
   console.log(`[模板子节提取] 成功提取 ${sectionNames.length} 个子节:`, sectionNames);
 
   return {
     processExample: {
       number: processNumber,
-      title: firstFuncProcess.title
+      title: firstFuncProcess.title.replace(/\s+\d{1,4}\s*$/, '').trim()
     },
     sections: sectionNames,
     sectionsDetailed: subSections.map(s => ({
       number: s.number,
-      name: s.title,
+      name: s.title.replace(/\s+\d{1,4}\s*$/, '').trim(),
       format: s.hasTable ? 'table' : (s.hasList ? 'list' : 'text')
     })),
     hierarchyLevels: 2 // 5.功能需求 -> 5.1.XXX功能 = 2级（简单结构）
@@ -5623,31 +7470,79 @@ app.post('/api/cosmic-to-spec/generate', async (req, res) => {
           savedAnalysis = JSON.parse(fs.readFileSync(analysisPath, 'utf-8'));
           templateText = savedAnalysis.originalTemplateText || '';
           fullProcessExample = savedAnalysis.fullProcessExample || '';
-          console.log('使用已保存的深度分析结果');
+          
+          // 【修复】清理已保存分析结果中的页码数字
+          const cleanPageNumber = (str) => str ? str.replace(/\s+\d{1,4}\s*$/, '').trim() : str;
+          if (savedAnalysis.allChapters) {
+            savedAnalysis.allChapters.forEach(c => { if (c.title) c.title = cleanPageNumber(c.title); });
+          }
+          if (savedAnalysis.sections) {
+            savedAnalysis.sections.forEach(c => { if (c.title) c.title = cleanPageNumber(c.title); });
+          }
+          if (savedAnalysis.processContentTemplate?.sections) {
+            savedAnalysis.processContentTemplate.sections = savedAnalysis.processContentTemplate.sections.map(s => 
+              typeof s === 'string' ? cleanPageNumber(s) : s
+            );
+          }
+          if (savedAnalysis.functionalChapter?.processContentTemplate?.sections) {
+            savedAnalysis.functionalChapter.processContentTemplate.sections = 
+              savedAnalysis.functionalChapter.processContentTemplate.sections.map(s => 
+                typeof s === 'string' ? cleanPageNumber(s) : s
+              );
+          }
+          if (savedAnalysis.functionalChapter?.processContentTemplate?.sectionsDetailed) {
+            savedAnalysis.functionalChapter.processContentTemplate.sectionsDetailed.forEach(s => {
+              if (s.name) s.name = cleanPageNumber(s.name);
+            });
+          }
+          
+          console.log('使用已保存的深度分析结果（已清理页码）');
         } catch (e) {
           console.log('读取分析结果失败，将重新分析');
         }
       }
 
-      // 如果没有分析结果，从缓存或文件获取模板
-      if (!templateText) {
+      // 如果没有分析结果，从缓存或文件获取模板并进行深度分析
+      if (!savedAnalysis) {
+        console.log('[生成] 没有找到已保存的分析结果，尝试加载模板并分析...');
+        
         const templateInfo = specTemplatesCache.get(templateId);
+        let templateBuffer = null;
+        let ext = '.docx';
+        
         if (templateInfo) {
           templateText = templateInfo.fullText || '';
           fullProcessExample = templateInfo.functionalExampleContent || '';
         } else {
           // 支持 .docx 和 .doc 两种格式
           let templatePath = path.join(TEMPLATES_DIR, `${templateId}.docx`);
-          let ext = '.docx';
+          ext = '.docx';
           if (!fs.existsSync(templatePath)) {
             templatePath = path.join(TEMPLATES_DIR, `${templateId}.doc`);
             ext = '.doc';
           }
           if (fs.existsSync(templatePath)) {
-            const buffer = fs.readFileSync(templatePath);
-            const parsed = await parseWordTemplate(buffer, ext);
+            templateBuffer = fs.readFileSync(templatePath);
+            const parsed = await parseWordTemplate(templateBuffer, ext);
             templateText = parsed.fullText;
             fullProcessExample = parsed.functionalExampleContent || '';
+            
+            // 【关键兜底】如果有模板文本但没有分析结果，自动进行深度分析并保存
+            if (templateText && templateText.length > 100) {
+              console.log('[生成] 自动触发模板深度分析...');
+              try {
+                const deepAnalysis = await deepAnalyzeTemplateMultiRound(client, parsed);
+                if (deepAnalysis) {
+                  savedAnalysis = deepAnalysis;
+                  // 保存分析结果供下次使用
+                  const analysisPath = path.join(TEMPLATES_DIR, `${templateId}_analysis.json`);
+                  fs.writeFileSync(analysisPath, JSON.stringify(deepAnalysis, null, 2));
+                  console.log('[生成] 模板深度分析完成并保存');
+                }
+              } catch (analyzeError) {
+                console.error('[生成] 模板深度分析失败:', analyzeError.message);
+              }
+            }
           }
         }
       }
@@ -5683,24 +7578,40 @@ app.post('/api/cosmic-to-spec/generate', async (req, res) => {
     // 优先使用已保存的分析结果
     if (savedAnalysis) {
       templateAnalysis = savedAnalysis;
+      // 【增强日志】输出模板分析的关键信息
+      const sectionsCount = savedAnalysis.allChapters?.length || savedAnalysis.sections?.length || 0;
+      const funcChapterInfo = savedAnalysis.functionalChapter || {};
+      console.log(`[模板分析] 使用已保存的分析结果:`);
+      console.log(`  - 章节数量: ${sectionsCount}`);
+      console.log(`  - 功能需求章节编号: ${savedAnalysis.functionalChapterNumber}`);
+      console.log(`  - 功能需求子节: ${funcChapterInfo.processContentTemplate?.sections?.join('、') || '未识别'}`);
+      console.log(`  - 前5个章节:`, (savedAnalysis.allChapters || savedAnalysis.sections || []).slice(0, 5).map(c => `${c.number} ${c.title}`));
+      
       res.write(`data: ${JSON.stringify({
         phase: 'template_analyzed',
-        message: `✅ 使用已保存的模板分析结果`,
+        message: `✅ 使用已保存的模板分析结果（${sectionsCount}个章节）`,
         templateAnalysis: {
           documentStyle: savedAnalysis.documentStyle,
           hierarchyStructure: savedAnalysis.hierarchyStructure,
-          processContentTemplate: savedAnalysis.processContentTemplate
+          processContentTemplate: savedAnalysis.processContentTemplate,
+          sectionsCount: sectionsCount,
+          functionalChapterNumber: savedAnalysis.functionalChapterNumber
         }
       })}\n\n`);
     } else if (templateText) {
+      console.log(`[模板分析] 没有已保存的分析结果，进行实时分析...`);
       templateAnalysis = await analyzeTemplateWithAI(client, templateText);
       if (templateAnalysis) {
+        const sectionsCount = templateAnalysis.allChapters?.length || 0;
+        console.log(`[模板分析] 实时分析完成: ${sectionsCount} 个章节`);
         res.write(`data: ${JSON.stringify({
           phase: 'template_analyzed',
-          message: `✅ 模板分析完成: ${templateAnalysis.chapters?.length || 0} 个章节`,
+          message: `✅ 模板分析完成: ${sectionsCount} 个章节`,
           templateAnalysis: templateAnalysis
         })}\n\n`);
       }
+    } else {
+      console.log(`[模板分析] 没有模板文本，将使用默认结构`);
     }
 
     // ========== 第1.5阶段：对功能过程进行智能分类 ==========
@@ -5781,79 +7692,356 @@ app.post('/api/cosmic-to-spec/generate', async (req, res) => {
 
     // ========== 动态构建前置章节列表（从模板分析结果中获取） ==========
     let headerChaptersList = '';
-    const allChapters = templateAnalysis?.allChapters || [];
+    const allChapters = templateAnalysis?.allChapters || savedAnalysis?.allChapters || savedAnalysis?.sections || [];
+    
+    console.log(`[动态章节] allChapters 数量: ${allChapters.length}`);
+    console.log(`[动态章节] allChapters 前5个:`, allChapters.slice(0, 5).map(c => `${c.number} ${c.title}`));
 
-    // 找到功能需求章节的位置
-    const funcChapterIndex = allChapters.findIndex(c =>
-      c.title?.includes('功能') || c.number === funcChapterNum
-    );
+    // 【修复】找到功能需求章节的位置 - 精确匹配一级章节
+    const funcChapterIndex = allChapters.findIndex(c => {
+      // 必须是一级章节
+      if (c.level !== 1) return false;
+      
+      // 编号精确匹配
+      const numMatch = c.number?.replace(/\.$/, '') === funcChapterNum || 
+                       c.number === funcChapterNum;
+      // 标题匹配（必须是"功能需求"而不是"功能架构"等）
+      const titleMatch = c.title?.includes('功能需求') || 
+                         c.title?.includes('功能要求');
+      return numMatch || titleMatch;
+    });
+    
+    console.log(`[动态章节] 匹配到的功能需求章节:`, funcChapterIndex >= 0 ? allChapters[funcChapterIndex] : 'NOT FOUND');
+    
+    console.log(`[动态章节] funcChapterNum: ${funcChapterNum}, funcChapterIndex: ${funcChapterIndex}`);
 
-    // 获取功能需求章节之前的所有章节
-    const headerChapters = funcChapterIndex > 0 ? allChapters.slice(0, funcChapterIndex) : [];
+    // 获取功能需求章节之前的所有一级章节（前置章节）
+    let headerChapters = [];
+    if (funcChapterIndex > 0) {
+      headerChapters = allChapters.slice(0, funcChapterIndex);
+    } else if (funcChapterIndex === -1 && allChapters.length > 0) {
+      // 如果没找到功能需求章节，尝试根据编号分割
+      const funcNum = parseInt(funcChapterNum);
+      headerChapters = allChapters.filter(c => {
+        const chapterNum = parseInt(c.number?.split('.')[0]);
+        return chapterNum < funcNum;
+      });
+      console.log(`[动态章节] 兜底提取前置章节: ${headerChapters.length} 个`);
+    }
+    
+    console.log(`[动态章节] 前置章节数量: ${headerChapters.length}`);
 
     if (headerChapters.length > 0) {
+      // 【增强】构建更详细的章节列表，包含层级信息
       headerChaptersList = headerChapters.map(c => {
         const prefix = c.level === 1 ? '#' : c.level === 2 ? '##' : '###';
-        return `${prefix} ${c.number} ${c.title}`;
+        const purpose = c.purpose ? ` - ${c.purpose}` : '';
+        return `${prefix} ${c.number} ${c.title}${purpose}`;
       }).join('\n');
       console.log('从模板分析结果中获取到前置章节:', headerChapters.length);
+      console.log('前置章节列表:', headerChapters.map(c => `${c.number} ${c.title}`).join(', '));
+    } else {
+      console.log('【警告】未能从模板分析结果中获取到前置章节！');
     }
 
-    const headerPrompt = templateText ? `你是资深需求分析专家。请**严格按照用户上传的模板格式**，生成需求规格说明书的前置章节。
-
-## 【核心要求】你必须完全按照模板的章节结构生成，不能自己发明章节！
-
-## 【模板分析结果】以下是从用户模板中识别出的前置章节结构：
-${headerChaptersList || '（未识别到前置章节，请从模板原文中提取）'}
-
-## 【模板原文】请仔细阅读并严格遵循：
-${templateText.slice(0, 8000)}
-
-## 【COSMIC功能过程列表】（用于填充业务背景等内容）：
-${classifiedOverview}
-
-## 【生成规则】
-1. **章节标题必须与模板完全一致**：包括编号格式（如1.1、1.1.1）、标题文字
-2. **只生成功能需求章节之前的内容**
-3. **最后输出功能需求章节的标题**："${funcChapterNum} 功能需求"或模板中的实际标题
-4. **内容要具体充实**：根据功能过程列表推导业务背景、系统概述等
-5. **保持模板的写作风格**
-
-请开始生成：` : `你是资深需求分析专家。
-
-## 【注意】没有上传模板，使用通用格式
-
-由于用户没有上传模板，请使用通用的需求规格说明书格式。
-
-## 功能过程分类结果：
-${classifiedOverview}
-
-## 生成要求：
-请根据功能过程列表，生成合适的前置章节（如概述、业务需求等），然后输出功能需求章节的标题。
-
-请开始生成：`;
+    // 【增强】获取功能需求章节的标题
+    const funcChapterTitle = allChapters.find(c => 
+      c.number === funcChapterNum || c.number?.startsWith(funcChapterNum + '.')
+    )?.title || '功能需求';
+    console.log(`[动态章节] 功能需求章节标题: ${funcChapterNum} ${funcChapterTitle}`);
 
     let fullContent = '';
 
-    // 生成前置章节
-    const headerStream = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'glm-4-flash',
-      messages: [
-        { role: 'system', content: '你是专业的需求规格说明书撰写专家，严格按照模板格式输出内容。' },
-        { role: 'user', content: headerPrompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 8000,
-      stream: true
-    });
+    // ========== 【核心改进】按章节逐个生成前置内容，确保格式一致 ==========
+    // 只取一级章节（避免重复生成子章节）
+    const level1HeaderChapters = headerChapters.filter(c => c.level === 1);
+    console.log(`[前置章节] 一级章节数量: ${level1HeaderChapters.length}`);
 
-    for await (const chunk of headerStream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      if (content) {
-        fullContent += content;
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+    // 从功能列表中提取用于图表生成的信息
+    const functionsForDiagram = (functionalProcesses || []).map(item => ({
+      name: item.process || item.functionalProcess || item.name || '',
+      description: item.description || ''
+    }));
+
+    for (const chapter of level1HeaderChapters) {
+      // 获取该一级章节下的所有子章节
+      const chapterPrefix = chapter.number + '.';
+      const subChapters = headerChapters.filter(c => 
+        c.number?.startsWith(chapterPrefix) && c.level > chapter.level
+      );
+      
+      // 【代码显式输出章节标题】确保格式完全一致
+      const chapterTitle = `\n## ${chapter.number} ${chapter.title}\n\n`;
+      fullContent += chapterTitle;
+      res.write(`data: ${JSON.stringify({ content: chapterTitle })}\n\n`);
+
+      // 构建该章节的子节列表
+      let subChaptersList = '';
+      if (subChapters.length > 0) {
+        subChaptersList = subChapters.map(s => `- ${s.number} ${s.title}`).join('\n');
+      }
+
+      // 【图表检测】检测是否包含需要生成图表的子节
+      const diagramSubChapters = subChapters.filter(s => 
+        s.title?.includes('用例图') || 
+        s.title?.includes('流程图') || 
+        s.title?.includes('时序图') ||
+        s.title?.includes('架构图') ||
+        s.title?.includes('功能架构') ||
+        s.title?.includes('数据流图') ||
+        s.title?.includes('象限图')
+      );
+      
+      console.log(`[图表检测] 章节 ${chapter.number} 检测到 ${diagramSubChapters.length} 个图表子节:`, diagramSubChapters.map(s => s.title));
+
+      // 为每个一级章节单独生成内容
+      const chapterPrompt = `你是专业的需求规格说明书撰写专家。请为以下章节生成内容。
+
+## 当前章节
+- 编号: ${chapter.number}
+- 标题: ${chapter.title}
+
+${subChapters.length > 0 ? `## 该章节包含的子节（必须全部输出）：
+${subChaptersList}
+
+请严格按照上述子节结构输出，每个子节标题格式为：### 编号 标题` : ''}
+
+${diagramSubChapters.length > 0 ? `## 【特别说明】以下子节包含图表，请在对应位置只写简短说明，图表将自动插入：
+${diagramSubChapters.map(s => `- ${s.number} ${s.title}：写一句简短说明即可，如"下图展示了系统用例图："，图表由系统自动生成` ).join('\n')}` : ''}
+
+## 项目背景（用于填充内容）
+本项目包含以下主要功能模块：
+${classifiedOverview.slice(0, 2000)}
+
+## 【重要规则】
+1. 不要输出当前章节的标题（已由系统输出）
+2. ${subChapters.length > 0 ? '必须按照子节列表逐个输出，子节标题格式：### 编号 标题' : '直接输出该章节的内容'}
+3. 内容要专业、具体、充实
+4. 不要使用"待补充"等模糊表述
+
+请直接开始输出内容：`;
+
+      const chapterStream = await client.chat.completions.create({
+        model: process.env.OPENAI_MODEL || 'glm-4-flash',
+        messages: [
+          { role: 'system', content: '你是专业的需求规格说明书撰写专家。直接输出内容，不要输出章节主标题。' },
+          { role: 'user', content: chapterPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+        stream: true
+      });
+
+      let chapterContent = '';
+      for await (const chunk of chapterStream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          chapterContent += content;
+        }
+      }
+      
+      // 【核心修复】修正AI输出中的错误子节编号
+      if (subChapters.length > 0) {
+        chapterContent = fixHeaderChapterNumbers(chapterContent, chapter.number, subChapters);
+      }
+      
+      // 输出修正后的内容
+      if (chapterContent.trim()) {
+        fullContent += chapterContent;
+        res.write(`data: ${JSON.stringify({ content: chapterContent })}\n\n`);
+      }
+
+      // 【图表自动生成】使用两阶段深度分析：1.深度思考 2.生成JSON 3.渲染HTML
+      for (const diagramChapter of diagramSubChapters) {
+        try {
+          let diagramHtml = '';
+          const diagramTitle = diagramChapter.title;
+          const systemName = processClassification?.systemName || functionalProcesses[0]?.systemName || '系统';
+          
+          // 【增强】构建更详细的功能列表，包含COSMIC数据
+          const functionsText = functionsForDiagram.map((f, i) => {
+            let funcDesc = `${i + 1}. ${f.name}`;
+            if (f.description) funcDesc += `: ${f.description}`;
+            // 如果有数据移动信息，添加操作类型
+            const processData = groupedByProcess[f.name] || [];
+            if (processData.length > 0) {
+              const operations = processData.map(d => d.dataMovementType).filter(Boolean);
+              const uniqueOps = [...new Set(operations)];
+              if (uniqueOps.length > 0) {
+                const opNames = uniqueOps.map(op => {
+                  if (op === 'E') return '入口';
+                  if (op === 'X') return '出口';
+                  if (op === 'R') return '读取';
+                  if (op === 'W') return '写入';
+                  return op;
+                });
+                funcDesc += ` [操作: ${opNames.join('/')}]`;
+              }
+              // 添加功能用户信息
+              const user = processData[0]?.functionalUser;
+              if (user) funcDesc += ` [用户: ${user}]`;
+            }
+            return funcDesc;
+          }).join('\n');
+          
+          console.log(`[图表数据] 为 ${diagramTitle} 准备了 ${functionsForDiagram.length} 个功能`);
+          
+          if (diagramTitle.includes('用例图')) {
+            console.log(`📊 [深度分析用例图] ${diagramChapter.number} ${diagramTitle}`);
+            res.write(`data: ${JSON.stringify({ content: '\n\n> 🤔 正在深度分析用例图...\n' })}\n\n`);
+            
+            try {
+              // 第一阶段：深度思考分析
+              const thinkingPrompt = `${USE_CASE_THINKING_PROMPT}\n\n## 系统名称\n${systemName}\n\n## 功能需求列表\n${functionsText}`;
+              const thinkingResponse = await client.chat.completions.create({
+                model: process.env.OPENAI_MODEL || 'glm-4-flash',
+                messages: [{ role: 'user', content: thinkingPrompt }],
+                temperature: 0.5,
+                max_tokens: 3000
+              });
+              const thinkingResult = thinkingResponse.choices[0].message.content;
+              console.log(`✅ 用例图深度分析完成，长度: ${thinkingResult.length}`);
+              
+              // 第二阶段：生成JSON
+              const generatePrompt = USE_CASE_DIAGRAM_PROMPT.replace('{THINKING_RESULT}', thinkingResult) + 
+                `\n\n## 功能列表\n${functionsText}\n\n## 系统名称\n${systemName}`;
+              const generateResponse = await client.chat.completions.create({
+                model: process.env.OPENAI_MODEL || 'glm-4-flash',
+                messages: [{ role: 'user', content: generatePrompt }],
+                temperature: 0.3,
+                max_tokens: 3000
+              });
+              const parsed = extractDiagramJSON(generateResponse.choices[0].message.content);
+              
+              if (parsed) {
+                diagramHtml = generateUseCaseDiagramFromAnalysis(parsed, systemName);
+                console.log(`✅ 用例图生成成功，包含 ${parsed.actors?.length || 0} 个参与者, ${parsed.useCases?.length || 0} 个用例`);
+              } else {
+                // 降级到简单版本
+                console.log('⚠️ JSON解析失败，使用简单版本');
+                diagramHtml = generateHTMLUseCaseDiagram(
+                  [{ name: '用户', description: '系统使用者' }],
+                  functionsForDiagram.slice(0, 15).map(f => ({ name: f.name, actor: '用户' })),
+                  systemName
+                );
+              }
+            } catch (aiError) {
+              console.log('AI分析用例失败，使用简单版本:', aiError.message);
+              diagramHtml = generateHTMLUseCaseDiagram(
+                [{ name: '用户', description: '系统使用者' }],
+                functionsForDiagram.slice(0, 15).map(f => ({ name: f.name, actor: '用户' })),
+                systemName
+              );
+            }
+            
+          } else if (diagramTitle.includes('象限图')) {
+            console.log(`📊 [深度分析象限图] ${diagramChapter.number} ${diagramTitle}`);
+            res.write(`data: ${JSON.stringify({ content: '\n\n> 🤔 正在深度分析优先级象限图...\n' })}\n\n`);
+            
+            try {
+              // 第一阶段：深度思考分析
+              const thinkingPrompt = `${QUADRANT_THINKING_PROMPT}\n\n## 功能需求列表\n${functionsText}`;
+              const thinkingResponse = await client.chat.completions.create({
+                model: process.env.OPENAI_MODEL || 'glm-4-flash',
+                messages: [{ role: 'user', content: thinkingPrompt }],
+                temperature: 0.5,
+                max_tokens: 3000
+              });
+              const thinkingResult = thinkingResponse.choices[0].message.content;
+              console.log(`✅ 象限图深度分析完成，长度: ${thinkingResult.length}`);
+              
+              // 第二阶段：生成JSON
+              const generatePrompt = QUADRANT_DIAGRAM_PROMPT.replace('{THINKING_RESULT}', thinkingResult) + 
+                `\n\n## 功能列表\n${functionsText}`;
+              const generateResponse = await client.chat.completions.create({
+                model: process.env.OPENAI_MODEL || 'glm-4-flash',
+                messages: [{ role: 'user', content: generatePrompt }],
+                temperature: 0.3,
+                max_tokens: 3000
+              });
+              const parsed = extractDiagramJSON(generateResponse.choices[0].message.content);
+              
+              if (parsed) {
+                diagramHtml = generateQuadrantDiagramFromAnalysis(parsed);
+                console.log(`✅ 象限图生成成功`);
+              } else {
+                console.log('⚠️ JSON解析失败，使用简单版本');
+                diagramHtml = generatePriorityQuadrantDiagram(functionsForDiagram);
+              }
+            } catch (aiError) {
+              console.log('AI分析象限图失败，使用简单版本:', aiError.message);
+              diagramHtml = generatePriorityQuadrantDiagram(functionsForDiagram);
+            }
+            
+          } else if (diagramTitle.includes('架构图') || diagramTitle.includes('功能架构')) {
+            console.log(`📊 [深度分析架构图] ${diagramChapter.number} ${diagramTitle}`);
+            res.write(`data: ${JSON.stringify({ content: '\n\n> 🤔 正在深度分析功能架构图...\n' })}\n\n`);
+            
+            try {
+              // 第一阶段：深度思考分析
+              const thinkingPrompt = `${ARCHITECTURE_THINKING_PROMPT}\n\n## 系统名称\n${systemName}\n\n## 功能需求列表\n${functionsText}`;
+              const thinkingResponse = await client.chat.completions.create({
+                model: process.env.OPENAI_MODEL || 'glm-4-flash',
+                messages: [{ role: 'user', content: thinkingPrompt }],
+                temperature: 0.5,
+                max_tokens: 3000
+              });
+              const thinkingResult = thinkingResponse.choices[0].message.content;
+              console.log(`✅ 架构图深度分析完成，长度: ${thinkingResult.length}`);
+              
+              // 第二阶段：生成JSON
+              const generatePrompt = ARCHITECTURE_DIAGRAM_PROMPT_V2.replace('{THINKING_RESULT}', thinkingResult) + 
+                `\n\n## 功能列表\n${functionsText}\n\n## 系统名称\n${systemName}`;
+              const generateResponse = await client.chat.completions.create({
+                model: process.env.OPENAI_MODEL || 'glm-4-flash',
+                messages: [{ role: 'user', content: generatePrompt }],
+                temperature: 0.3,
+                max_tokens: 3000
+              });
+              const parsed = extractDiagramJSON(generateResponse.choices[0].message.content);
+              
+              if (parsed) {
+                diagramHtml = generateArchitectureDiagramFromAnalysis(parsed);
+                console.log(`✅ 架构图生成成功，包含 ${parsed.layers?.length || 0} 个层级`);
+              } else {
+                console.log('⚠️ JSON解析失败，使用简单版本');
+                diagramHtml = generateFunctionArchitectureDiagram(functionsForDiagram, systemName);
+              }
+            } catch (aiError) {
+              console.log('AI分析架构图失败，使用简单版本:', aiError.message);
+              diagramHtml = generateFunctionArchitectureDiagram(functionsForDiagram, systemName);
+            }
+            
+          } else if (diagramTitle.includes('流程图') || diagramTitle.includes('业务流程')) {
+            console.log(`📊 [自动生成流程图] ${diagramChapter.number} ${diagramTitle}`);
+            const sampleDataMovements = [
+              { dataMovementType: 'E', subProcessDesc: '用户发起请求' },
+              { dataMovementType: 'R', subProcessDesc: '查询相关数据' },
+              { dataMovementType: 'W', subProcessDesc: '保存处理结果' },
+              { dataMovementType: 'X', subProcessDesc: '返回操作结果' }
+            ];
+            diagramHtml = generateHTMLFlowchart(sampleDataMovements, '业务流程');
+          }
+          
+          if (diagramHtml) {
+            // 直接输出HTML图表（前端预览时渲染，导出Word时用html2canvas转图片）
+            // 使用特殊标记包裹，便于前端识别和处理
+            const diagramInsert = `\n\n<!-- DIAGRAM_START:${diagramTitle} -->\n${diagramHtml}\n<!-- DIAGRAM_END -->\n\n`;
+            
+            fullContent += diagramInsert;
+            res.write(`data: ${JSON.stringify({ content: diagramInsert })}\n\n`);
+            console.log(`✅ 图表HTML已插入: ${diagramTitle}`);
+          }
+        } catch (diagramError) {
+          console.error(`生成图表失败 ${diagramChapter.title}:`, diagramError.message);
+        }
       }
     }
+
+    // 输出功能需求章节标题
+    const funcChapterHeader = `\n## ${funcChapterNum} ${funcChapterTitle}\n\n`;
+    fullContent += funcChapterHeader;
+    res.write(`data: ${JSON.stringify({ content: funcChapterHeader })}\n\n`);
 
     // ========== 第三阶段：按层级结构分批生成功能需求 ==========
     // 【核心修复】优先从 sections 中分析层级深度，而不是依赖可能不存在的 AI 分析结果
@@ -6035,7 +8223,9 @@ ${dataMovements}
 
           // 根据模板分析结果构建功能过程的内容格式
           const processTemplate = templateAnalysis?.functionalChapter?.processTemplate || {};
-          const templateSections = processTemplate.sections || ['功能说明', '业务规则', '处理数据表', '接口设计', '验收标准'];
+          // 【修复】清理子节名称末尾的页码数字
+          const templateSections = (processTemplate.sections || ['功能说明', '业务规则', '处理数据表', '接口设计', '验收标准'])
+            .map(s => typeof s === 'string' ? s.replace(/\s+\d{1,4}\s*$/, '').trim() : s);
           const dataTableHeaders = processTemplate.dataTableHeaders || ['字段名', '类型', '长度', '说明', '来源'];
 
           // 构建基于模板的输出格式说明
@@ -6062,7 +8252,12 @@ ${templateAnalysis.originalTemplateText.slice(0, 4000)}
           for (const item of batchItems) {
             const processNumbers = [funcChapterNum, item.subsysNum, item.moduleNum, item.processNum];
             const fullNum = processNumbers.join(numberSeparator);
-            const processTitle = `\n#### ${fullNum}${titleSeparator}${item.process}\n\n`;
+            // 【修正】根据编号层级动态确定标题级别
+            const processDotCount = (fullNum.match(/\./g) || []).length;
+            const processHeadingLevel = Math.min(processDotCount + 2, 6);
+            const processHashes = '#'.repeat(processHeadingLevel);
+            // 【修复】编号和标题之间用空格分隔，不要用分隔符
+            const processTitle = `\n${processHashes} ${fullNum} ${item.process}\n\n`;
             fullContent += processTitle;
             res.write(`data: ${JSON.stringify({ content: processTitle })}\n\n`);
 
@@ -6083,6 +8278,10 @@ ${dataMovements}
             // 根据 COSMIC 数据生成HTML+CSS时序图（用于插入Word文档）
             const htmlSequenceDiagram = generateHTMLSequenceDiagram(rows, item.process);
             const htmlFlowchart = generateHTMLFlowchart(rows, item.process);
+
+            // ========== 【增强】执行快速深度思考 ==========
+            let deepThinkingInsight = '';
+            // 【移除深度思考】直接生成功能内容，不再进行额外的深度思考调用
 
             // 获取模板的内容格式（表格形式 vs 普通文本形式）
             const contentFormat = processTemplate.contentFormat || 'text';
@@ -6133,14 +8332,38 @@ ${dataMovements}
               console.log(`[复杂结构子节来源] 使用 templateSections 变量:`, finalSections);
             }
 
-            console.log(`功能过程 ${item.process} 使用的子节结构（共${finalSections.length}个）:`, finalSections);
+            // 【修复】清理子节名称末尾的页码数字
+            finalSections = finalSections.map(s => s.replace(/\s+\d{1,4}\s*$/, '').trim());
 
-            let singleProcessPrompt = `你是专业的需求规格说明书撰写专家。请为以下功能过程生成规范的内容。
+            // 构建单个功能过程的提示词
+            let singleProcessPrompt = `你是专业的需求规格说明书撰写专家。
+
+## 【最高优先级 - 必须严格遵守的格式要求】
+
+### 关键规则1：子节标题是强制性的
+- ✅ **必须输出所有子节标题**（如 "##### 5.3.1 功能说明"、"##### 5.3.2 业务规则"）
+- ✅ **每个子节都要有完整的标题行**（5个#号 + 空格 + 编号 + 空格 + 名称）
+- ❌ **绝对禁止省略子节标题**
+
+### 关键规则2：不要输出功能过程主标题
+- ❌ 不要输出功能过程的主标题（如 "## 5.3 查询小区保障性用户预测结果"），这个标题已由系统生成
+- ✅ 只输出子节标题和内容
+
+### 关键规则3：子节标题格式
+- 格式：##### 编号 名称
+- 示例：##### ${processNumbers.join(numberSeparator)}.1 功能说明
+- 5个#号，后跟空格，再跟编号，再跟空格，最后是名称
 
 ## 功能过程详情：
 ${processDetail}
 
-## 【最重要】不要输出功能过程标题！标题已由系统生成。
+${deepThinkingInsight}
+
+## 【内容丰富度要求】
+- 功能说明着重描述：功能描述（做什么）、操作流程（怎么做，步骤要清晰具体）
+- 业务规则要全面：数据校验、权限控制、状态转换、异常处理等维度
+- 验收标准要具体：正常流程、异常流程、边界条件都要覆盖
+- 数据字段要详细：包含字段说明、类型、约束、示例
 
 `;
 
@@ -6152,6 +8375,9 @@ ${exampleContent.slice(0, 3000)}
 
 ## 【写作要求】
 ${writingGuidelines}
+- 内容要专业、详细、有深度
+- 不要使用"待补充"、"至少XX字"、"AI生成"等模糊表述
+- 每个子节的内容都要实质性填写
 
 `;
             }
@@ -6195,9 +8421,25 @@ ${writingGuidelines}
               const processNumbers = [funcChapterNum, item.subsysNum, item.moduleNum, item.processNum];
               const processNumPrefix = processNumbers.join(numberSeparator);
 
-              singleProcessPrompt += `## 【严格按照以下子节结构输出】\n\n`;
-              singleProcessPrompt += `模板中识别到的子节（共${finalSections.length}个）：${finalSections.join('、')}\n\n`;
-              singleProcessPrompt += `【重要】你必须输出以上全部${finalSections.length}个子节，不能遗漏任何一个！\n\n`;
+              singleProcessPrompt += `\n## 【必须严格按照以下结构输出 - 共${finalSections.length}个子节】\n\n`;
+              singleProcessPrompt += `模板要求的子节：${finalSections.join('、')}\n\n`;
+              singleProcessPrompt += `### 输出格式示例（必须完全按照此格式）：\n\n`;
+              
+              // 为前3个子节生成完整示例
+              for (let i = 0; i < Math.min(3, finalSections.length); i++) {
+                singleProcessPrompt += `##### ${processNumPrefix}.${i+1} ${finalSections[i]}\n`;
+                singleProcessPrompt += `（这里写${finalSections[i]}的具体内容）\n\n`;
+              }
+              
+              if (finalSections.length > 3) {
+                singleProcessPrompt += `...（后续子节以此类推）\n\n`;
+              }
+              
+              singleProcessPrompt += `### 强制要求：\n`;
+              singleProcessPrompt += `1. 必须输出全部${finalSections.length}个子节，一个都不能少\n`;
+              singleProcessPrompt += `2. 每个子节必须以 "##### ${processNumPrefix}.X 子节名称" 开头\n`;
+              singleProcessPrompt += `3. 子节之间用空行分隔\n`;
+              singleProcessPrompt += `4. 不要输出任何其他格式的标题\n\n`;
 
               // 根据模板中的子节结构生成格式指南
               finalSections.forEach((section, idx) => {
@@ -6256,12 +8498,16 @@ ${writingGuidelines}
                   singleProcessPrompt += `${sectionTitle}
 
 **功能目的：** 描述该功能的业务目的
+
 **使用场景：** 描述用户在什么情况下使用该功能
+
 **操作流程：**
 1. 用户执行操作1
 2. 系统响应
 3. 用户执行操作2
 ...
+
+【注意】操作流程、使用场景等都是功能说明的内容，不要为它们单独创建子节标题
 
 `;
                 } else if (section.includes('时序') || section.includes('流程图') || section.includes('示意图') || section.includes('交互图')) {
@@ -6281,16 +8527,28 @@ ${writingGuidelines}
               singleProcessPrompt += `\n\n**操作时序图：**\n\n${htmlSequenceDiagram}`;
             }
 
-            singleProcessPrompt += `\n\n## 【输出规范】：
-- 不要输出功能过程标题（已由系统生成）
-- 不要输出子系统标题或模块标题
-- 不要使用"待补充"、"至少XX字"、"AI生成"等字眼
-- 表格必须完整，使用标准Markdown格式
-- 内容要专业规范，像真正的需求规格说明书
-- 严格按照上述格式输出，不要改变格式结构
-- 【重要】内容深度和详细程度要与参考示例保持一致
+            singleProcessPrompt += `\n\n## 【最终检查清单 - 输出前必须确认】
 
-请直接输出内容：`;
+### 格式检查：
+- [ ] 每个子节都有 "##### X.X.X 名称" 格式的标题
+- [ ] 使用了5个#号（#####），不是2个、3个或4个
+- [ ] 编号格式正确：${fullNum}.1、${fullNum}.2、${fullNum}.3...
+- [ ] 子节之间有空行分隔
+- [ ] 没有输出功能过程主标题（## ${fullNum} XXX）
+
+### 内容检查：
+- [ ] 所有${finalSections.length}个子节都已输出
+- [ ] 每个子节都有实质性内容，不是空的
+- [ ] 表格格式正确，使用标准Markdown
+- [ ] 没有"待补充"、"根据实际情况"等模糊表述
+
+### 禁止事项：
+- ❌ 禁止省略任何子节标题
+- ❌ 禁止重复输出同一个子节
+- ❌ 禁止使用错误的编号
+- ❌ 禁止输出目录列表
+
+现在请严格按照上述要求输出内容：`;
 
             const singleStream = await client.chat.completions.create({
               model: process.env.OPENAI_MODEL || 'glm-4-flash',
@@ -6298,17 +8556,85 @@ ${writingGuidelines}
                 { role: 'system', content: COSMIC_FUNCTION_ANALYSIS_PROMPT },
                 { role: 'user', content: singleProcessPrompt }
               ],
-              temperature: 0.7,
+              temperature: 0.3,  // 降低温度，提高输出稳定性和一致性
               max_tokens: 8000,
               stream: true
             });
 
+            // 收集当前功能过程的完整内容，用于后处理
+            let processContent = '';
             for await (const chunk of singleStream) {
               const content = chunk.choices[0]?.delta?.content || '';
               if (content) {
-                fullContent += content;
-                res.write(`data: ${JSON.stringify({ content })}\n\n`);
+                processContent += content;
               }
+            }
+            
+            // 【后处理】过滤AI可能输出的重复功能过程标题
+            // 【修复】增强正则匹配，支持更多格式变体
+            const escapedItemProcess = item.process.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // 提取功能名称的核心部分（去掉括号内容）用于更宽松的匹配
+            const coreItemProcess = item.process.replace(/[（(][^）)]*[）)]/g, '').trim();
+            const escapedCoreItemProcess = coreItemProcess.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const titlePatterns = [
+              // 匹配完整功能名称（带括号）
+              new RegExp(`^\\s*#{1,4}\\s*${fullNum.replace(/\./g, '\\.')}[.．、\\s]*${escapedItemProcess}[\\s\\n]*`, 'i'),
+              // 匹配核心功能名称（不带括号）
+              new RegExp(`^\\s*#{1,4}\\s*${fullNum.replace(/\./g, '\\.')}[.．、\\s]*${escapedCoreItemProcess}[\\s\\n]*`, 'i'),
+              // 匹配纯编号开头
+              new RegExp(`^\\s*#{1,4}\\s*${fullNum.replace(/\./g, '\\.')}[.．、\\s]+[^\\n]*\\n`, 'i'),
+              // 匹配无#号的标题格式
+              new RegExp(`^\\s*${fullNum.replace(/\./g, '\\.')}[.．、\\s]*${escapedItemProcess}[\\s\\n]*`, 'i'),
+              new RegExp(`^\\s*${fullNum.replace(/\./g, '\\.')}[.．、\\s]*${escapedCoreItemProcess}[\\s\\n]*`, 'i')
+            ];
+            
+            let cleanedContent = processContent;
+            for (const pattern of titlePatterns) {
+              const match = cleanedContent.match(pattern);
+              if (match) {
+                // 确保只移除功能过程标题，不移除子节标题
+                const matchedText = match[0];
+                // 检查匹配的内容是否包含子节编号（如 5.1.1.1）
+                if (!matchedText.match(/\d+\.\d+\.\d+\.\d+/)) {
+                  cleanedContent = cleanedContent.replace(pattern, '');
+                  console.log(`[标题过滤-复杂结构] 移除了重复的功能过程标题: ${fullNum} ${item.process}`);
+                  break;
+                }
+              }
+            }
+            
+            // 【核心修复0】移除AI输出中错误的功能过程标题（如在5.9内容中出现5.1）
+            cleanedContent = removeWrongProcessTitles(cleanedContent, fullNum, funcChapterNum);
+            
+            // 【核心修复0.5】重组内容，确保子节标题和内容匹配
+            if (finalSections && finalSections.length > 0) {
+              cleanedContent = reorganizeContent(cleanedContent, fullNum, finalSections, '.');
+            }
+            
+            // 【核心修复1】移除AI输出中的重复子节
+            if (finalSections && finalSections.length > 0) {
+              cleanedContent = removeDuplicateSections(cleanedContent, fullNum, finalSections);
+            }
+            
+            // 【核心修复1.5】移除子节标题下方的重复文本标题
+            if (finalSections && finalSections.length > 0) {
+              cleanedContent = removeTextDuplicateTitles(cleanedContent, fullNum, finalSections);
+            }
+            
+            // 【核心修复1.6】移除子节内容中出现的错位子节标题
+            if (finalSections && finalSections.length > 0) {
+              cleanedContent = removeMisplacedSectionTitles(cleanedContent, fullNum, finalSections);
+            }
+            
+            // 【核心修复2】修正AI输出中的错误子节编号
+            if (finalSections && finalSections.length > 0) {
+              cleanedContent = fixSubSectionNumbers(cleanedContent, fullNum, '.', finalSections);
+            }
+            
+            // 输出清理后的内容
+            if (cleanedContent.trim()) {
+              fullContent += cleanedContent;
+              res.write(`data: ${JSON.stringify({ content: cleanedContent })}\n\n`);
             }
 
             fullContent += '\n\n---\n\n';
@@ -6359,6 +8685,9 @@ ${writingGuidelines}
         console.log('[子节来源] 无法自动提取，将使用AI实时提取');
       }
 
+      // 【修复】清理子节名称末尾的页码数字（如 "业务规则、模型和算法 10" -> "业务规则、模型和算法"）
+      finalSectionsForSimple = finalSectionsForSimple.map(s => s.replace(/\s+\d{1,4}\s*$/, '').trim());
+
       console.log('最终子节结构:', finalSectionsForSimple);
       console.log('是否需要实时提取:', needsRealTimeExtraction);
 
@@ -6382,7 +8711,13 @@ ${writingGuidelines}
         })}\n\n`);
 
         // 输出功能过程标题（如：5.1.XXX功能（功能编号））
-        const processTitle = `\n## ${fullNum}${numberSeparator}${processName}\n\n`;
+        // 【修正】根据编号层级确定正确的标题级别
+        // fullNum 如 "5.1" 有1个点，应该是三级标题(###)
+        const dotCount = (fullNum.match(/\./g) || []).length;
+        const headingLevel = Math.min(dotCount + 2, 6); // ## 是一级，### 是二级，以此类推
+        const headingHashes = '#'.repeat(headingLevel);
+        // 【修复】编号和标题之间用空格分隔，不要用分隔符
+        const processTitle = `\n${headingHashes} ${fullNum} ${processName}\n\n`;
         fullContent += processTitle;
         res.write(`data: ${JSON.stringify({ content: processTitle })}\n\n`);
 
@@ -6398,6 +8733,9 @@ ${writingGuidelines}
 ${dataMovements}
 - 涉及数据组: ${dataGroups}
 - 数据属性: ${dataAttrs}`;
+
+        // 【移除深度思考】直接生成功能内容，不再进行额外的深度思考调用
+        let deepThinkingInsightSimple = '';
 
         // ========== 完全动态构建子节提示词 ==========
         let sectionsPrompt = '';
@@ -6421,39 +8759,49 @@ ${dataMovements}
             : (savedAnalysis?.functionalChapter?.processContentTemplate?.sectionsDetailed ||
                templateAnalysis?.functionalChapter?.processContentTemplate?.sectionsDetailed || []);
 
-          sectionsPrompt = `## 【严格按照模板的子节结构输出】\n\n`;
-          sectionsPrompt += `模板中识别到的子节（共${finalSectionsForSimple.length}个）：${finalSectionsForSimple.join('、')}\n\n`;
-          sectionsPrompt += `【重要】你必须输出以上全部${finalSectionsForSimple.length}个子节，不能遗漏任何一个！\n\n`;
-
+          // 【修复】简化提示词，只输出一次子节结构，避免AI混乱导致重复输出
+          sectionsPrompt = `## 【子节结构要求 - 严格按顺序输出，每个子节只输出一次！】\n`;
+          sectionsPrompt += `本功能必须包含以下${finalSectionsForSimple.length}个子节，按顺序逐个输出：\n\n`;
+          
           finalSectionsForSimple.forEach((section, idx) => {
             const sectionNum = `${fullNum}${numberSeparator}${idx + 1}`;
-            const sectionTitle = `### ${sectionNum}${numberSeparator} ${section}`;
-
+            const sectionDotCount = (sectionNum.match(/\./g) || []).length;
+            const sectionHeadingLevel = Math.min(sectionDotCount + 2, 6);
+            const sectionHashes = '#'.repeat(sectionHeadingLevel);
+            
             // 尝试从详细信息中获取该子节的描述
             const sectionDetail = sectionsDetailed.find(s => s.name === section || s.title === section);
-            const sectionPurpose = sectionDetail?.purpose || '';
             const sectionFormat = sectionDetail?.format || 'text';
-            const sectionSample = sectionDetail?.sampleContent || '';
-
-            sectionsPrompt += `${sectionTitle}\n`;
-
-            if (sectionPurpose) {
-              sectionsPrompt += `【${sectionPurpose}】\n`;
+            
+            sectionsPrompt += `${idx + 1}. ${sectionHashes} ${sectionNum} ${section}`;
+            // 为每个子节添加内容说明
+            if (section.includes('功能说明') || section.includes('功能描述')) {
+              sectionsPrompt += `
+   【功能说明包含以下内容，全部写在这个子节内，不要分开！】
+   - 功能目的：描述该功能的业务目的
+   - 使用场景：描述用户在什么情况下使用该功能（写在功能说明内，不是单独的子节！）
+   - 操作流程：描述用户操作步骤（写在功能说明内，不是单独的子节！）`;
+            } else if (section.includes('业务规则') || section.includes('规则')) {
+              sectionsPrompt += `（列出业务规则，如数据校验、权限控制等，用编号列表格式。注意：不要在这里写使用场景或操作流程！）`;
+            } else if (section.includes('处理数据') || section.includes('数据')) {
+              sectionsPrompt += `（用表格列出数据字段。注意：不要在这里写操作流程！）`;
+            } else if (section.includes('接口')) {
+              sectionsPrompt += `（描述接口信息）`;
+            } else if (section.includes('界面')) {
+              sectionsPrompt += `（描述界面要求）`;
+            } else if (section.includes('验收') || section.includes('标准')) {
+              sectionsPrompt += `（列出验收标准，用编号列表格式）`;
             }
-
-            if (sectionSample) {
-              sectionsPrompt += `参考示例：${sectionSample}\n`;
-            }
-
-            // 根据格式类型添加基本结构提示
-            if (sectionFormat === 'table' || section.includes('数据')) {
-              sectionsPrompt += `（使用表格格式）\n`;
-            } else if (sectionFormat === 'list' || section.includes('规则') || section.includes('标准')) {
-              sectionsPrompt += `（使用列表格式）\n`;
-            }
-
             sectionsPrompt += `\n`;
           });
+          
+          sectionsPrompt += `\n【严格警告】
+1. 每个子节只能输出一次，不要重复！
+2. 子节编号必须使用 ${fullNum}.X 格式（如 ${fullNum}.1、${fullNum}.2），不要使用其他编号！
+3. 不要输出任何 5.1.X 或其他错误编号的标题！
+4. 输出完${finalSectionsForSimple.length}个子节后立即停止，不要继续输出！
+5. 【重要】"使用场景"和"操作流程"必须写在"功能说明"子节内，不要放到其他子节！
+\n\n`;
         }
 
         // 获取模板示例
@@ -6461,24 +8809,44 @@ ${dataMovements}
           templateAnalysis?.templateExamples?.functionalProcessExample ||
           fullProcessExample || '';
 
-        // 获取模板原文片段作为格式参考（如果需要实时提取，传递更多内容）
+        // 获取模板原文片段作为格式参考（减少长度避免AI混乱）
         const templateTextSnippet = needsRealTimeExtraction
-          ? (templateAnalysis?.originalTemplateText?.slice(0, 6000) || templateText?.slice(0, 6000) || '')
-          : (templateAnalysis?.originalTemplateText?.slice(0, 2000) || templateText?.slice(0, 2000) || '');
+          ? (templateAnalysis?.originalTemplateText?.slice(0, 5000) || templateText?.slice(0, 3000) || '')
+          : (templateAnalysis?.originalTemplateText?.slice(0, 2000) || templateText?.slice(0, 1000) || '');
 
         // 构建子节输出规范（只有在已知子节结构时才指定）
         const sectionOutputSpec = finalSectionsForSimple.length > 0
           ? `- 严格按照模板的子节结构输出：${finalSectionsForSimple.join('、')}\n- 子节标题格式必须与模板一致`
           : `- 从模板原文中识别子节结构，并严格按照该结构输出\n- 子节标题格式必须与模板一致`;
 
-        const singleProcessPrompt = `你是专业的需求规格说明书撰写专家。请**严格按照用户上传的模板格式**，为以下功能过程生成规范的内容。
+        const singleProcessPrompt = `你是专业的需求规格说明书撰写专家。
 
-## 【核心要求】完全按照模板格式生成，不能使用任何预设结构！
+## 【最高优先级 - 必须严格遵守的格式要求】
+
+### 关键规则1：子节标题是强制性的
+- ✅ **必须输出所有子节标题**（如 "##### ${fullNum}.1 功能说明"、"##### ${fullNum}.2 业务规则"）
+- ✅ **每个子节都要有完整的标题行**（5个#号 + 空格 + 编号 + 空格 + 名称）
+- ❌ **绝对禁止省略子节标题**
+
+### 关键规则2：不要输出功能过程主标题
+- ❌ 不要输出功能过程的主标题（如 "## ${fullNum} XXX功能"），这个标题已由系统生成
+- ✅ 只输出子节标题和内容
+
+### 关键规则3：子节标题格式
+- 格式：##### 编号 名称
+- 示例：##### ${fullNum}.1 功能说明
+- 5个#号，后跟空格，再跟编号，再跟空格，最后是名称
 
 ## 功能过程详情（COSMIC数据）：
 ${processDetail}
 
-## 【最重要】不要输出功能过程标题！标题已由系统生成。
+${deepThinkingInsightSimple}
+
+## 【内容丰富度要求】
+- 功能说明着重描述：功能描述（做什么）、操作流程（怎么做，步骤要清晰具体）
+- 业务规则要全面：数据校验、权限控制、状态转换、异常处理等维度
+- 验收标准要具体：正常流程、异常流程、边界条件都要覆盖
+- 数据字段要详细：包含字段说明、类型、约束、示例
 
 ## 【模板原文】这是用户上传的模板，你必须严格按照这个模板的格式生成：
 
@@ -6492,15 +8860,29 @@ ${exampleContent.slice(0, 2000)}
 
 ${sectionsPrompt}
 
-## 【输出规范】：
-- 不要输出功能过程标题（已由系统生成）
-${sectionOutputSpec}
-- 内容要专业规范，与模板风格一致
-- 不要使用"待补充"、"至少XX字"等字眼
-- 如果模板中有表格，使用相同的表头格式
-- 如果模板中有列表，使用相同的列表格式
+## 【最终检查清单 - 输出前必须确认】
 
-请直接输出内容：`;
+### 格式检查：
+- [ ] 每个子节都有 "##### ${fullNum}.X 名称" 格式的标题
+- [ ] 使用了5个#号（#####），不是2个、3个或4个
+- [ ] 编号格式正确：${fullNum}.1、${fullNum}.2、${fullNum}.3...
+- [ ] 子节之间有空行分隔
+- [ ] 没有输出功能过程主标题（## ${fullNum} XXX）
+
+### 内容检查：
+- [ ] 所有${finalSectionsForSimple.length}个子节都已输出
+- [ ] 每个子节都有实质性内容，不是空的
+- [ ] 表格格式正确，使用标准Markdown
+- [ ] 没有"待补充"、"根据实际情况"等模糊表述
+- [ ] 内容与模板风格一致
+
+### 禁止事项：
+- ❌ 禁止省略任何子节标题
+- ❌ 禁止重复输出同一个子节
+- ❌ 禁止使用错误的编号
+- ❌ 禁止输出目录列表
+
+现在请严格按照上述要求输出内容：`;
 
         const singleStream = await client.chat.completions.create({
           model: process.env.OPENAI_MODEL || 'glm-4-flash',
@@ -6508,17 +8890,233 @@ ${sectionOutputSpec}
             { role: 'system', content: COSMIC_FUNCTION_ANALYSIS_PROMPT },
             { role: 'user', content: singleProcessPrompt }
           ],
-          temperature: 0.7,
+          temperature: 0.3,  // 降低温度，提高输出稳定性和一致性
           max_tokens: 8000,
           stream: true
         });
 
+        // 收集当前功能过程的完整内容，用于后处理
+        let processContent = '';
         for await (const chunk of singleStream) {
           const content = chunk.choices[0]?.delta?.content || '';
           if (content) {
-            fullContent += content;
-            res.write(`data: ${JSON.stringify({ content })}\n\n`);
+            processContent += content;
           }
+        }
+        
+        // 【后处理】过滤AI可能输出的重复功能过程标题
+        // 【修复】增强正则匹配，支持更多格式变体
+        const escapedProcessName = processName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // 提取功能名称的核心部分（去掉括号内容）用于更宽松的匹配
+        const coreProcessName = processName.replace(/[（(][^）)]*[）)]/g, '').trim();
+        const escapedCoreProcessName = coreProcessName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const titlePatterns = [
+          // 匹配完整功能名称（带括号）
+          new RegExp(`^\\s*#{1,4}\\s*${fullNum.replace(/\./g, '\\.')}[.．、\\s]*${escapedProcessName}[\\s\\n]*`, 'i'),
+          // 匹配核心功能名称（不带括号）
+          new RegExp(`^\\s*#{1,4}\\s*${fullNum.replace(/\./g, '\\.')}[.．、\\s]*${escapedCoreProcessName}[\\s\\n]*`, 'i'),
+          // 匹配纯编号开头
+          new RegExp(`^\\s*#{1,4}\\s*${fullNum.replace(/\./g, '\\.')}[.．、\\s]+[^\\n]*\\n`, 'i'),
+          // 匹配无#号的标题格式
+          new RegExp(`^\\s*${fullNum.replace(/\./g, '\\.')}[.．、\\s]*${escapedProcessName}[\\s\\n]*`, 'i'),
+          new RegExp(`^\\s*${fullNum.replace(/\./g, '\\.')}[.．、\\s]*${escapedCoreProcessName}[\\s\\n]*`, 'i')
+        ];
+        
+        let cleanedContent = processContent;
+        for (const pattern of titlePatterns) {
+          const match = cleanedContent.match(pattern);
+          if (match) {
+            // 确保只移除功能过程标题，不移除子节标题
+            const matchedText = match[0];
+            // 检查匹配的内容是否包含子节编号（如 5.1.1）
+            if (!matchedText.match(/\d+\.\d+\.\d+/)) {
+              cleanedContent = cleanedContent.replace(pattern, '');
+              console.log(`[标题过滤] 移除了重复的功能过程标题: ${fullNum} ${processName}`);
+              break;
+            }
+          }
+        }
+        
+        // 【新增】检测并过滤异常的目录结构输出
+        // 如果内容看起来像是目录（包含大量连续的章节编号），则标记为异常
+        const tocPattern = /(\d+\.\d+(\.\d+)?[.、\s]+[^\n]+\n){5,}/;
+        const hasExcessiveNumbers = (cleanedContent.match(/\d+\.\d+\.\d+/g) || []).length > 20;
+        if (tocPattern.test(cleanedContent) || hasExcessiveNumbers) {
+          console.log(`[异常检测] 功能 ${fullNum} ${processName} 输出疑似目录结构，将重新生成简化内容`);
+          // 生成简化的占位内容
+          cleanedContent = '';
+          finalSectionsForSimple.forEach((section, idx) => {
+            const sectionNum = `${fullNum}${numberSeparator}${idx + 1}`;
+            const sectionDotCount = (sectionNum.match(/\./g) || []).length;
+            const sectionHeadingLevel = Math.min(sectionDotCount + 2, 6);
+            const sectionHashes = '#'.repeat(sectionHeadingLevel);
+            cleanedContent += `${sectionHashes} ${sectionNum} ${section}\n\n`;
+            // 根据子节类型生成基本内容
+            if (section.includes('功能说明') || section.includes('功能描述')) {
+              cleanedContent += `本功能用于${processName}，支持用户进行相关操作。\n\n**操作流程：**\n1. 用户进入功能界面\n2. 执行${processName}操作\n3. 系统处理并返回结果\n\n`;
+            } else if (section.includes('业务规则')) {
+              cleanedContent += `- 规则1：数据必须符合系统要求\n- 规则2：操作需要相应权限\n- 规则3：异常情况需要提示用户\n\n`;
+            } else if (section.includes('处理数据') || section.includes('数据')) {
+              cleanedContent += `| 字段名 | 类型 | 说明 |\n|--------|------|------|\n| id | Integer | 主键ID |\n| name | String | 名称 |\n| status | Integer | 状态 |\n\n`;
+            } else if (section.includes('接口')) {
+              cleanedContent += `本功能涉及的接口将在详细设计阶段定义。\n\n`;
+            } else if (section.includes('界面')) {
+              cleanedContent += `界面设计遵循系统统一风格，具体布局在UI设计阶段确定。\n\n`;
+            } else if (section.includes('验收标准')) {
+              cleanedContent += `- 功能正常执行，无报错\n- 数据正确保存和展示\n- 异常情况有明确提示\n\n`;
+            } else {
+              cleanedContent += `（${section}内容待完善）\n\n`;
+            }
+          });
+        }
+        
+        // 【核心修复】检查并补充缺失的子节标题
+        if (finalSectionsForSimple.length > 0) {
+          let contentWithSections = cleanedContent;
+          let missingSections = [];
+          
+          // 检查每个子节标题是否存在
+          for (let idx = 0; idx < finalSectionsForSimple.length; idx++) {
+            const section = finalSectionsForSimple[idx];
+            const sectionNum = `${fullNum}${numberSeparator}${idx + 1}`;
+            // 【修复】放宽匹配条件，支持更多格式
+            const sectionPatterns = [
+              // 匹配完整编号+名称
+              new RegExp(`#{2,6}\\s*${sectionNum.replace(/\./g, '\\.')}[.．、\\s]+${section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'),
+              // 匹配编号（不要求名称完全一致）
+              new RegExp(`#{2,6}\\s*${sectionNum.replace(/\./g, '\\.')}[.．、\\s]+`, 'i'),
+              // 匹配名称（不要求编号）
+              new RegExp(`#{2,6}\\s*[\\d.]+[.．、\\s]+${section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i'),
+              // 匹配纯名称
+              new RegExp(`#{2,6}\\s*${section.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i')
+            ];
+            
+            const hasSection = sectionPatterns.some(p => p.test(contentWithSections));
+            if (!hasSection) {
+              missingSections.push({ idx, section, sectionNum });
+              console.log(`[子节缺失] ${sectionNum} ${section} 未找到`);
+            }
+          }
+          
+          // 【核心修复】如果所有子节都缺失，强制添加子节标题
+          if (missingSections.length === finalSectionsForSimple.length) {
+            console.log(`[子节补充] 功能 ${fullNum} ${processName} 所有子节都缺失，强制添加子节标题`);
+            
+            // 尝试按内容段落分割并添加子节标题
+            let reconstructedContent = '';
+            // 过滤掉空段落和已有的标题行
+            const paragraphs = cleanedContent.split(/\n\n+/).filter(p => {
+              const trimmed = p.trim();
+              return trimmed && !trimmed.match(/^#{1,6}\s*\d/);
+            });
+            
+            // 为每个子节添加标题
+            for (let idx = 0; idx < finalSectionsForSimple.length; idx++) {
+              const section = finalSectionsForSimple[idx];
+              const sectionNum = `${fullNum}${numberSeparator}${idx + 1}`;
+              const sectionDotCount = (sectionNum.match(/\./g) || []).length;
+              const sectionHeadingLevel = Math.min(sectionDotCount + 2, 6);
+              const sectionHashes = '#'.repeat(sectionHeadingLevel);
+              
+              // 添加子节标题
+              reconstructedContent += `${sectionHashes} ${sectionNum} ${section}\n\n`;
+              
+              // 如果有对应的段落内容，添加它
+              if (paragraphs[idx]) {
+                reconstructedContent += `${paragraphs[idx]}\n\n`;
+              } else {
+                // 根据子节类型生成默认内容
+                if (section.includes('功能说明') || section.includes('功能描述')) {
+                  reconstructedContent += `本功能用于${processName}。\n\n`;
+                } else if (section.includes('业务规则')) {
+                  reconstructedContent += `- 规则1：数据必须符合系统要求\n- 规则2：操作需要相应权限\n\n`;
+                } else if (section.includes('处理数据') || section.includes('数据')) {
+                  reconstructedContent += `| 字段名 | 类型 | 说明 |\n|--------|------|------|\n| id | Integer | 主键ID |\n\n`;
+                } else if (section.includes('接口')) {
+                  reconstructedContent += `本功能涉及的接口将在详细设计阶段定义。\n\n`;
+                } else if (section.includes('界面')) {
+                  reconstructedContent += `界面设计遵循系统统一风格。\n\n`;
+                } else if (section.includes('验收标准')) {
+                  reconstructedContent += `- 功能正常执行，无报错\n- 数据正确保存和展示\n\n`;
+                } else {
+                  reconstructedContent += `（${section}内容待完善）\n\n`;
+                }
+              }
+            }
+            
+            // 添加剩余段落
+            for (let idx = finalSectionsForSimple.length; idx < paragraphs.length; idx++) {
+              reconstructedContent += paragraphs[idx] + '\n\n';
+            }
+            cleanedContent = reconstructedContent;
+          }
+          // 如果只有部分子节缺失，尝试插入缺失的子节
+          else if (missingSections.length > 0) {
+            console.log(`[子节补充] 功能 ${fullNum} ${processName} 有 ${missingSections.length} 个子节缺失`);
+            
+            // 在内容末尾添加缺失的子节
+            for (const missing of missingSections) {
+              const sectionDotCount = (missing.sectionNum.match(/\./g) || []).length;
+              const sectionHeadingLevel = Math.min(sectionDotCount + 2, 6);
+              const sectionHashes = '#'.repeat(sectionHeadingLevel);
+              
+              cleanedContent += `\n${sectionHashes} ${missing.sectionNum} ${missing.section}\n\n`;
+              
+              // 根据子节类型生成默认内容
+              if (missing.section.includes('功能说明')) {
+                cleanedContent += `本功能用于${processName}。\n\n`;
+              } else if (missing.section.includes('业务规则')) {
+                cleanedContent += `- 规则1：数据必须符合系统要求\n\n`;
+              } else if (missing.section.includes('数据')) {
+                cleanedContent += `| 字段名 | 类型 | 说明 |\n|--------|------|------|\n| id | Integer | 主键ID |\n\n`;
+              } else {
+                cleanedContent += `（内容待完善）\n\n`;
+              }
+            }
+          }
+        }
+        
+        // 【核心修复0】移除AI输出中错误的功能过程标题（如在5.9内容中出现5.1）
+        cleanedContent = removeWrongProcessTitles(cleanedContent, fullNum, funcChapterNum);
+        
+        // 【核心修复0.5】重组内容，确保子节标题和内容匹配
+        if (finalSectionsForSimple.length > 0) {
+          cleanedContent = reorganizeContent(cleanedContent, fullNum, finalSectionsForSimple, numberSeparator);
+        }
+        
+        // 【核心修复1】移除AI输出中的重复子节
+        if (finalSectionsForSimple.length > 0) {
+          cleanedContent = removeDuplicateSections(cleanedContent, fullNum, finalSectionsForSimple);
+        }
+        
+        // 【核心修复1.5】移除子节标题下方的重复文本标题
+        if (finalSectionsForSimple.length > 0) {
+          cleanedContent = removeTextDuplicateTitles(cleanedContent, fullNum, finalSectionsForSimple);
+        }
+        
+        // 【核心修复1.6】移除子节内容中出现的错位子节标题
+        if (finalSectionsForSimple.length > 0) {
+          cleanedContent = removeMisplacedSectionTitles(cleanedContent, fullNum, finalSectionsForSimple);
+        }
+        
+        // 【核心修复2】修正AI输出中的错误子节编号
+        // AI经常忽略正确的编号要求，输出如 5.1.1 而不是 5.7.1
+        if (finalSectionsForSimple.length > 0) {
+          cleanedContent = fixSubSectionNumbers(cleanedContent, fullNum, numberSeparator, finalSectionsForSimple);
+        }
+        
+        // 【调试日志】检查最终内容中的子节数量
+        const finalSubSectionCount = (cleanedContent.match(/#{2,6}\s*\d+\.\d+\.\d+/g) || []).length;
+        console.log(`[内容检查] 功能 ${fullNum} ${processName}: 内容长度=${cleanedContent.length}, 子节数量=${finalSubSectionCount}, 期望子节=${finalSectionsForSimple.length}`);
+        
+        if (finalSubSectionCount < finalSectionsForSimple.length) {
+          console.log(`[警告] 功能 ${fullNum} ${processName} 的子节数量(${finalSubSectionCount})小于期望(${finalSectionsForSimple.length})`);
+        }
+        
+        // 输出清理后的内容
+        if (cleanedContent.trim()) {
+          fullContent += cleanedContent;
+          res.write(`data: ${JSON.stringify({ content: cleanedContent })}\n\n`);
         }
 
         fullContent += '\n\n';
@@ -6536,9 +9134,33 @@ ${sectionOutputSpec}
     // 构建功能过程列表用于后置章节
     const processListForFooter = functionalProcesses.map((fp, idx) => `${idx + 1}. ${fp}`).join('\n');
 
-    // 从模板分析结果中获取后置章节信息（使用之前定义的 allChapters）
-    const funcChapterIdx = allChapters.findIndex(c => c.number === funcChapterNum || c.title?.includes('功能'));
-    const footerChapters = funcChapterIdx >= 0 ? allChapters.slice(funcChapterIdx + 1) : [];
+    // 【修复】从模板分析结果中获取后置章节信息 - 使用更宽松的匹配逻辑
+    const funcChapterIdx = allChapters.findIndex(c => {
+      const numMatch = c.number?.replace(/\.$/, '') === funcChapterNum || 
+                       c.number?.startsWith(funcChapterNum + '.') ||
+                       c.number === funcChapterNum;
+      const titleMatch = c.title?.includes('功能需求') || 
+                         c.title?.includes('功能要求') ||
+                         (c.title?.includes('功能') && c.level === 1);
+      return numMatch || titleMatch;
+    });
+    
+    // 获取功能需求章节之后的一级章节（后置章节）
+    let footerChapters = [];
+    if (funcChapterIdx >= 0) {
+      // 只取一级章节，避免把功能需求的子章节也算进去
+      footerChapters = allChapters.slice(funcChapterIdx + 1).filter(c => c.level === 1);
+    } else if (allChapters.length > 0) {
+      // 兜底：根据编号提取
+      const funcNum = parseInt(funcChapterNum);
+      footerChapters = allChapters.filter(c => {
+        const chapterNum = parseInt(c.number?.split('.')[0]);
+        return c.level === 1 && chapterNum > funcNum;
+      });
+    }
+    
+    console.log(`[动态章节] 后置章节数量: ${footerChapters.length}`);
+    console.log(`[动态章节] 后置章节:`, footerChapters.map(c => `${c.number} ${c.title}`));
 
     // 构建后置章节的详细结构说明（包含层级信息）
     let footerChaptersList = '';
@@ -6991,9 +9613,52 @@ ${htmlBody}
   }
 });
 
+// 【新增】根据章节编号修正标题层级
+function normalizeHeadingLevels(markdown) {
+  const lines = markdown.split('\n');
+  const result = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    
+    // 匹配Markdown标题
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      const currentHashes = headingMatch[1];
+      const titleContent = headingMatch[2].trim();
+      
+      // 从标题内容中提取章节编号
+      const numberMatch = titleContent.match(/^(\d+(?:\.\d+)*)[.、．\s]/);
+      if (numberMatch) {
+        const chapterNumber = numberMatch[1];
+        const dotCount = (chapterNumber.match(/\./g) || []).length;
+        
+        // 根据编号中的点数确定正确的层级
+        // 5 -> 一级(##), 5.1 -> 二级(###), 5.1.1 -> 三级(####)
+        let correctLevel = dotCount + 2; // ## 是一级章节
+        if (correctLevel > 6) correctLevel = 6;
+        if (correctLevel < 2) correctLevel = 2;
+        
+        const correctHashes = '#'.repeat(correctLevel);
+        
+        // 如果层级不对，修正它
+        if (currentHashes !== correctHashes) {
+          console.log(`[层级修正] "${titleContent}" 从 ${currentHashes.length}级 修正为 ${correctLevel}级`);
+          line = `${correctHashes} ${titleContent}`;
+        }
+      }
+    }
+    
+    result.push(line);
+  }
+  
+  return result.join('\n');
+}
+
 // Markdown转Word HTML的辅助函数
 function convertMarkdownToWordHtml(markdown) {
-  let html = markdown;
+  // 【新增】先修正标题层级
+  let html = normalizeHeadingLevels(markdown);
 
   // 统一换行符
   html = html.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -7009,6 +9674,17 @@ function convertMarkdownToWordHtml(markdown) {
 
   // 处理行内代码
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // 处理Markdown图片语法 ![alt](dataUrl) - 支持base64
+  let imgCount = 0;
+  html = html.replace(/!\[([^\]]*)\]\((data:image\/[^)]+)\)/g, (match, alt, dataUrl) => {
+    imgCount++;
+    return `
+<div style="text-align:center;margin:20pt 0;page-break-inside:avoid;">
+  <img src="${dataUrl}" alt="${alt || '图片' + imgCount}" style="max-width:500px;width:90%;height:auto;border:1px solid #ddd;"/>
+  <p style="font-size:10pt;color:#666;margin-top:8pt;">${alt || '图 ' + imgCount}</p>
+</div>`;
+  });
 
   // 处理表格 - 增强版，支持更多格式
   const tableRegex = /(?:^|\n)(\|[^\n]+\|)\n(\|[-:\s|]+\|)\n((?:\|[^\n]+\|\n?)+)/g;
@@ -7158,8 +9834,49 @@ async function parseRequirementDocument(buffer, fileExtension = '.docx') {
   let currentSection = null;
   let currentContent = [];
 
-  // 章节标题识别模式
-  const sectionPattern = /^(\d{1,2}(?:\.\d{1,3})*)\s*[、.．\s]\s*([^\d\t][^\t]*?)(?:\t.*)?$/;
+  // 章节标题识别模式 - 增强版：更严格的匹配
+  // 匹配：1、1.1、1.1.1 等格式，后跟中文/英文标题
+  const sectionPattern = /^(\d{1,2}(?:\.\d{1,3})*)\s*[、.．]?\s+([^\d\t\n][^\t\n]{1,50})$/;
+  
+  // 非章节内容黑名单（页码、表格序号等常见误匹配模式）
+  const blacklistPatterns = [
+    /^第?\d+页$/,                    // 页码：第1页、1页
+    /^共\d+页$/,                     // 共X页
+    /^\d+\/\d+$/,                    // 页码：1/10
+    /^表\s*\d/,                      // 表1、表 1
+    /^图\s*\d/,                      // 图1、图 1
+    /^序号$/i,                       // 表格表头
+    /^编号$/,                        // 表格表头
+    /^\d+\s*[、,，]\s*\d+/,          // 列表如 "1、2、3"
+    /^[\d\s,.，。、]+$/,             // 纯数字和标点
+    /^[-—_=]+$/,                     // 分隔线
+  ];
+  
+  // 验证是否为有效的章节标题
+  const isValidChapterTitle = (title, number) => {
+    if (!title || title.length < 2) return false;
+    if (/^\d+$/.test(title)) return false;  // 纯数字
+    if (/^[a-zA-Z]$/.test(title)) return false;  // 单个字母
+    
+    // 检查黑名单
+    const fullText = `${number} ${title}`;
+    for (const pattern of blacklistPatterns) {
+      if (pattern.test(title) || pattern.test(fullText)) {
+        return false;
+      }
+    }
+    
+    // 标题应该以中文字符、英文字母或特定符号开头
+    if (!/^[\u4e00-\u9fa5a-zA-Z【（(]/.test(title)) {
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // 用于检测层级连续性的辅助变量
+  let lastLevel1 = 0;  // 上一个一级章节编号
+  let expectedNumbers = new Set();  // 预期的章节编号集合
 
   lines.forEach((line, idx) => {
     const trimmed = line.trim();
@@ -7170,21 +9887,39 @@ async function parseRequirementDocument(buffer, fileExtension = '.docx') {
 
     const match = trimmed.match(sectionPattern);
     if (match) {
-      const numParts = match[1].split('.');
+      const numberStr = match[1];
+      const numParts = numberStr.split('.');
+      
+      // 验证编号的合理性
       const isValidSection = numParts.every(part => {
         const num = parseInt(part);
-        return num >= 1 && num <= 99;
+        return num >= 0 && num <= 99;
       });
+      
       const title = match[2].trim();
-      const isValidTitle = title.length >= 2 && !/^\d+$/.test(title);
-
-      if (isValidSection && isValidTitle) {
+      const level = numParts.length;
+      
+      // 增强验证：检查标题有效性 + 层级连续性
+      if (isValidSection && isValidChapterTitle(title, numberStr)) {
+        // 层级连续性检查：一级章节编号应该递增或保持
+        if (level === 1) {
+          const currentNum = parseInt(numParts[0]);
+          // 允许一级章节从0-9开始，之后应该是连续或跳跃不超过3
+          if (sections.length > 0 && currentNum > lastLevel1 + 3 && lastLevel1 > 0) {
+            // 跳跃过大，可能是误匹配（如页码）
+            if (currentSection) currentContent.push(trimmed);
+            return;
+          }
+          lastLevel1 = currentNum;
+        }
+        
+        // 保存上一个章节的内容
         if (currentSection) {
           sectionContents.set(currentSection.number, currentContent.join('\n').trim());
         }
-        const level = numParts.length;
+        
         currentSection = {
-          number: match[1],
+          number: numberStr,
           title: title,
           level,
           lineIndex: idx
@@ -7194,6 +9929,7 @@ async function parseRequirementDocument(buffer, fileExtension = '.docx') {
         return;
       }
     }
+    
     if (currentSection) {
       currentContent.push(trimmed);
     }
@@ -8071,6 +10807,95 @@ app.post('/api/cosmic-to-spec/parse-requirement-doc', uploadMultiple.single('fil
   }
 });
 
+/**
+ * 【新增】针对Word文档的功能需求深度思考函数
+ * 为每个功能需求进行多维度深度分析，生成更丰富的内容提示
+ */
+async function deepThinkForFunctionFromDoc(client, functionInfo, context) {
+  const { name, content, businessRules, acceptanceCriteria } = functionInfo;
+  const { projectInfo, templateAnalysis, allFunctions } = context;
+
+  const prompt = `你是一位资深业务分析师和需求工程师，请对以下功能需求进行**深度多维度分析**，为后续生成高质量需求规格说明书提供参考。
+
+## 【功能名称】
+${name}
+
+## 【原始需求内容】
+${content?.slice(0, 2000) || '无详细描述'}
+
+## 【已有业务规则】
+${businessRules ? JSON.stringify(businessRules) : '无'}
+
+## 【已有验收标准】
+${acceptanceCriteria ? JSON.stringify(acceptanceCriteria) : '无'}
+
+## 【项目背景】
+- 项目名称：${projectInfo?.projectName || '未知'}
+- 用户角色：${(projectInfo?.userRoles || []).join('、') || '未知'}
+- 相关功能：${allFunctions?.slice(0, 10).join('、') || '无'}
+
+## 【深度分析任务】
+请从以下维度进行深入分析：
+
+1. **业务价值分析**：这个功能解决什么业务问题？带来什么价值？
+2. **核心使用场景**：列出3-5个典型使用场景（场景名称+简要描述）
+3. **关键业务规则**：推导出5-8条关键业务规则（规则名称+描述）
+4. **关键数据字段**：识别8-12个关键数据字段（字段名+类型+说明）
+5. **验收要点**：推导5-8个关键验收标准（场景+预期结果）
+6. **异常场景**：识别3-5个可能的异常场景（异常名称+处理方式）
+7. **用户角色**：识别涉及的用户角色
+8. **权限要点**：识别关键权限控制点
+
+## 【输出格式】JSON
+\`\`\`json
+{
+  "businessValue": "业务价值描述",
+  "coreScenarios": [
+    {"name": "场景名称", "description": "场景描述"}
+  ],
+  "keyRules": [
+    {"name": "规则名称", "description": "规则描述"}
+  ],
+  "keyDataFields": [
+    {"name": "字段名", "type": "数据类型", "description": "说明"}
+  ],
+  "acceptanceCriteria": [
+    {"scenario": "测试场景", "expected": "预期结果"}
+  ],
+  "exceptionScenarios": [
+    {"name": "异常名称", "handling": "处理方式"}
+  ],
+  "userRoles": ["角色1", "角色2"],
+  "permissionPoints": ["权限点1", "权限点2"]
+}
+\`\`\``;
+
+  try {
+    const response = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'glm-4-flash',
+      messages: [
+        { role: 'system', content: '你是资深业务分析师，擅长深度分析功能需求并提取关键信息。请输出JSON格式。' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.6,
+      max_tokens: 3000
+    });
+
+    const responseContent = response.choices[0].message.content.trim();
+    const jsonMatch = responseContent.match(/```json\s*([\s\S]*?)```/) || responseContent.match(/\{[\s\S]*\}/);
+    
+    if (jsonMatch) {
+      const result = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+      console.log(`✅ 【Word模式】深度思考完成: ${name}`);
+      return result;
+    }
+    return null;
+  } catch (error) {
+    console.error(`❌ 【Word模式】深度思考失败: ${name}`, error.message);
+    return null;
+  }
+}
+
 // 根据需求文档和模板生成需求规格说明书 - 增强版：与Excel模式一致的模板驱动
 app.post('/api/cosmic-to-spec/generate-from-doc', async (req, res) => {
   try {
@@ -8105,7 +10930,33 @@ app.post('/api/cosmic-to-spec/generate-from-doc', async (req, res) => {
           savedAnalysis = JSON.parse(fs.readFileSync(analysisPath, 'utf-8'));
           templateText = savedAnalysis.originalTemplateText || '';
           fullProcessExample = savedAnalysis.fullProcessExample || '';
-          console.log('【Word模式】使用已保存的深度分析结果');
+          
+          // 【修复】清理已保存分析结果中的页码数字
+          const cleanPageNumber = (str) => str ? str.replace(/\s+\d{1,4}\s*$/, '').trim() : str;
+          if (savedAnalysis.allChapters) {
+            savedAnalysis.allChapters.forEach(c => { if (c.title) c.title = cleanPageNumber(c.title); });
+          }
+          if (savedAnalysis.sections) {
+            savedAnalysis.sections.forEach(c => { if (c.title) c.title = cleanPageNumber(c.title); });
+          }
+          if (savedAnalysis.processContentTemplate?.sections) {
+            savedAnalysis.processContentTemplate.sections = savedAnalysis.processContentTemplate.sections.map(s => 
+              typeof s === 'string' ? cleanPageNumber(s) : s
+            );
+          }
+          if (savedAnalysis.functionalChapter?.processContentTemplate?.sections) {
+            savedAnalysis.functionalChapter.processContentTemplate.sections = 
+              savedAnalysis.functionalChapter.processContentTemplate.sections.map(s => 
+                typeof s === 'string' ? cleanPageNumber(s) : s
+              );
+          }
+          if (savedAnalysis.functionalChapter?.processContentTemplate?.sectionsDetailed) {
+            savedAnalysis.functionalChapter.processContentTemplate.sectionsDetailed.forEach(s => {
+              if (s.name) s.name = cleanPageNumber(s.name);
+            });
+          }
+          
+          console.log('【Word模式】使用已保存的深度分析结果（已清理页码）');
         } catch (e) {
           console.log('读取分析结果失败，将重新分析');
         }
@@ -8256,6 +11107,11 @@ app.post('/api/cosmic-to-spec/generate-from-doc', async (req, res) => {
       c.title?.includes('功能') || c.number === funcChapterNum
     );
     const headerChapters = funcChapterIndex > 0 ? allChapters.slice(0, funcChapterIndex) : [];
+    
+    // 获取功能需求章节的标题
+    const funcChapterTitle = allChapters.find(c => 
+      c.number === funcChapterNum || c.number?.startsWith(funcChapterNum + '.')
+    )?.title || '功能需求';
 
     let headerChaptersList = '';
     if (headerChapters.length > 0) {
@@ -8266,54 +11122,94 @@ app.post('/api/cosmic-to-spec/generate-from-doc', async (req, res) => {
     }
 
     const projectInfo = requirementDoc.aiAnalysis || {};
-    const headerPrompt = `你是资深需求分析专家。请根据以下需求文档信息，生成需求规格说明书的前置章节。
-
-## 【项目信息】
-- 项目名称：${projectInfo.projectName || '待定'}
-- 项目描述：${projectInfo.projectDescription || ''}
-- 系统范围：${projectInfo.systemScope || ''}
-- 用户角色：${(projectInfo.userRoles || []).join('、')}
-
-## 【功能模块概览】
-${functionalOverview}
-
-## 【原始需求文档摘要】
-${requirementDoc.fullText.slice(0, 6000)}
-
-${templateText ? `## 【模板格式参考】
-${templateText.slice(0, 4000)}
-
-## 【前置章节结构】
-${headerChaptersList || '1. 概述\n2. 业务需求\n3. 用户需求\n4. 产品功能架构'}` : ''}
-
-## 【生成要求】
-1. 严格按照模板的章节结构生成（如果有模板）
-2. 内容要具体充实，基于需求文档的实际内容
-3. 最后输出功能需求章节的标题："${funcChapterNum} 功能需求"
-4. 使用Markdown格式
-
-请开始生成：`;
-
     let fullContent = '';
 
-    const headerStream = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'glm-4-flash',
-      messages: [
-        { role: 'system', content: '你是专业的需求规格说明书撰写专家，严格按照模板格式输出内容。' },
-        { role: 'user', content: headerPrompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 8000,
-      stream: true
-    });
+    // ========== 【核心改进】按章节逐个生成前置内容，确保格式一致 ==========
+    const level1HeaderChapters = headerChapters.filter(c => c.level === 1);
+    console.log(`[Word模式前置章节] 一级章节数量: ${level1HeaderChapters.length}`);
 
-    for await (const chunk of headerStream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      if (content) {
-        fullContent += content;
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+    for (const chapter of level1HeaderChapters) {
+      // 获取该一级章节下的所有子章节
+      const chapterPrefix = chapter.number + '.';
+      const subChapters = headerChapters.filter(c => 
+        c.number?.startsWith(chapterPrefix) && c.level > chapter.level
+      );
+      
+      // 【代码显式输出章节标题】确保格式完全一致
+      const chapterTitle = `\n## ${chapter.number} ${chapter.title}\n\n`;
+      fullContent += chapterTitle;
+      res.write(`data: ${JSON.stringify({ content: chapterTitle })}\n\n`);
+
+      // 构建该章节的子节列表
+      let subChaptersList = '';
+      if (subChapters.length > 0) {
+        subChaptersList = subChapters.map(s => `- ${s.number} ${s.title}`).join('\n');
+      }
+
+      // 为每个一级章节单独生成内容
+      const chapterPrompt = `你是专业的需求规格说明书撰写专家。请为以下章节生成内容。
+
+## 当前章节
+- 编号: ${chapter.number}
+- 标题: ${chapter.title}
+
+${subChapters.length > 0 ? `## 该章节包含的子节（必须全部输出）：
+${subChaptersList}
+
+请严格按照上述子节结构输出，每个子节标题格式为：### 编号 标题` : ''}
+
+## 项目信息
+- 项目名称：${projectInfo.projectName || '待定'}
+- 项目描述：${projectInfo.projectDescription || ''}
+- 用户角色：${(projectInfo.userRoles || []).join('、')}
+
+## 功能模块概览
+${functionalOverview.slice(0, 2000)}
+
+## 【重要规则】
+1. 不要输出当前章节的标题（已由系统输出）
+2. ${subChapters.length > 0 ? '必须按照子节列表逐个输出，子节标题格式：### 编号 标题' : '直接输出该章节的内容'}
+3. 内容要专业、具体、充实
+4. 基于需求文档的实际内容填写
+
+请直接开始输出内容：`;
+
+      const chapterStream = await client.chat.completions.create({
+        model: process.env.OPENAI_MODEL || 'glm-4-flash',
+        messages: [
+          { role: 'system', content: '你是专业的需求规格说明书撰写专家。直接输出内容，不要输出章节主标题。' },
+          { role: 'user', content: chapterPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+        stream: true
+      });
+
+      // 【修复】先收集完整内容，再进行编号修正后输出
+      let chapterContent = '';
+      for await (const chunk of chapterStream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          chapterContent += content;
+        }
+      }
+      
+      // 【核心修复】修正AI输出中的错误子节编号
+      if (subChapters.length > 0) {
+        chapterContent = fixHeaderChapterNumbers(chapterContent, chapter.number, subChapters);
+      }
+      
+      // 输出修正后的内容
+      if (chapterContent.trim()) {
+        fullContent += chapterContent;
+        res.write(`data: ${JSON.stringify({ content: chapterContent })}\n\n`);
       }
     }
+
+    // 输出功能需求章节标题
+    const funcChapterHeader = `\n## ${funcChapterNum} ${funcChapterTitle}\n\n`;
+    fullContent += funcChapterHeader;
+    res.write(`data: ${JSON.stringify({ content: funcChapterHeader })}\n\n`);
 
     // ========== 第四阶段：分批生成功能需求（与Excel模式一致的模板驱动） ==========
     
@@ -8341,6 +11237,11 @@ ${headerChaptersList || '1. 概述\n2. 业务需求\n3. 用户需求\n4. 产品�
       finalSectionsForGenerate = ['功能说明', '业务规则、模型和算法', '处理数据', '接口', '界面', '验收标准'];
     }
     
+    // 【修复】清理子节名称末尾的页码数字
+    finalSectionsForGenerate = finalSectionsForGenerate.map(s => 
+      typeof s === 'string' ? s.replace(/\s+\d{1,4}\s*$/, '').trim() : s
+    );
+    
     console.log(`【Word模式】最终使用的功能过程子节: ${finalSectionsForGenerate.join('、')}`);
 
     // 构建模板示例内容（与Excel模式一致）
@@ -8361,11 +11262,50 @@ ${fullProcessExample.slice(0, 6000)}
       const batchEnd = Math.min(batchStart + BATCH_SIZE, totalFunctions);
       const batchReqs = functionalReqs.slice(batchStart, batchEnd);
 
+      // ========== 【新增】深度思考阶段：为每个功能进行深度分析 ==========
+      res.write(`data: ${JSON.stringify({
+        phase: 'deep_thinking',
+        message: `🧠 深度思考分析功能需求 (${batchStart + 1}-${batchEnd}/${totalFunctions})...`,
+        currentStep: batchIdx + 4,
+        totalSteps: totalBatches + 5
+      })}\n\n`);
+
+      // 为当前批次的每个功能执行深度思考
+      const deepThinkingResults = [];
+      for (const req of batchReqs) {
+        try {
+          const functionName = req.title || req.name;
+          console.log(`🧠 【Word模式】深度思考: ${functionName}`);
+          
+          const thinkResult = await deepThinkForFunctionFromDoc(client, {
+            name: functionName,
+            content: req.content || req.description || '',
+            businessRules: req.businessRules,
+            acceptanceCriteria: req.acceptanceCriteria
+          }, {
+            projectInfo,
+            templateAnalysis,
+            allFunctions: functionalReqs.map(f => f.title || f.name)
+          });
+          
+          deepThinkingResults.push({
+            functionName,
+            thinkResult
+          });
+        } catch (thinkError) {
+          console.log(`⚠️ 深度思考跳过: ${thinkError.message}`);
+          deepThinkingResults.push({
+            functionName: req.title || req.name,
+            thinkResult: null
+          });
+        }
+      }
+
       res.write(`data: ${JSON.stringify({
         phase: 'generating_functions',
         message: `🔄 生成功能需求 (${batchStart + 1}-${batchEnd}/${totalFunctions})...`,
         currentStep: batchIdx + 4,
-        totalSteps: totalBatches + 4,
+        totalSteps: totalBatches + 5,
         batchInfo: {
           start: batchStart + 1,
           end: batchEnd,
@@ -8373,55 +11313,100 @@ ${fullProcessExample.slice(0, 6000)}
         }
       })}\n\n`);
 
-      // 构建当前批次的详细信息（包含更多原始需求细节）
+      // 构建当前批次的详细信息（包含深度思考结果）
       const batchDetails = batchReqs.map((req, idx) => {
         const globalIdx = batchStart + idx + 1;
         const reqContent = req.content || req.description || '';
         const businessRules = req.businessRules ? `\n业务规则: ${JSON.stringify(req.businessRules)}` : '';
         const acceptanceCriteria = req.acceptanceCriteria ? `\n验收标准: ${JSON.stringify(req.acceptanceCriteria)}` : '';
         
+        // 获取深度思考结果（仅作为生成参考，不直接输出到文档）
+        const thinkResult = deepThinkingResults[idx]?.thinkResult;
+        let deepThinkingInsight = '';
+        if (thinkResult) {
+          deepThinkingInsight = `
+【深度分析参考 - 仅供AI生成参考，不要直接输出以下内容】
+业务价值：${thinkResult.businessValue || '提升业务效率'}
+核心场景：${(thinkResult.coreScenarios || []).slice(0, 3).map(s => s.name || s).join('、') || '请推断'}
+关键规则：${(thinkResult.keyRules || []).slice(0, 5).map(r => r.name || r.ruleName || r).join('、') || '请提取'}
+关键字段：${(thinkResult.keyDataFields || []).slice(0, 8).map(f => f.name || f).join('、') || '请分析'}
+验收要点：${(thinkResult.acceptanceCriteria || []).slice(0, 5).map(c => c.scenario || c).join('、') || '请推断'}
+异常场景：${(thinkResult.exceptionScenarios || []).slice(0, 3).map(e => e.name || e).join('、') || '请考虑'}
+用户角色：${(thinkResult.userRoles || []).join('、') || '系统用户'}`;
+        }
+        
         return `【功能 ${funcChapterNum}.${globalIdx}】${req.title || req.name}
 原始需求内容：
-${reqContent.slice(0, 3000)}${businessRules}${acceptanceCriteria}`;
+${reqContent.slice(0, 3000)}${businessRules}${acceptanceCriteria}${deepThinkingInsight}`;
       }).join('\n\n---\n\n');
 
-      // 构建子节结构说明
-      const sectionsDescription = finalSectionsForGenerate.map((s, i) => `${funcChapterNum}.X.${i + 1}. ${s}`).join('\n');
+      // 构建子节结构说明（使用正确的编号格式）
+      const sectionsDescription = finalSectionsForGenerate.map((s, i) => `### ${funcChapterNum}.X.${i + 1} ${s}`).join('\n');
 
-      const functionPrompt = `你是资深需求规格说明书撰写专家。请根据原始需求内容，为以下功能生成**完整、详细、专业**的需求规格说明。
+      const functionPrompt = `你是资深需求规格说明书撰写专家。请根据原始需求内容和深度思考分析结果，为以下功能生成**完整、详细、专业、高质量**的需求规格说明。
 ${templateExampleContent}
 
 ## 【待生成的功能需求】
 ${batchDetails}
 
 ## 【每个功能必须包含的子节结构】（严格按此顺序和格式）
+功能标题格式：## ${funcChapterNum}.N 功能名称（N为功能序号1、2、3...）
+子节标题格式：### ${funcChapterNum}.N.M 子节名称（M为子节序号1、2、3...）
+
 ${sectionsDescription}
 
-## 【格式要求 - 必须严格遵守】
-1. 每个功能使用二级标题: ## ${funcChapterNum}.X ${useSimpleStructure ? '功能名称' : '功能名称（功能编号）'}
-2. 每个子节使用三级标题: ### ${funcChapterNum}.X.Y 子节名称
-3. **功能说明**：至少300字，必须包含：
-   - 功能背景和目的
-   - 使用场景和用户角色
-   - 详细操作流程（步骤1、2、3...）
-   - 前置条件和后置条件
-4. **业务规则**：必须使用表格格式，至少5条规则：
+## 【内容质量要求 - 深度思考增强】
+1. **功能说明**（至少400字）：
+   - 功能背景和业务价值（参考深度思考的业务价值分析）
+   - 至少3个典型使用场景（参考深度思考的核心场景）
+   - 详细操作流程（步骤1、2、3...，至少5个步骤）
+   - 前置条件、后置条件
+   - 涉及的用户角色及权限
+
+2. **业务规则**（至少8条规则，使用表格格式）：
+   - 参考深度思考的关键业务规则
+   - 包含数据校验规则、权限控制规则、状态转换规则、异常处理规则
    | 规则编号 | 规则名称 | 规则描述 | 触发条件 | 执行动作 |
    |---------|---------|---------|---------|---------|
-5. **处理数据**：必须使用表格格式，列出所有数据字段：
-   | 字段名 | 数据类型 | 长度 | 是否必填 | 说明 |
-   |-------|---------|------|---------|------|
-6. **接口**：包含请求参数表和响应参数表，必须有具体的参数定义
-7. **界面**：描述页面布局、交互元素、操作按钮等
-8. **验收标准**：至少5条测试用例，使用表格格式：
+
+3. **处理数据**（至少10个字段，使用表格格式）：
+   - 参考深度思考的关键数据字段
+   | 字段名 | 数据类型 | 长度 | 是否必填 | 校验规则 | 说明 |
+   |-------|---------|------|---------|---------|------|
+
+4. **接口**：
+   - 请求参数表（至少5个参数）
+   - 响应参数表（至少5个参数）
+   - 错误码表（至少3个错误码）
+
+5. **界面**：
+   - 页面整体布局描述
+   - 主要界面元素列表（至少5个）
+   - 交互流程说明
+
+6. **验收标准**（至少8条用例）：
+   - 参考深度思考的验收要点和异常场景
+   - 覆盖正常流程、异常流程、边界条件
    | 用例编号 | 测试场景 | 前置条件 | 操作步骤 | 预期结果 |
    |---------|---------|---------|---------|---------|
 
-## 【禁止事项】
-- ❌ 不要使用"XXX"、"待定"、"..."等占位符
+## 【格式要求】
+1. 每个功能使用二级标题: ## ${funcChapterNum}.X ${useSimpleStructure ? '功能名称' : '功能名称（功能编号）'}
+2. 每个子节使用三级标题: ### ${funcChapterNum}.X.Y 子节名称
+
+## 【严格禁止】
+- ❌ 不要使用"XXX"、"待定"、"..."、"略"等占位符
 - ❌ 不要输出空白内容或只有标题
-- ❌ 不要使用"请参考"、"详见"等推诿表述
-- ❌ 表格数据不能少于3行
+- ❌ 不要使用"请参考"、"详见"、"同上"等推诿表述
+- ❌ 表格数据不能少于指定的最小行数
+- ❌ 内容不能过于简单或泛泛而谈
+
+## 【严格警告 - 必须遵守】
+1. **禁止重复**：每个子节只输出一次，绝对禁止重复输出同一个子节！
+2. **编号严格**：子节编号必须使用 ${funcChapterNum}.X.Y 格式，不要使用其他编号！
+3. **禁止错误标题**：不要输出任何与当前功能无关的标题！
+4. **内容归位**："使用场景"和"操作流程"必须写在"功能说明"子节内，除非有单独的子节标题！
+5. **不要输出目录**：直接输出详细内容，不要输出目录列表！
 
 请直接开始输出，不要有任何解释或说明：`;
 
@@ -8432,16 +11417,63 @@ ${sectionsDescription}
           { role: 'user', content: functionPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 12000,
+        max_tokens: 16000,
         stream: true
       });
 
+      // 【修复】先收集完整内容，再进行子节编号修正后输出
+      let batchContent = '';
       for await (const chunk of functionStream) {
         const content = chunk.choices[0]?.delta?.content || '';
         if (content) {
-          fullContent += content;
-          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+          batchContent += content;
         }
+      }
+      
+      // 【核心修复1】移除AI输出中的重复子节
+      // 对批次中的每个功能进行去重
+      if (finalSectionsForGenerate.length > 0) {
+        for (let idx = 0; idx < batchReqs.length; idx++) {
+          const globalIdx = batchStart + idx + 1;
+          const correctPrefix = `${funcChapterNum}.${globalIdx}`;
+          batchContent = removeDuplicateSections(batchContent, correctPrefix, finalSectionsForGenerate);
+        }
+      }
+      
+      // 【核心修复1.5】移除子节标题下方的重复文本标题
+      // 对批次中的每个功能进行文本标题去重
+      if (finalSectionsForGenerate.length > 0) {
+        for (let idx = 0; idx < batchReqs.length; idx++) {
+          const globalIdx = batchStart + idx + 1;
+          const correctPrefix = `${funcChapterNum}.${globalIdx}`;
+          batchContent = removeTextDuplicateTitles(batchContent, correctPrefix, finalSectionsForGenerate);
+        }
+      }
+      
+      // 【核心修复1.6】移除子节内容中出现的错位子节标题
+      // 对批次中的每个功能进行错位标题移除
+      if (finalSectionsForGenerate.length > 0) {
+        for (let idx = 0; idx < batchReqs.length; idx++) {
+          const globalIdx = batchStart + idx + 1;
+          const correctPrefix = `${funcChapterNum}.${globalIdx}`;
+          batchContent = removeMisplacedSectionTitles(batchContent, correctPrefix, finalSectionsForGenerate);
+        }
+      }
+      
+      // 【核心修复2】修正AI输出中的错误子节编号
+      // 对批次中的每个功能进行编号修正
+      if (finalSectionsForGenerate.length > 0) {
+        for (let idx = 0; idx < batchReqs.length; idx++) {
+          const globalIdx = batchStart + idx + 1;
+          const correctPrefix = `${funcChapterNum}.${globalIdx}`;
+          batchContent = fixSubSectionNumbers(batchContent, correctPrefix, '.', finalSectionsForGenerate);
+        }
+      }
+      
+      // 输出修正后的内容
+      if (batchContent.trim()) {
+        fullContent += batchContent;
+        res.write(`data: ${JSON.stringify({ content: batchContent })}\n\n`);
       }
     }
 
@@ -9177,6 +12209,188 @@ app.get('/api/chat/info', (req, res) => {
 // ==================== 智器云自研AI智能体 API 结束 ====================
 
 
+// ==================== 编程智能体 API ====================
+
+/**
+ * API: 生成代码（增强版：支持纯HTML和React）
+ * POST /api/code-generator/generate
+ * 根据项目类型选择不同的生成策略
+ */
+app.post('/api/code-generator/generate', async (req, res) => {
+  try {
+    const { requirement, documentContent, projectType, uiFramework, includeBackend, chatHistory } = req.body;
+
+    const client = getOpenAIClient();
+    if (!client) {
+      return res.status(400).json({ error: '请先配置API密钥' });
+    }
+
+    // 设置SSE响应头
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    console.log('\n🚀 ========== 代码生成请求 ==========');
+    console.log(`📋 项目类型: ${projectType}`);
+    console.log(`🎨 UI框架: ${uiFramework}`);
+    console.log(`📝 需求: ${(requirement || '').slice(0, 100)}...`);
+    console.log(`📄 文档长度: ${(documentContent || '').length} 字符`);
+
+    // 分析需求，用于日志
+    const analysis = analyzeRequirementForData(requirement, documentContent);
+    console.log(`📊 识别实体: ${analysis.entities.map(e => e.name).join(', ') || '通用数据'}`);
+    console.log(`🔧 识别功能: ${analysis.features.join(', ') || '基础CRUD'}`);
+
+    let codeBlocks;
+
+    // 根据项目类型选择生成策略
+    if (projectType === 'html') {
+      // 纯HTML生成 - 单文件，包含CSS和JS
+      console.log('🌐 使用纯HTML生成模式');
+      
+      res.write(`data: ${JSON.stringify({ 
+        phase: 'start', 
+        progress: 5, 
+        message: '🌐 启动纯HTML页面生成...'
+      })}\n\n`);
+
+      // 获取上传的HTML模板（如果有）
+      const uploadedHtml = req.body.uploadedHtml || '';
+      if (uploadedHtml) {
+        console.log('📄 检测到上传的HTML模板，将作为参考');
+      }
+
+      codeBlocks = await streamHtmlGenerate(
+        client,
+        requirement,
+        documentContent,
+        { projectType, uiFramework, includeBackend, uploadedHtml },
+        res
+      );
+
+    } else {
+      // React/Vue 多轮迭代生成
+      console.log(`⚛️ 使用${projectType === 'react' ? 'React' : 'Vue'}多轮迭代模式`);
+      console.log(`🔄 迭代轮数: ${GENERATION_CONFIG.maxRounds}`);
+
+      res.write(`data: ${JSON.stringify({ 
+        phase: 'start', 
+        progress: 5, 
+        message: '🚀 启动多轮迭代生成...',
+        totalRounds: GENERATION_CONFIG.maxRounds
+      })}\n\n`);
+
+      codeBlocks = await streamMultiRoundGenerate(
+        client,
+        requirement,
+        documentContent,
+        { projectType, uiFramework, includeBackend },
+        res
+      );
+    }
+
+    // 发送最终代码
+    const finalCode = codeBlocks.html || codeBlocks.react || codeBlocks.fullCode || '';
+    const finalLineCount = finalCode.split('\n').length;
+    
+    res.write(`data: ${JSON.stringify({ 
+      complete: true, 
+      finalCode: codeBlocks,
+      phase: 'complete',
+      progress: 100,
+      lineCount: finalLineCount,
+      message: `✅ 生成完成！共 ${finalLineCount} 行代码`
+    })}\n\n`);
+
+    console.log(`✅ 代码生成完成，最终代码行数: ${finalLineCount}`);
+    res.end();
+
+  } catch (error) {
+    console.error('❌ 代码生成错误:', error);
+    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+    res.end();
+  }
+});
+
+/**
+ * API: 修改代码
+ * POST /api/code-generator/modify
+ * 根据修改需求调整现有代码
+ */
+app.post('/api/code-generator/modify', async (req, res) => {
+  try {
+    const { modification, currentCode, projectType, uiFramework, chatHistory } = req.body;
+
+    const client = getOpenAIClient();
+    if (!client) {
+      return res.status(400).json({ error: '请先配置API密钥' });
+    }
+
+    // 设置SSE响应头
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    console.log('\n🔧 ========== 代码修改请求 ==========');
+    console.log(`📝 修改需求: ${modification.slice(0, 100)}...`);
+
+    // 构建修改提示词
+    const { prompt, systemPrompt } = await modifyCode(
+      client, modification, currentCode,
+      { projectType, uiFramework },
+      chatHistory
+    );
+
+    // 调用AI修改代码
+    const stream = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL || 'glm-4-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 16000,
+      stream: true
+    });
+
+    let fullResponse = '';
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content || '';
+      if (content) {
+        fullResponse += content;
+        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+    }
+
+    // 解析修改后的代码
+    const codeBlocks = parseCodeBlocks(fullResponse);
+    
+    if (!codeBlocks.react && !codeBlocks.html) {
+      codeBlocks.react = fullResponse;
+      codeBlocks.fullCode = buildFullReactCode({ react: fullResponse, css: currentCode.css || '' });
+    }
+
+    res.write(`data: ${JSON.stringify({ 
+      complete: true, 
+      finalCode: codeBlocks 
+    })}\n\n`);
+
+    console.log('✅ 代码修改完成');
+    res.end();
+
+  } catch (error) {
+    console.error('❌ 代码修改错误:', error);
+    res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+    res.end();
+  }
+});
+
+// ==================== 编程智能体 API 结束 ====================
+
+
 app.listen(PORT, () => {
   console.log(`🚀 智能体服务器运行在 http://localhost:${PORT}`);
   console.log(`📋 API密钥状态: ${process.env.OPENAI_API_KEY ? '已配置' : '未配置'}`);
@@ -9199,6 +12413,10 @@ app.listen(PORT, () => {
   console.log(`      · /api/chat/sync - 同步对话`);
   console.log(`      · /api/chat/info - 获取AI信息`);
   console.log(`      · 核心模块: NLU引擎、对话管理、知识库、NLG引擎、技能系统`);
+  console.log(`   💻 编程智能体: 根据需求生成前端代码，支持实时预览`);
+  console.log(`      · /api/code-generator/generate - 生成代码`);
+  console.log(`      · /api/code-generator/modify - 修改代码`);
+  console.log(`      · 支持: React/Vue/HTML + Tailwind/Antd/Material UI`);
   if (fs.existsSync(CLIENT_DIST_PATH)) {
     console.log('🖥️  静态前端: 已启用 client/dist 产物');
   }
