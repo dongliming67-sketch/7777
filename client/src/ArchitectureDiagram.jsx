@@ -575,22 +575,29 @@ function ArchitectureDiagram({ documentContent, documentName }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
+    <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 transition-all duration-300">
       {/* 标题栏 */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Layers className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-800">架构图生成</h3>
-          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">深度思考版</span>
+      <div className="flex items-center justify-between mb-6 border-b border-claude-border pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-claude-accent-primary flex items-center justify-center shadow-sm">
+            <Layers className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-serif font-bold text-claude-text-primary">架构图生成</h3>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-xs text-claude-text-muted">基于AI的深度架构分析与可视化</span>
+              <span className="text-[10px] bg-claude-bg-warm text-claude-accent-primary border border-claude-border-warm px-2 py-0.5 rounded-full font-medium">深度思考版</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* 操作按钮 */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-3 mb-6 p-4 bg-claude-bg-warm rounded-xl border border-claude-border-warm">
         <button
           onClick={generateDiagram}
           disabled={isThinking || isGenerating || !documentContent}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-5 py-2.5 bg-claude-accent-primary text-white rounded-lg hover:bg-claude-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm font-medium"
         >
           {isThinking ? (
             <>
@@ -612,12 +619,14 @@ function ArchitectureDiagram({ documentContent, documentName }) {
 
         {architectureData && (
           <>
+            <div className="w-px h-8 bg-claude-border mx-1 self-center"></div>
+            
             <button
               onClick={toggleEditMode}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all font-medium ${
                 isEditMode 
-                  ? 'bg-orange-500 text-white hover:bg-orange-600' 
-                  : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                  ? 'bg-claude-text-primary text-white hover:bg-claude-text-secondary shadow-md' 
+                  : 'bg-white border border-claude-border text-claude-text-secondary hover:text-claude-text-primary hover:bg-claude-bg-cream'
               }`}
             >
               {isEditMode ? (
@@ -628,7 +637,7 @@ function ArchitectureDiagram({ documentContent, documentName }) {
               ) : (
                 <>
                   <Edit3 className="w-4 h-4" />
-                  编辑架构图
+                  编辑模式
                 </>
               )}
             </button>
@@ -636,26 +645,28 @@ function ArchitectureDiagram({ documentContent, documentName }) {
             <button
               onClick={generateDiagram}
               disabled={isThinking || isGenerating}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-claude-border text-claude-text-secondary rounded-lg hover:bg-claude-bg-cream hover:text-claude-text-primary transition-all font-medium"
             >
               <RefreshCw className="w-4 h-4" />
               重新生成
             </button>
             
+            <div className="flex-1"></div>
+
             <button
               onClick={downloadImage}
-              className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-claude-border text-claude-text-secondary rounded-lg hover:bg-claude-bg-cream hover:text-claude-text-primary transition-all font-medium"
             >
               <Download className="w-4 h-4" />
-              下载PNG
+              PNG
             </button>
 
             <button
               onClick={downloadPPT}
-              className="flex items-center gap-2 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-claude-border text-claude-text-secondary rounded-lg hover:bg-claude-bg-cream hover:text-claude-text-primary transition-all font-medium"
             >
               <FileSpreadsheet className="w-4 h-4" />
-              导出PPT
+              PPT
             </button>
           </>
         )}
@@ -663,55 +674,58 @@ function ArchitectureDiagram({ documentContent, documentName }) {
 
       {/* 进度指示器 */}
       {(isThinking || isGenerating) && (
-        <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${currentPhase === 'thinking' ? 'bg-blue-500 animate-pulse' : 'bg-green-500'}`}>
+        <div className="mb-6 p-5 bg-white rounded-xl border border-claude-border shadow-sm animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-sm transition-all duration-500 ${currentPhase === 'thinking' ? 'bg-claude-accent-primary scale-110' : 'bg-green-500'}`}>
                 1
               </div>
-              <span className={`text-sm ${currentPhase === 'thinking' ? 'text-blue-600 font-medium' : 'text-green-600'}`}>
+              <span className={`text-sm font-medium ${currentPhase === 'thinking' ? 'text-claude-accent-primary' : 'text-green-600'}`}>
                 深度思考
               </span>
             </div>
-            <div className="flex-1 h-1 bg-gray-200 rounded">
-              <div className={`h-full rounded transition-all duration-500 ${currentPhase === 'thinking' ? 'w-1/2 bg-blue-400' : 'w-full bg-green-400'}`}></div>
+            <div className="flex-1 h-1.5 bg-claude-bg-warm rounded-full overflow-hidden">
+              <div className={`h-full rounded-full transition-all duration-700 ease-out ${currentPhase === 'thinking' ? 'w-1/2 bg-claude-accent-primary/50' : 'w-full bg-green-500'}`}></div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${currentPhase === 'generating' ? 'bg-purple-500 text-white animate-pulse' : currentPhase === 'done' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-sm transition-all duration-500 ${currentPhase === 'generating' ? 'bg-claude-accent-primary scale-110 text-white' : currentPhase === 'done' ? 'bg-green-500 text-white' : 'bg-claude-bg-warm text-claude-text-muted border border-claude-border'}`}>
                 2
               </div>
-              <span className={`text-sm ${currentPhase === 'generating' ? 'text-purple-600 font-medium' : currentPhase === 'done' ? 'text-green-600' : 'text-gray-400'}`}>
+              <span className={`text-sm font-medium ${currentPhase === 'generating' ? 'text-claude-accent-primary' : currentPhase === 'done' ? 'text-green-600' : 'text-claude-text-muted'}`}>
                 生成架构图
               </span>
             </div>
           </div>
-          <p className="text-sm text-gray-600">
-            {currentPhase === 'thinking' && '🧠 正在深入分析文档内容，识别系统功能模块和架构层级...'}
-            {currentPhase === 'generating' && '🎨 基于分析结果，正在生成专业架构图...'}
-          </p>
+          <div className="flex items-center gap-3 text-sm text-claude-text-secondary bg-claude-bg-warm p-3 rounded-lg border border-claude-border-warm">
+            <Loader2 className="w-4 h-4 animate-spin text-claude-accent-primary" />
+            <p>
+              {currentPhase === 'thinking' && '🧠 正在深入分析文档内容，识别系统功能模块和架构层级...'}
+              {currentPhase === 'generating' && '🎨 基于分析结果，正在生成专业架构图...'}
+            </p>
+          </div>
         </div>
       )}
 
       {/* 深度思考结果展示 */}
       {thinkingContent && (
-        <div className="mb-4 border rounded-lg overflow-hidden">
+        <div className="mb-6 border border-claude-border rounded-xl overflow-hidden shadow-sm transition-all hover:shadow-md">
           <button
             onClick={() => setShowThinking(!showThinking)}
-            className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 transition-colors"
+            className="w-full flex items-center justify-between p-4 bg-claude-bg-warm hover:bg-claude-bg-light transition-colors"
           >
-            <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
+            <span className="flex items-center gap-2 text-sm font-serif font-semibold text-claude-text-primary">
               <span className="text-lg">🧠</span>
               AI深度思考过程
-              <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">
+              <span className="text-xs bg-white text-claude-text-secondary px-2 py-0.5 rounded border border-claude-border-warm font-sans font-normal ml-2">
                 {thinkingContent.length} 字
               </span>
             </span>
-            {showThinking ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {showThinking ? <ChevronUp className="w-4 h-4 text-claude-text-muted" /> : <ChevronDown className="w-4 h-4 text-claude-text-muted" />}
           </button>
           
           {showThinking && (
-            <div className="p-4 bg-white max-h-[400px] overflow-auto">
-              <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+            <div className="p-5 bg-white border-t border-claude-border max-h-[400px] overflow-auto custom-scrollbar">
+              <div className="prose prose-sm max-w-none text-claude-text-secondary whitespace-pre-wrap leading-relaxed">
                 {thinkingContent}
               </div>
             </div>
@@ -721,45 +735,49 @@ function ArchitectureDiagram({ documentContent, documentName }) {
 
       {/* 错误提示 */}
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-lg mb-4">
-          <AlertCircle className="w-4 h-4" />
-          {error}
+        <div className="flex items-center gap-3 p-4 bg-red-50 text-red-700 border border-red-100 rounded-xl mb-6 shadow-sm">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
       {/* 编辑模式提示 */}
       {isEditMode && architectureData && (
-        <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-          <div className="flex items-center gap-2 text-orange-700 text-sm">
-            <Edit3 className="w-4 h-4" />
-            <span className="font-medium">编辑模式已开启</span>
-            <span className="text-orange-600">- 点击任意文字可编辑，使用按钮添加/删除元素</span>
+        <div className="mb-6 p-4 bg-claude-bg-warm border border-claude-accent-primary/30 rounded-xl shadow-sm animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-2 text-claude-text-primary text-sm">
+            <div className="w-8 h-8 rounded-full bg-claude-accent-primary/10 flex items-center justify-center text-claude-accent-primary">
+              <Edit3 className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold block text-claude-accent-primary">编辑模式已开启</span>
+              <span className="text-claude-text-secondary text-xs">点击任意文字可编辑，使用按钮添加/删除元素</span>
+            </div>
           </div>
         </div>
       )}
 
       {/* 架构图预览 */}
       {architectureData && (
-        <div className={`border rounded-lg p-3 bg-gray-50 mb-4 overflow-auto ${isEditMode ? 'ring-2 ring-orange-300' : ''}`}>
+        <div className={`border rounded-xl p-4 bg-claude-bg-cream mb-6 overflow-auto transition-all duration-300 ${isEditMode ? 'ring-2 ring-claude-accent-primary/50 shadow-md' : 'border-claude-border shadow-inner'}`}>
           <div 
             ref={diagramRef}
-            className="bg-white p-6 min-w-[950px]"
+            className="bg-white p-8 min-w-[950px] rounded-lg shadow-sm"
             style={{ fontFamily: 'Microsoft YaHei, SimHei, sans-serif' }}
           >
             {/* 系统标题 */}
-            <div className="text-center mb-5 pb-3 border-b-2 border-gray-300 relative">
+            <div className="text-center mb-8 pb-4 border-b-2 border-claude-border-warm relative">
               {editingItem?.type === 'systemName' ? (
                 <div className="flex justify-center">
                   <EditableText
                     value={editingItem.value}
                     onSave={(text) => saveEditing(text)}
                     onCancel={cancelEditing}
-                    className="text-xl font-bold"
+                    className="text-2xl font-serif font-bold text-claude-text-primary"
                   />
                 </div>
               ) : (
                 <h2 
-                  className={`text-xl font-bold text-gray-800 tracking-wide ${isEditMode ? 'cursor-pointer hover:bg-blue-50 hover:text-blue-600 px-2 py-1 rounded transition-colors' : ''}`}
+                  className={`text-2xl font-serif font-bold text-claude-text-primary tracking-wide ${isEditMode ? 'cursor-pointer hover:text-claude-accent-primary hover:bg-claude-bg-warm px-4 py-1 rounded-lg transition-all' : ''}`}
                   onClick={() => startEditing('systemName', null)}
                 >
                   {architectureData.systemName || '系统架构图'}
@@ -773,44 +791,44 @@ function ArchitectureDiagram({ documentContent, documentName }) {
                 const colors = getLayerColor(layer.name);
                 const groupCount = layer.groups?.length || 1;
                 return (
-                  <div key={layerIdx}>
-                    <div className="flex border border-gray-300 relative" style={{ borderTopWidth: layerIdx === 0 ? 1 : 0 }}>
+                  <div key={layerIdx} className="relative">
+                    <div className="flex border border-claude-border-warm relative shadow-sm" style={{ borderTopWidth: layerIdx === 0 ? 1 : 0 }}>
                       {/* 编辑模式：层级操作按钮 */}
                       {isEditMode && (
-                        <div className="absolute -left-8 top-1/2 -translate-y-1/2 flex flex-col gap-1">
+                        <div className="absolute -left-10 top-1/2 -translate-y-1/2 flex flex-col gap-2">
                           <button
                             onClick={() => deleteLayer(layerIdx)}
-                            className="p-1 bg-red-500 text-white rounded hover:bg-red-600 opacity-70 hover:opacity-100"
+                            className="p-2 bg-white border border-red-200 text-red-500 rounded-full hover:bg-red-50 shadow-sm transition-all"
                             title="删除层级"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       )}
 
                       {/* 左侧层级标签 */}
                       <div 
-                        className={`w-20 flex-shrink-0 flex items-center justify-center font-bold text-white text-sm relative ${isEditMode ? 'cursor-pointer' : ''}`}
+                        className={`w-24 flex-shrink-0 flex items-center justify-center font-bold text-claude-text-primary text-sm relative ${isEditMode ? 'cursor-pointer group' : ''}`}
                         style={{ 
-                          backgroundColor: colors.label,
-                          minHeight: '80px',
-                          borderRight: `2px solid ${colors.border}`
+                          backgroundColor: colors.bg,
+                          minHeight: '100px',
+                          borderRight: `3px solid ${colors.label}`
                         }}
                         onClick={() => startEditing('layerName', layerIdx)}
                       >
                         {editingItem?.type === 'layerName' && editingItem.layerIdx === layerIdx ? (
-                          <div className="absolute inset-0 flex items-center justify-center bg-white p-1">
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm p-1 z-10">
                             <EditableText
                               value={editingItem.value}
                               onSave={(text) => saveEditing(text)}
                               onCancel={cancelEditing}
-                              className="text-xs w-16"
+                              className="text-xs w-20"
                             />
                           </div>
                         ) : (
                           <span 
-                            style={{ writingMode: 'vertical-rl', letterSpacing: '0.15em' }}
-                            className={isEditMode ? 'hover:opacity-70' : ''}
+                            style={{ writingMode: 'vertical-rl', letterSpacing: '0.2em' }}
+                            className={`font-serif ${isEditMode ? 'group-hover:text-claude-accent-primary transition-colors' : ''}`}
                           >
                             {layer.name}
                           </span>
@@ -819,22 +837,20 @@ function ArchitectureDiagram({ documentContent, documentName }) {
 
                       {/* 右侧内容区 - 分组平铺 */}
                       <div 
-                        className="flex-1 flex"
-                        style={{ backgroundColor: colors.bg }}
+                        className="flex-1 flex bg-white"
                       >
                         {layer.groups?.map((group, groupIdx) => (
                           <div 
                             key={groupIdx}
-                            className="flex-1 border-r border-gray-200 last:border-r-0 relative"
+                            className="flex-1 border-r border-dashed border-claude-border-warm last:border-r-0 relative flex flex-col"
                             style={{ minWidth: `${100 / groupCount}%` }}
                           >
                             {/* 分组标题 */}
                             <div 
-                              className={`px-3 py-2 text-center font-semibold text-sm border-b relative ${isEditMode ? 'cursor-pointer hover:bg-blue-50' : ''}`}
+                              className={`px-4 py-2.5 text-center font-medium text-sm border-b border-dashed border-claude-border-warm relative ${isEditMode ? 'cursor-pointer hover:bg-claude-bg-warm transition-colors' : ''}`}
                               style={{ 
-                                backgroundColor: 'rgba(255,255,255,0.7)',
-                                borderColor: colors.border,
-                                color: '#333'
+                                backgroundColor: isEditMode ? '' : `${colors.bg}40`,
+                                color: '#444'
                               }}
                             >
                               {editingItem?.type === 'groupName' && editingItem.layerIdx === layerIdx && editingItem.groupIdx === groupIdx ? (
@@ -845,17 +861,17 @@ function ArchitectureDiagram({ documentContent, documentName }) {
                                   className="text-sm"
                                 />
                               ) : (
-                                <div className="flex items-center justify-center gap-1">
+                                <div className="flex items-center justify-center gap-1.5">
                                   <span 
                                     onClick={() => startEditing('groupName', layerIdx, groupIdx)}
-                                    className={isEditMode ? 'hover:text-blue-600' : ''}
+                                    className={`font-semibold tracking-wide ${isEditMode ? 'hover:text-claude-accent-primary' : ''}`}
                                   >
                                     {group.name}
                                   </span>
                                   {isEditMode && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); deleteGroup(layerIdx, groupIdx); }}
-                                      className="p-0.5 bg-red-400 text-white rounded hover:bg-red-500 ml-1"
+                                      className="p-0.5 text-claude-text-light hover:text-red-500 rounded transition-colors"
                                       title="删除分组"
                                     >
                                       <X className="w-3 h-3" />
@@ -866,8 +882,8 @@ function ArchitectureDiagram({ documentContent, documentName }) {
                             </div>
                             
                             {/* 模块列表 - 自适应填充 */}
-                            <div className="p-2">
-                              <div className="flex flex-wrap gap-1.5">
+                            <div className="p-3 flex-1 flex flex-col justify-center">
+                              <div className="flex flex-wrap gap-2 justify-center content-center h-full">
                                 {group.modules?.map((module, modIdx) => {
                                   const moduleName = typeof module === 'string' ? module : module.name;
                                   const isEditing = editingItem?.type === 'module' && 
@@ -878,10 +894,13 @@ function ArchitectureDiagram({ documentContent, documentName }) {
                                   return (
                                     <div
                                       key={modIdx}
-                                      className={`flex-1 min-w-[80px] px-2 py-1.5 text-center text-xs border bg-white relative group ${isEditMode ? 'cursor-pointer hover:bg-blue-50 hover:border-blue-400' : ''}`}
+                                      className={`flex-1 min-w-[100px] max-w-[180px] px-3 py-2 text-center text-xs border rounded shadow-sm relative group transition-all duration-200 ${
+                                        isEditMode 
+                                          ? 'cursor-pointer hover:border-claude-accent-primary hover:shadow-md bg-white' 
+                                          : 'border-claude-border-warm bg-white hover:border-claude-border hover:shadow-md'
+                                      }`}
                                       style={{
-                                        borderColor: isEditing ? '#3B82F6' : colors.border,
-                                        color: '#333'
+                                        borderColor: isEditing ? '#D97706' : undefined,
                                       }}
                                     >
                                       {isEditing ? (
@@ -889,23 +908,24 @@ function ArchitectureDiagram({ documentContent, documentName }) {
                                           value={editingItem.value}
                                           onSave={(text) => saveEditing(text)}
                                           onCancel={cancelEditing}
-                                          className="text-xs"
+                                          className="text-xs w-full"
                                         />
                                       ) : (
                                         <>
                                           <span 
                                             onClick={() => startEditing('module', layerIdx, groupIdx, modIdx)}
-                                            className="block"
+                                            className="block truncate text-claude-text-primary"
+                                            title={moduleName}
                                           >
                                             {moduleName}
                                           </span>
                                           {isEditMode && (
                                             <button
                                               onClick={(e) => { e.stopPropagation(); deleteModule(layerIdx, groupIdx, modIdx); }}
-                                              className="absolute -top-1 -right-1 p-0.5 bg-red-400 text-white rounded-full hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                              className="absolute -top-1.5 -right-1.5 p-0.5 bg-white border border-red-200 text-red-500 rounded-full hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all shadow-sm"
                                               title="删除模块"
                                             >
-                                              <X className="w-2 h-2" />
+                                              <X className="w-2.5 h-2.5" />
                                             </button>
                                           )}
                                         </>
@@ -918,9 +938,9 @@ function ArchitectureDiagram({ documentContent, documentName }) {
                                 {isEditMode && (
                                   <button
                                     onClick={() => addModule(layerIdx, groupIdx)}
-                                    className="flex-1 min-w-[80px] px-2 py-1.5 text-center text-xs border-2 border-dashed border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                                    className="flex-1 min-w-[80px] max-w-[120px] px-2 py-1.5 text-center text-xs border border-dashed border-claude-border text-claude-text-muted hover:border-claude-accent-primary hover:text-claude-accent-primary hover:bg-claude-bg-warm rounded transition-all"
                                   >
-                                    <Plus className="w-3 h-3 inline" /> 添加模块
+                                    <Plus className="w-3 h-3 inline mr-1" /> 添加
                                   </button>
                                 )}
                               </div>
@@ -932,11 +952,11 @@ function ArchitectureDiagram({ documentContent, documentName }) {
                         {isEditMode && (
                           <button
                             onClick={() => addGroup(layerIdx)}
-                            className="w-24 flex items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+                            className="w-16 flex items-center justify-center border-l border-dashed border-claude-border hover:bg-claude-bg-warm text-claude-text-muted hover:text-claude-accent-primary transition-all"
+                            title="添加分组"
                           >
                             <div className="text-center">
-                              <Plus className="w-4 h-4 mx-auto" />
-                              <span className="text-xs">添加分组</span>
+                              <Plus className="w-5 h-5 mx-auto" />
                             </div>
                           </button>
                         )}
@@ -945,8 +965,8 @@ function ArchitectureDiagram({ documentContent, documentName }) {
                     
                     {/* 层级间连接线 */}
                     {layerIdx < architectureData.layers.length - 1 && (
-                      <div className="flex justify-center">
-                        <div className="w-0 h-3 border-l-2 border-dashed border-gray-400"></div>
+                      <div className="flex justify-center h-4 items-center">
+                        <div className="w-0.5 h-full bg-claude-border-warm"></div>
                       </div>
                     )}
                   </div>
@@ -957,9 +977,9 @@ function ArchitectureDiagram({ documentContent, documentName }) {
               {isEditMode && (
                 <button
                   onClick={addLayer}
-                  className="w-full mt-2 py-3 border-2 border-dashed border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="w-full mt-4 py-3 border-2 border-dashed border-claude-border text-claude-text-muted hover:border-claude-accent-primary hover:text-claude-accent-primary hover:bg-claude-bg-warm rounded-xl transition-all flex items-center justify-center gap-2 font-medium"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-5 h-5" />
                   添加新层级
                 </button>
               )}
@@ -970,21 +990,21 @@ function ArchitectureDiagram({ documentContent, documentName }) {
 
       {/* AI分析结果 */}
       {architectureData && (
-        <div className="border rounded-lg">
+        <div className="border border-claude-border rounded-xl overflow-hidden bg-white shadow-sm">
           <button
             onClick={() => setShowAnalysis(!showAnalysis)}
-            className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors rounded-t-lg"
+            className="w-full flex items-center justify-between p-4 bg-claude-bg-warm hover:bg-claude-bg-light transition-colors"
           >
-            <span className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <FileText className="w-4 h-4" />
+            <span className="flex items-center gap-2 text-sm font-serif font-medium text-claude-text-primary">
+              <FileText className="w-4 h-4 text-claude-text-secondary" />
               查看分析数据 (JSON)
             </span>
-            {showAnalysis ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {showAnalysis ? <ChevronUp className="w-4 h-4 text-claude-text-muted" /> : <ChevronDown className="w-4 h-4 text-claude-text-muted" />}
           </button>
           
           {showAnalysis && (
-            <div className="p-4 bg-gray-900 rounded-b-lg">
-              <pre className="text-sm text-green-400 overflow-auto max-h-[300px]">
+            <div className="p-0 bg-claude-dark border-t border-claude-border">
+              <pre className="text-xs text-gray-300 overflow-auto max-h-[300px] p-4 font-mono leading-relaxed">
                 {JSON.stringify(architectureData, null, 2)}
               </pre>
             </div>
@@ -992,15 +1012,20 @@ function ArchitectureDiagram({ documentContent, documentName }) {
         </div>
       )}
 
-      {/* 使用说明 */}
+      {/* 使用说明 - Claude风格 */}
       {!architectureData && !isGenerating && (
-        <div className="text-center py-8 text-gray-500">
-          <Layers className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">上传需求文档后，点击"生成架构图"按钮</p>
-          <p className="text-xs mt-1">AI将分析文档内容，生成专业的分层架构图</p>
+        <div className="text-center py-16 bg-claude-bg-warm rounded-xl border border-dashed border-claude-border">
+          <div className="w-16 h-16 rounded-2xl bg-white border border-claude-border shadow-sm flex items-center justify-center mx-auto mb-4">
+            <Layers className="w-8 h-8 text-claude-accent-primary" />
+          </div>
+          <h4 className="text-lg font-serif font-medium text-claude-text-primary mb-2">准备生成架构图</h4>
+          <p className="text-sm text-claude-text-secondary max-w-sm mx-auto">
+            上传需求文档后，点击上方的"生成架构图"按钮。AI将自动分析文档内容，识别功能模块并生成专业的分层架构图。
+          </p>
         </div>
       )}
     </div>
+
   );
 }
 

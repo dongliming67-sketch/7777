@@ -7,6 +7,7 @@ import ArchitectureDiagram from './ArchitectureDiagram';
 import CosmicToSpec from './CosmicToSpec';
 import RequirementReview from './RequirementReview';
 import ChatAgent from './ChatAgent';
+import CodeGenerator from './CodeGenerator';
 import {
   Upload,
   FileText,
@@ -1544,118 +1545,76 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-claude-bg text-claude-text-primary font-sans selection:bg-claude-accent-light selection:text-claude-accent-primary">
       {/* 顶部导航 */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-              <Bot className="w-6 h-6 text-white" />
+      <header className="bg-claude-bg/80 backdrop-blur-md border-b border-claude-border sticky top-0 z-50 transition-all duration-300">
+        <div className="max-w-[1500px] w-full mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-claude-accent-primary text-white rounded-lg flex items-center justify-center shadow-sm">
+              <Bot className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">
+              <h1 className="text-xl font-serif font-bold text-claude-text-primary tracking-tight">
                 {activeModule === 'cosmic' ? 'Cosmic拆分智能体' : 
                  activeModule === 'requirement' ? '需求规格书生成' : 
                  activeModule === 'cosmicToSpec' ? 'COSMIC转需求规格书' :
                  activeModule === 'review' ? '需求评审智能体' :
                  activeModule === 'chat' ? '智器云AI助手' :
+                 activeModule === 'codeGen' ? '编程智能体' :
                  '架构图生成'}
               </h1>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-claude-text-muted mt-0.5">
                 {activeModule === 'cosmic' ? '基于AI的软件功能规模度量工具' : 
                  activeModule === 'requirement' ? '基于AI的需求文档智能分析工具' :
                  activeModule === 'cosmicToSpec' ? '将COSMIC Excel数据转换为需求规格说明书' :
                  activeModule === 'review' ? '多维度智能需求文档评审' :
                  activeModule === 'chat' ? '自研通用AI对话助手' :
+                 activeModule === 'codeGen' ? '输入需求，AI生成前端代码，实时预览' :
                  '基于AI的系统架构图生成工具'}
               </p>
             </div>
           </div>
 
-          {/* 功能模块切换器 */}
-          <div className="flex items-center bg-gray-100 rounded-xl p-1">
-            <button
-              onClick={() => setActiveModule('cosmic')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeModule === 'cosmic'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              Cosmic拆分
-            </button>
-            <button
-              onClick={() => setActiveModule('requirement')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeModule === 'requirement'
-                  ? 'bg-white text-purple-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              需求规格书
-            </button>
-            <button
-              onClick={() => setActiveModule('cosmicToSpec')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeModule === 'cosmicToSpec'
-                  ? 'bg-white text-green-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <FileOutput className="w-4 h-4" />
-              COSMIC转规格书
-            </button>
-            <button
-              onClick={() => setActiveModule('diagram')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeModule === 'diagram'
-                  ? 'bg-white text-teal-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <GitBranch className="w-4 h-4" />
-              架构图
-            </button>
-            <button
-              onClick={() => setActiveModule('review')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeModule === 'review'
-                  ? 'bg-white text-indigo-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <Search className="w-4 h-4" />
-              需求评审
-            </button>
-            <button
-              onClick={() => setActiveModule('chat')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                activeModule === 'chat'
-                  ? 'bg-white text-pink-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-            >
-              <MessageSquare className="w-4 h-4" />
-              AI助手
-            </button>
+          {/* 功能模块切换器 - Claude风格导航 */}
+          <div className="hidden md:flex items-center gap-1 bg-claude-sidebar/50 p-1.5 rounded-xl border border-claude-border/50 flex-nowrap">
+            {[
+              { id: 'cosmic', icon: Layers, label: 'Cosmic拆分' },
+              { id: 'requirement', icon: BookOpen, label: '需求规格书' },
+              { id: 'cosmicToSpec', icon: FileOutput, label: '转规格书' },
+              { id: 'diagram', icon: GitBranch, label: '架构图' },
+              { id: 'review', icon: Search, label: '需求评审' },
+              { id: 'chat', icon: MessageSquare, label: 'AI助手' },
+              { id: 'codeGen', icon: Zap, label: '编程' }
+            ].map(module => (
+              <button
+                key={module.id}
+                onClick={() => setActiveModule(module.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                  activeModule === module.id
+                    ? 'bg-white text-claude-accent-primary shadow-sm border border-claude-border-warm'
+                    : 'text-claude-text-secondary hover:text-claude-text-primary hover:bg-claude-sidebar'
+                }`}
+              >
+                <module.icon className={`w-4 h-4 ${activeModule === module.id ? 'text-claude-accent-primary' : 'text-claude-text-muted'}`} />
+                <span>{module.label}</span>
+              </button>
+            ))}
           </div>
 
           <div className="flex items-center gap-3">
             {/* API状态指示 */}
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm ${apiStatus.hasApiKey
-                ? 'bg-green-100 text-green-700'
-                : 'bg-yellow-100 text-yellow-700'
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border ${apiStatus.hasApiKey
+                ? 'bg-green-50 text-green-700 border-green-200'
+                : 'bg-amber-50 text-amber-700 border-amber-200'
               }`}>
               {apiStatus.hasApiKey ? (
                 <>
-                  <CheckCircle className="w-4 h-4" />
+                  <CheckCircle className="w-3.5 h-3.5" />
                   <span>API已连接</span>
                 </>
               ) : (
                 <>
-                  <AlertCircle className="w-4 h-4" />
+                  <AlertCircle className="w-3.5 h-3.5" />
                   <span>未配置API</span>
                 </>
               )}
@@ -1667,15 +1626,15 @@ function App() {
                 <button
                   onClick={() => setShowTableView(true)}
                   disabled={tableData.length === 0}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white text-claude-text-primary border border-claude-border rounded-lg hover:bg-claude-bg-cream hover:border-claude-accent-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
                 >
-                  <Table className="w-4 h-4" />
+                  <Table className="w-4 h-4 text-claude-accent-primary" />
                   <span>查看表格</span>
                 </button>
                 <button
                   onClick={exportExcel}
                   disabled={tableData.length === 0}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-claude-accent-primary text-white rounded-lg hover:bg-claude-accent-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
                   <span>导出Excel</span>
@@ -1688,7 +1647,7 @@ function App() {
               <button
                 onClick={exportWord}
                 disabled={!specContent}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 bg-claude-accent-primary text-white rounded-lg hover:bg-claude-accent-hover shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
               >
                 <FileOutput className="w-4 h-4" />
                 <span>导出Word</span>
@@ -1708,7 +1667,7 @@ function App() {
                   setDocumentName('');
                 }
               }}
-              className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              className="p-2 text-claude-text-muted hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="清空对话"
             >
               <Trash2 className="w-5 h-5" />
@@ -1717,7 +1676,7 @@ function App() {
             {/* 设置按钮 */}
             <button
               onClick={() => setShowSettings(true)}
-              className="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+              className="p-2 text-claude-text-muted hover:text-claude-accent-primary hover:bg-claude-bg-cream rounded-lg transition-colors"
               title="API设置"
             >
               <Settings className="w-5 h-5" />
@@ -1734,9 +1693,9 @@ function App() {
           {/* 左侧：文件上传和文档预览 */}
           <div className="lg:col-span-1 space-y-4">
             {/* 文件上传区 */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Upload className="w-5 h-5 text-blue-500" />
+            <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 transition-all duration-300 hover:shadow-claude-lg">
+              <h2 className="text-lg font-serif font-semibold text-claude-text-primary mb-4 flex items-center gap-2">
+                <Upload className="w-5 h-5 text-claude-accent-primary" />
                 导入Word文档
               </h2>
 
@@ -1747,9 +1706,9 @@ function App() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${isDragging
-                    ? 'border-blue-500 bg-blue-50 scale-105'
-                    : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50/50'
+                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ${isDragging
+                    ? 'border-claude-accent-primary bg-claude-accent-light scale-[1.02]'
+                    : 'border-claude-border hover:border-claude-accent-primary hover:bg-claude-bg-warm'
                   }`}
               >
                 <input
@@ -1761,14 +1720,14 @@ function App() {
                 />
                 {isDragging ? (
                   <>
-                    <Upload className="w-12 h-12 text-blue-500 mx-auto mb-3 animate-bounce" />
-                    <p className="text-blue-600 font-medium">松开鼠标上传文件</p>
+                    <Upload className="w-12 h-12 text-claude-accent-primary mx-auto mb-3 animate-bounce" />
+                    <p className="text-claude-accent-primary font-medium">松开鼠标上传文件</p>
                   </>
                 ) : (
                   <>
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 font-medium">点击或拖拽上传</p>
-                    <p className="text-sm text-gray-400 mt-1">支持 .docx, .txt, .md 格式</p>
+                    <FileText className="w-12 h-12 text-claude-text-muted/50 mx-auto mb-3 transition-colors group-hover:text-claude-text-secondary" />
+                    <p className="text-claude-text-primary font-medium">点击或拖拽上传</p>
+                    <p className="text-sm text-claude-text-muted mt-1">支持 .docx, .txt, .md 格式</p>
                   </>
                 )}
               </div>
@@ -1922,40 +1881,42 @@ function App() {
 
           {/* 右侧：对话区域 */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 h-[calc(100vh-180px)] flex flex-col">
+            <div className="bg-white rounded-xl shadow-claude border border-claude-border h-[calc(100vh-180px)] flex flex-col transition-all duration-300">
               {/* 对话消息区 */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {messages.length === 0 && !streamingContent && (
                   <div className="text-center py-12">
-                    <Bot className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-600 mb-2">欢迎使用Cosmic拆分智能体</h3>
-                    <p className="text-gray-400">上传Word文档开始分析，或直接输入功能过程描述</p>
+                    <div className="w-16 h-16 bg-claude-bg-warm rounded-2xl flex items-center justify-center mx-auto mb-4 border border-claude-border">
+                      <Bot className="w-8 h-8 text-claude-accent-primary" />
+                    </div>
+                    <h3 className="text-lg font-serif font-medium text-claude-text-primary mb-2">欢迎使用Cosmic拆分智能体</h3>
+                    <p className="text-claude-text-muted">上传Word文档开始分析，或直接输入功能过程描述</p>
                   </div>
                 )}
 
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
-                    className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                    className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                   >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user'
-                        ? 'bg-blue-500'
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${msg.role === 'user'
+                        ? 'bg-claude-sidebar border border-claude-border'
                         : msg.role === 'system'
-                          ? 'bg-gray-500'
-                          : 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                          ? 'bg-claude-bg-warm border border-claude-border'
+                          : 'bg-claude-accent-primary'
                       }`}>
                       {msg.role === 'user' ? (
-                        <User className="w-4 h-4 text-white" />
+                        <User className="w-4 h-4 text-claude-text-secondary" />
                       ) : (
-                        <Bot className="w-4 h-4 text-white" />
+                        <Bot className={`w-4 h-4 ${msg.role === 'system' ? 'text-claude-text-muted' : 'text-white'}`} />
                       )}
                     </div>
-                    <div className={`max-w-[80%] ${msg.role === 'user' ? 'text-right' : ''}`}>
-                      <div className={`inline-block p-4 rounded-2xl ${msg.role === 'user'
-                          ? 'bg-blue-500 text-white'
+                    <div className={`max-w-[85%] ${msg.role === 'user' ? 'text-right' : ''}`}>
+                      <div className={`inline-block p-4 rounded-xl text-left ${msg.role === 'user'
+                          ? 'bg-claude-sidebar text-claude-text-primary border border-claude-border'
                           : msg.role === 'system'
-                            ? 'bg-gray-100 text-gray-700'
-                            : 'bg-gray-50 text-gray-800'
+                            ? 'bg-claude-bg-light text-claude-text-secondary border border-claude-border-warm text-sm'
+                            : 'bg-transparent text-claude-text-primary'
                         }`}>
                         {msg.role === 'assistant' ? (
                           <div className="markdown-content">
@@ -1970,7 +1931,7 @@ function App() {
                       {msg.role === 'assistant' && (
                         <button
                           onClick={() => copyContent(msg.content)}
-                          className="mt-2 text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+                          className="mt-2 text-xs text-claude-text-muted hover:text-claude-accent-primary flex items-center gap-1 ml-1"
                         >
                           {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                           {copied ? '已复制' : '复制'}
@@ -1982,12 +1943,12 @@ function App() {
 
                 {/* 流式输出 */}
                 {streamingContent && (
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                  <div className="flex gap-4">
+                    <div className="w-8 h-8 rounded-lg bg-claude-accent-primary flex items-center justify-center flex-shrink-0">
                       <Bot className="w-4 h-4 text-white" />
                     </div>
-                    <div className="max-w-[80%]">
-                      <div className="inline-block p-4 rounded-2xl bg-gray-50 text-gray-800">
+                    <div className="max-w-[85%]">
+                      <div className="inline-block p-4 rounded-xl bg-transparent text-claude-text-primary">
                         <div className="markdown-content">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {streamingContent}
@@ -2001,13 +1962,13 @@ function App() {
 
                 {/* 加载状态 */}
                 {isLoading && !streamingContent && (
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                  <div className="flex gap-4">
+                    <div className="w-8 h-8 rounded-lg bg-claude-accent-primary flex items-center justify-center">
                       <Bot className="w-4 h-4 text-white" />
                     </div>
-                    <div className="bg-gray-50 rounded-2xl p-4 flex items-center gap-2">
-                      <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                      <span className="text-gray-600">AI正在分析中...</span>
+                    <div className="bg-claude-bg-light rounded-xl p-4 flex items-center gap-2 border border-claude-border-warm">
+                      <Loader2 className="w-4 h-4 text-claude-accent-primary animate-spin" />
+                      <span className="text-claude-text-secondary text-sm">AI正在分析中...</span>
                     </div>
                   </div>
                 )}
@@ -2016,20 +1977,21 @@ function App() {
               </div>
 
               {/* 输入区 */}
-              <div className="border-t border-gray-200 p-4">
+              <div className="border-t border-claude-border p-4 bg-white/50 backdrop-blur-sm rounded-b-xl">
                 <div className="flex gap-3">
                   <textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="输入功能过程描述或与AI对话..."
-                    className="flex-1 resize-none border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows={2}
+                    className="flex-1 resize-none border border-claude-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-claude-accent-primary/20 focus:border-claude-accent-primary bg-claude-bg-warm transition-all placeholder:text-claude-text-muted/50"
+                    rows={1}
+                    style={{ minHeight: '50px' }}
                   />
                   <button
                     onClick={sendMessage}
                     disabled={!inputText.trim() || isLoading}
-                    className="px-6 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                    className="px-4 bg-claude-accent-primary text-white rounded-xl hover:bg-claude-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md flex items-center justify-center w-12 h-[50px]"
                   >
                     {isLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -2038,7 +2000,7 @@ function App() {
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">按 Enter 发送，Shift + Enter 换行</p>
+                <p className="text-xs text-claude-text-muted mt-2 text-center">按 Enter 发送，Shift + Enter 换行</p>
               </div>
             </div>
           </div>
@@ -2051,9 +2013,9 @@ function App() {
           {/* 左侧：文件上传 */}
           <div className="lg:col-span-1 space-y-4">
             {/* 文件上传区 */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Upload className="w-5 h-5 text-purple-500" />
+            <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 transition-all duration-300 hover:shadow-claude-lg">
+              <h2 className="text-lg font-serif font-semibold text-claude-text-primary mb-4 flex items-center gap-2">
+                <Upload className="w-5 h-5 text-claude-accent-primary" />
                 导入需求文档
               </h2>
 
@@ -2076,22 +2038,22 @@ function App() {
                   const file = e.dataTransfer?.files?.[0];
                   if (file) processFileForSpec(file);
                 }}
-                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ${
                   isDragging
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50/50'
+                    ? 'border-claude-accent-primary bg-claude-accent-light scale-[1.02]'
+                    : 'border-claude-border hover:border-claude-accent-primary hover:bg-claude-bg-warm'
                 }`}
               >
                 {isDragging ? (
                   <>
-                    <Upload className="w-12 h-12 text-purple-500 mx-auto mb-3 animate-bounce" />
-                    <p className="text-purple-600 font-medium">松开鼠标上传文件</p>
+                    <Upload className="w-12 h-12 text-claude-accent-primary mx-auto mb-3 animate-bounce" />
+                    <p className="text-claude-accent-primary font-medium">松开鼠标上传文件</p>
                   </>
                 ) : (
                   <>
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 font-medium">点击或拖拽上传</p>
-                    <p className="text-sm text-gray-400 mt-1">支持 .docx, .txt, .md 格式</p>
+                    <FileText className="w-12 h-12 text-claude-text-muted/50 mx-auto mb-3 transition-colors group-hover:text-claude-text-secondary" />
+                    <p className="text-claude-text-primary font-medium">点击或拖拽上传</p>
+                    <p className="text-sm text-claude-text-muted mt-1">支持 .docx, .txt, .md 格式</p>
                   </>
                 )}
               </div>
@@ -2099,13 +2061,13 @@ function App() {
               {/* 上传进度 */}
               {uploadProgress > 0 && uploadProgress < 100 && (
                 <div className="mt-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <div className="flex justify-between text-sm text-claude-text-secondary mb-1">
                     <span>上传中...</span>
                     <span>{uploadProgress}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-claude-bg-cream rounded-full h-2">
                     <div
-                      className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                      className="bg-claude-accent-primary h-2 rounded-full transition-all duration-300"
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
@@ -2114,7 +2076,7 @@ function App() {
 
               {/* 错误提示 */}
               {errorMessage && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm text-red-700">{errorMessage}</p>
@@ -2130,16 +2092,16 @@ function App() {
 
               {/* 已上传文件 */}
               {documentName && activeModule === 'requirement' && (
-                <div className="mt-4 p-3 bg-purple-50 rounded-lg">
+                <div className="mt-4 p-3 bg-claude-bg-cream rounded-lg border border-claude-border-warm">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-purple-500" />
-                    <span className="text-sm text-purple-700 truncate flex-1">{documentName}</span>
+                    <FileText className="w-5 h-5 text-claude-accent-primary" />
+                    <span className="text-sm text-claude-text-primary truncate flex-1">{documentName}</span>
                     <CheckCircle className="w-5 h-5 text-green-500" />
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2">
                     <button
                       onClick={() => setShowPreview(true)}
-                      className="text-xs px-2 py-1 bg-purple-100 text-purple-600 rounded hover:bg-purple-200 flex items-center gap-1"
+                      className="text-xs px-2 py-1 bg-white border border-claude-border text-claude-text-secondary rounded hover:bg-claude-bg-warm flex items-center gap-1 transition-colors"
                     >
                       <Eye className="w-3 h-3" />
                       预览文档
@@ -2147,7 +2109,7 @@ function App() {
                     {extractedImages.length > 0 && (
                       <button
                         onClick={() => setShowImagePreview(true)}
-                        className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 flex items-center gap-1"
+                        className="text-xs px-2 py-1 bg-white border border-claude-border text-claude-text-secondary rounded hover:bg-claude-bg-warm flex items-center gap-1 transition-colors"
                       >
                         🖼️ 查看图片({extractedImages.length})
                       </button>
@@ -2161,7 +2123,7 @@ function App() {
                         }
                       }}
                       disabled={isGeneratingSpec || isEnhancing}
-                      className="text-xs px-2 py-1 bg-green-100 text-green-600 rounded hover:bg-green-200 flex items-center gap-1 disabled:opacity-50"
+                      className="text-xs px-2 py-1 bg-claude-accent-primary text-white rounded hover:bg-claude-accent-hover flex items-center gap-1 disabled:opacity-50 transition-colors"
                     >
                       <RefreshCw className={`w-3 h-3 ${isGeneratingSpec || isEnhancing ? 'animate-spin' : ''}`} />
                       重新生成
@@ -2171,125 +2133,135 @@ function App() {
               )}
               
               {/* 模板选择 */}
-              <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-purple-500" />
+              <div className="mt-4 p-4 bg-claude-bg-cream rounded-lg border border-claude-border-warm">
+                <h3 className="text-sm font-serif font-semibold text-claude-text-primary mb-3 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-claude-accent-primary" />
                   选择文档模板
                 </h3>
                 <div className="space-y-2">
                   {/* 模板1 */}
                   <label 
-                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
                       selectedTemplate === 1 
-                        ? 'bg-white border-2 border-purple-500 shadow-sm' 
-                        : 'bg-white/50 border border-gray-200 hover:border-purple-300'
+                        ? 'bg-white border border-claude-accent-primary shadow-sm' 
+                        : 'bg-white/50 border border-claude-border hover:border-claude-text-muted'
                     }`}
                   >
+                    <div className={`mt-1 w-4 h-4 rounded-full border flex items-center justify-center ${
+                      selectedTemplate === 1 ? 'border-claude-accent-primary' : 'border-claude-border'
+                    }`}>
+                      {selectedTemplate === 1 && <div className="w-2 h-2 rounded-full bg-claude-accent-primary" />}
+                    </div>
                     <input
                       type="radio"
                       name="template"
                       value={1}
                       checked={selectedTemplate === 1}
                       onChange={() => setSelectedTemplate(1)}
-                      className="mt-1 w-4 h-4 text-purple-600"
+                      className="hidden"
                     />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-800">完整型需求规格说明书</span>
-                        <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-600 rounded">7章节</span>
+                        <span className={`font-medium ${selectedTemplate === 1 ? 'text-claude-accent-primary' : 'text-claude-text-primary'}`}>完整型需求规格说明书</span>
+                        <span className="text-xs px-2 py-0.5 bg-claude-bg-warm text-claude-text-secondary border border-claude-border-warm rounded">7章节</span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">适用于正式项目立项、招投标，含用例图、接口设计、验收标准</p>
+                      <p className="text-xs text-claude-text-muted mt-1">适用于正式项目立项、招投标，含用例图、接口设计、验收标准</p>
                     </div>
                   </label>
                   
                   {/* 模板2 */}
                   <label 
-                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
                       selectedTemplate === 2 
-                        ? 'bg-white border-2 border-blue-500 shadow-sm' 
-                        : 'bg-white/50 border border-gray-200 hover:border-blue-300'
+                        ? 'bg-white border border-claude-accent-primary shadow-sm' 
+                        : 'bg-white/50 border border-claude-border hover:border-claude-text-muted'
                     }`}
                   >
+                    <div className={`mt-1 w-4 h-4 rounded-full border flex items-center justify-center ${
+                      selectedTemplate === 2 ? 'border-claude-accent-primary' : 'border-claude-border'
+                    }`}>
+                      {selectedTemplate === 2 && <div className="w-2 h-2 rounded-full bg-claude-accent-primary" />}
+                    </div>
                     <input
                       type="radio"
                       name="template"
                       value={2}
                       checked={selectedTemplate === 2}
                       onChange={() => setSelectedTemplate(2)}
-                      className="mt-1 w-4 h-4 text-blue-600"
+                      className="hidden"
                     />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-800">江苏移动项目需求文档</span>
-                        <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-600 rounded">5章节</span>
+                        <span className={`font-medium ${selectedTemplate === 2 ? 'text-claude-accent-primary' : 'text-claude-text-primary'}`}>江苏移动项目需求文档</span>
+                        <span className="text-xs px-2 py-0.5 bg-claude-bg-warm text-claude-text-secondary border border-claude-border-warm rounded">5章节</span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">参照江苏移动格式，含功能说明、字段表、接口说明表</p>
+                      <p className="text-xs text-claude-text-muted mt-1">参照江苏移动格式，含功能说明、字段表、接口说明表</p>
                     </div>
                   </label>
                 </div>
                 
                 {/* 生成轮次提示 */}
-                <div className="mt-3 flex items-center justify-between text-xs">
-                  <span className="text-gray-500">
+                <div className="mt-3 flex items-center justify-between text-xs border-t border-claude-border-warm pt-3">
+                  <span className="text-claude-text-muted">
                     {selectedTemplate === 1 ? '每章节生成+完善，共14轮AI调用' : '每章节生成+完善，共10轮AI调用'}
                   </span>
-                  <span className={`font-semibold ${selectedTemplate === 1 ? 'text-purple-600' : 'text-blue-600'}`}>
+                  <span className="font-semibold text-claude-accent-primary">
                     {totalEnhanceRounds}轮
                   </span>
                 </div>
               </div>
 
               {/* 多轮完善开关 */}
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+              <div className="mt-3 p-3 bg-claude-bg-cream rounded-lg border border-claude-border-warm">
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     id="enableEnhance"
                     checked={enableMultiRoundEnhance}
                     onChange={(e) => setEnableMultiRoundEnhance(e.target.checked)}
-                    className="w-4 h-4 text-purple-600 rounded"
+                    className="w-4 h-4 text-claude-accent-primary rounded focus:ring-claude-accent-primary"
                   />
-                  <label htmlFor="enableEnhance" className="text-sm text-gray-700">
+                  <label htmlFor="enableEnhance" className="text-sm text-claude-text-primary font-medium">
                     启用多轮完善（推荐）
                   </label>
                 </div>
-                <p className="text-xs text-gray-400 mt-1 ml-6">关闭后仅生成基础内容，不进行章节完善</p>
+                <p className="text-xs text-claude-text-muted mt-1 ml-6">关闭后仅生成基础内容，不进行章节完善</p>
               </div>
             </div>
 
             {/* 使用说明 */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6">
+              <h2 className="text-lg font-serif font-semibold text-claude-text-primary mb-4 flex items-center gap-2">
                 使用说明
-                <span className={`text-xs px-2 py-0.5 rounded ${selectedTemplate === 1 ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
+                <span className="text-xs px-2 py-0.5 rounded bg-claude-bg-cream text-claude-text-secondary border border-claude-border-warm">
                   {selectedTemplate === 1 ? '模板1' : '模板2'}
                 </span>
               </h2>
-              <div className="space-y-3 text-sm text-gray-600">
+              <div className="space-y-4 text-sm text-claude-text-secondary">
                 <div className="flex gap-3">
-                  <span className={`w-6 h-6 ${selectedTemplate === 1 ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center text-xs font-bold`}>1</span>
+                  <span className="w-6 h-6 bg-claude-bg-cream text-claude-accent-primary border border-claude-border-warm rounded-full flex items-center justify-center text-xs font-bold">1</span>
                   <p>选择文档模板，上传初步需求文档</p>
                 </div>
                 <div className="flex gap-3">
-                  <span className={`w-6 h-6 ${selectedTemplate === 1 ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center text-xs font-bold`}>2</span>
+                  <span className="w-6 h-6 bg-claude-bg-cream text-claude-accent-primary border border-claude-border-warm rounded-full flex items-center justify-center text-xs font-bold">2</span>
                   <p>{selectedTemplate === 1 ? 'AI按7章节结构生成完整需求规格说明书' : 'AI按5章节结构生成简洁功能需求文档'}</p>
                 </div>
                 <div className="flex gap-3">
-                  <span className={`w-6 h-6 ${selectedTemplate === 1 ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center text-xs font-bold`}>3</span>
+                  <span className="w-6 h-6 bg-claude-bg-cream text-claude-accent-primary border border-claude-border-warm rounded-full flex items-center justify-center text-xs font-bold">3</span>
                   <p>{selectedTemplate === 1 ? '每章节经过生成+完善两轮优化' : '聚焦功能说明：输入/处理/输出/字段表'}</p>
                 </div>
                 <div className="flex gap-3">
-                  <span className={`w-6 h-6 ${selectedTemplate === 1 ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'} rounded-full flex items-center justify-center text-xs font-bold`}>4</span>
+                  <span className="w-6 h-6 bg-claude-bg-cream text-claude-accent-primary border border-claude-border-warm rounded-full flex items-center justify-center text-xs font-bold">4</span>
                   <p>查看生成结果并导出Word文档</p>
                 </div>
               </div>
               
               {/* 当前模板章节预览 */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-500 mb-2">当前模板章节结构：</p>
+              <div className="mt-4 pt-4 border-t border-claude-border-warm">
+                <p className="text-xs text-claude-text-muted mb-2">当前模板章节结构：</p>
                 <div className="flex flex-wrap gap-1">
                   {CHAPTER_CONFIG.map((ch, idx) => (
-                    <span key={idx} className={`text-xs px-2 py-0.5 rounded ${selectedTemplate === 1 ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
+                    <span key={idx} className="text-xs px-2 py-0.5 rounded bg-claude-bg-cream text-claude-text-secondary border border-claude-border-warm">
                       {ch.name.replace('第', '').replace('章 ', '.')}
                     </span>
                   ))}
@@ -2299,14 +2271,14 @@ function App() {
 
             {/* 生成状态 */}
             {(isGeneratingSpec || isEnhancing || specContent) && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">生成状态</h2>
+              <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 transition-all duration-300">
+                <h2 className="text-lg font-serif font-semibold text-claude-text-primary mb-4">生成状态</h2>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     {isGeneratingSpec || isEnhancing ? (
                       <>
-                        <Loader2 className="w-5 h-5 text-purple-500 animate-spin" />
-                        <span className="text-sm text-gray-600">
+                        <Loader2 className="w-5 h-5 text-claude-accent-primary animate-spin" />
+                        <span className="text-sm text-claude-text-primary">
                           {isEnhancing 
                             ? `正在生成 (${enhanceRound}/${totalEnhanceRounds})...` 
                             : '正在生成中...'}
@@ -2315,7 +2287,7 @@ function App() {
                     ) : (
                       <>
                         <CheckCircle className="w-5 h-5 text-green-500" />
-                        <span className="text-sm text-gray-600">生成完成</span>
+                        <span className="text-sm text-claude-text-primary">生成完成</span>
                       </>
                     )}
                   </div>
@@ -2323,13 +2295,13 @@ function App() {
                   {/* 多轮完善进度条 */}
                   {isEnhancing && (
                     <div className="mt-2">
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                      <div className="flex justify-between text-xs text-claude-text-muted mb-1">
                         <span>完善进度</span>
                         <span>{Math.round((enhanceRound / totalEnhanceRounds) * 100)}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-claude-bg-cream rounded-full h-2">
                         <div 
-                          className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                          className="bg-claude-accent-primary h-2 rounded-full transition-all duration-500"
                           style={{ width: `${(enhanceRound / totalEnhanceRounds) * 100}%` }}
                         />
                       </div>
@@ -2358,37 +2330,39 @@ function App() {
 
           {/* 右侧：生成结果展示 */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 h-[calc(100vh-180px)] flex flex-col">
+            <div className="bg-white rounded-xl shadow-claude border border-claude-border h-[calc(100vh-180px)] flex flex-col transition-all duration-300">
               {/* 标题栏 */}
-              <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                <h3 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-purple-500" />
+              <div className="border-b border-claude-border px-6 py-4 flex items-center justify-between bg-claude-bg-warm rounded-t-xl">
+                <h3 className="font-serif font-semibold text-claude-text-primary flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-claude-accent-primary" />
                   需求规格说明书
                 </h3>
                 {specContent && (
                   <button
                     onClick={() => copyContent(specContent)}
-                    className="text-sm px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 flex items-center gap-1"
+                    className="text-sm px-3 py-1.5 bg-white border border-claude-border text-claude-text-secondary rounded-lg hover:bg-claude-bg-cream hover:border-claude-accent-primary flex items-center gap-1 transition-all"
                   >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
                     {copied ? '已复制' : '复制全文'}
                   </button>
                 )}
               </div>
 
               {/* 内容区 */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-8 bg-white">
                 {!specContent && !specStreamingContent && specMessages.length === 0 && (
                   <div className="text-center py-12">
-                    <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-600 mb-2">欢迎使用需求规格书生成</h3>
-                    <p className="text-gray-400">上传需求文档，AI将自动生成完整的需求规格说明书</p>
+                    <div className="w-16 h-16 bg-claude-bg-warm rounded-2xl flex items-center justify-center mx-auto mb-4 border border-claude-border">
+                      <BookOpen className="w-8 h-8 text-claude-accent-primary" />
+                    </div>
+                    <h3 className="text-lg font-serif font-medium text-claude-text-primary mb-2">欢迎使用需求规格书生成</h3>
+                    <p className="text-claude-text-muted">上传需求文档，AI将自动生成完整的需求规格说明书</p>
                   </div>
                 )}
 
                 {/* 系统消息 */}
                 {specMessages.filter(m => m.role === 'system').map((msg, idx) => (
-                  <div key={idx} className="mb-4 p-3 bg-gray-100 rounded-lg text-sm text-gray-600">
+                  <div key={idx} className="mb-4 p-4 bg-claude-bg-cream border border-claude-border-warm rounded-lg text-sm text-claude-text-secondary">
                     {msg.content}
                   </div>
                 ))}
@@ -2396,11 +2370,11 @@ function App() {
                 {/* 分析结果显示 */}
                 {specAnalysisJson && (
                   <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                      <Layers className="w-4 h-4 text-purple-500" />
+                    <h4 className="text-sm font-semibold text-claude-text-primary mb-2 flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-claude-accent-primary" />
                       结构化分析结果（阶段1）
                     </h4>
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-700 whitespace-pre-wrap max-h-64 overflow-y-auto">
+                    <div className="bg-claude-bg-warm border border-claude-border rounded-lg p-4 text-xs text-claude-text-secondary whitespace-pre-wrap max-h-64 overflow-y-auto font-mono">
                       {specAnalysisJson}
                     </div>
                   </div>
@@ -2408,16 +2382,16 @@ function App() {
 
                 {/* 流式输出或最终内容 - 支持Mermaid图表渲染 */}
                 {(specStreamingContent || specContent) && (
-                  <div className="prose prose-sm max-w-none">
+                  <div className="prose prose-sm max-w-none text-claude-text-primary">
                     <MarkdownWithMermaid content={specStreamingContent || specContent} />
                   </div>
                 )}
 
                 {/* 加载指示器 */}
                 {isGeneratingSpec && !specStreamingContent && (
-                  <div className="flex items-center gap-3 text-purple-600">
+                  <div className="flex items-center gap-3 text-claude-accent-primary p-4 bg-claude-bg-light rounded-lg border border-claude-border-warm">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>AI正在分析文档并生成需求规格书...</span>
+                    <span className="font-medium">AI正在分析文档并生成需求规格书...</span>
                   </div>
                 )}
 
@@ -2451,30 +2425,40 @@ function App() {
             setShowSettings={setShowSettings} 
           />
         )}
+
+        {/* 编程智能体模块 */}
+        {activeModule === 'codeGen' && (
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden" style={{ height: 'calc(100vh - 180px)' }}>
+            <CodeGenerator 
+              apiStatus={apiStatus} 
+              setShowSettings={setShowSettings} 
+            />
+          </div>
+        )}
       </main>
 
       {/* 设置弹窗 */}
       {showSettings && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-all duration-300">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto border border-claude-border">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">API设置</h2>
+              <h2 className="text-xl font-serif font-bold text-claude-text-primary">API设置</h2>
               <button
                 onClick={() => setShowSettings(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-claude-bg-warm rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-claude-text-muted" />
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* 快速配置 */}
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <Zap className="w-5 h-5 text-green-600" />
                   <span className="font-medium text-green-800">推荐：智谱GLM-4-Flash（免费）</span>
                 </div>
-                <p className="text-sm text-green-700 mb-3">
+                <p className="text-sm text-green-700 mb-4">
                   无限tokens、永久有效、无需付费
                 </p>
                 <button
@@ -2482,20 +2466,20 @@ function App() {
                     setBaseUrl('https://open.bigmodel.cn/api/paas/v4');
                     setModelName('glm-4-flash');
                   }}
-                  className="text-sm px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                  className="text-sm px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-sm transition-all"
                 >
                   一键填入智谱配置
                 </button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-claude-text-secondary mb-2">
                   API Base URL
                 </label>
                 <select
                   value={baseUrl}
                   onChange={(e) => setBaseUrl(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                  className="w-full border border-claude-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-claude-accent-primary/20 focus:border-claude-accent-primary bg-white text-claude-text-primary mb-3"
                 >
                   <option value="https://open.bigmodel.cn/api/paas/v4">智谱GLM (免费)</option>
                   <option value="https://api.siliconflow.cn/v1">SiliconCloud (免费)</option>
@@ -2510,13 +2494,13 @@ function App() {
                     value=""
                     onChange={(e) => setBaseUrl(e.target.value)}
                     placeholder="输入自定义API地址"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-claude-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-claude-accent-primary/20 focus:border-claude-accent-primary bg-white text-claude-text-primary"
                   />
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-claude-text-secondary mb-2">
                   API Key
                 </label>
                 <input
@@ -2524,30 +2508,30 @@ function App() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="输入你的API密钥..."
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-claude-border rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-claude-accent-primary/20 focus:border-claude-accent-primary bg-white text-claude-text-primary"
                 />
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-4 text-sm">
-                <p className="font-medium text-blue-800 mb-2 flex items-center gap-2">
-                  <Info className="w-4 h-4" />
+              <div className="bg-claude-bg-warm rounded-xl p-5 text-sm border border-claude-border-warm">
+                <p className="font-medium text-claude-text-primary mb-3 flex items-center gap-2">
+                  <Info className="w-4 h-4 text-claude-accent-primary" />
                   免费API获取方式
                 </p>
-                <div className="space-y-2 text-blue-700">
+                <div className="space-y-2 text-claude-text-secondary">
                   <div className="flex items-start gap-2">
-                    <span className="font-bold">智谱GLM:</span>
-                    <span>访问 <a href="https://bigmodel.cn" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-900">bigmodel.cn</a> 注册获取</span>
+                    <span className="font-semibold">智谱GLM:</span>
+                    <span>访问 <a href="https://bigmodel.cn" target="_blank" rel="noopener noreferrer" className="text-claude-accent-primary hover:underline">bigmodel.cn</a> 注册获取</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="font-bold">SiliconCloud:</span>
-                    <span>访问 <a href="https://cloud.siliconflow.cn" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-900">cloud.siliconflow.cn</a> 注册获取</span>
+                    <span className="font-semibold">SiliconCloud:</span>
+                    <span>访问 <a href="https://cloud.siliconflow.cn" target="_blank" rel="noopener noreferrer" className="text-claude-accent-primary hover:underline">cloud.siliconflow.cn</a> 注册获取</span>
                   </div>
                 </div>
               </div>
 
               <button
                 onClick={saveApiConfig}
-                className="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                className="w-full bg-claude-accent-primary text-white py-3 rounded-xl hover:bg-claude-accent-hover transition-colors font-medium shadow-sm"
               >
                 保存配置
               </button>
@@ -2562,9 +2546,9 @@ function App() {
           {/* 左侧：文件上传 */}
           <div className="lg:col-span-1 space-y-4">
             {/* 文件上传区 */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Upload className="w-5 h-5 text-green-500" />
+            <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 transition-all duration-300 hover:shadow-claude-lg">
+              <h2 className="text-lg font-serif font-semibold text-claude-text-primary mb-4 flex items-center gap-2">
+                <Upload className="w-5 h-5 text-claude-accent-primary" />
                 导入需求文档
               </h2>
 
@@ -2618,47 +2602,47 @@ function App() {
                     }
                   }
                 }}
-                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ${
                   isDragging
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-300 hover:border-green-400 hover:bg-green-50/50'
+                    ? 'border-claude-accent-primary bg-claude-accent-light scale-[1.02]'
+                    : 'border-claude-border hover:border-claude-accent-primary hover:bg-claude-bg-warm'
                 }`}
               >
                 <div className="flex flex-col items-center gap-3">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-claude-bg-cream rounded-full flex items-center justify-center border border-claude-border-warm">
                     {isLoading ? (
-                      <Loader2 className="w-6 h-6 text-green-600 animate-spin" />
+                      <Loader2 className="w-6 h-6 text-claude-accent-primary animate-spin" />
                     ) : (
-                      <Upload className="w-6 h-6 text-green-600" />
+                      <Upload className="w-6 h-6 text-claude-accent-primary" />
                     )}
                   </div>
                   <div>
-                    <p className="text-gray-700 font-medium">
+                    <p className="text-claude-text-primary font-medium">
                       {isLoading ? '解析中...' : '点击或拖拽上传文档'}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">支持 .docx, .txt, .md 格式</p>
+                    <p className="text-sm text-claude-text-muted mt-1">支持 .docx, .txt, .md 格式</p>
                   </div>
                 </div>
               </div>
 
               {/* 已上传文件 */}
               {diagramDocName && (
-                <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                <div className="mt-4 p-3 bg-claude-bg-cream rounded-lg border border-claude-border-warm">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-green-500" />
+                    <FileText className="w-5 h-5 text-claude-accent-primary" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{diagramDocName}</p>
-                      <p className="text-xs text-gray-500">{diagramDocContent.length} 字符</p>
+                      <p className="text-sm font-medium text-claude-text-primary truncate">{diagramDocName}</p>
+                      <p className="text-xs text-claude-text-secondary">{diagramDocContent.length} 字符</p>
                     </div>
                     <button
                       onClick={() => {
                         setDiagramDocContent('');
                         setDiagramDocName('');
                       }}
-                      className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                      className="p-1.5 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors text-claude-text-muted"
                       title="清除文档"
                     >
-                      <X className="w-4 h-4 text-red-500" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -2666,26 +2650,26 @@ function App() {
             </div>
 
             {/* 使用说明 */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-5 border border-green-100">
-              <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
-                <Info className="w-4 h-4" />
+            <div className="bg-claude-bg-warm rounded-xl p-5 border border-claude-border-warm">
+              <h3 className="font-semibold text-claude-text-primary mb-3 flex items-center gap-2 font-serif">
+                <Info className="w-4 h-4 text-claude-accent-primary" />
                 架构图生成说明
               </h3>
-              <ul className="text-sm text-green-700 space-y-2">
+              <ul className="text-sm text-claude-text-secondary space-y-2">
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
+                  <span className="text-claude-accent-primary mt-0.5">•</span>
                   <span>上传文档后点击"生成架构图"按钮</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
+                  <span className="text-claude-accent-primary mt-0.5">•</span>
                   <span>AI将分析文档内容，生成分层架构图</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
+                  <span className="text-claude-accent-primary mt-0.5">•</span>
                   <span>支持导出SVG/PNG格式，可插入Word</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">•</span>
+                  <span className="text-claude-accent-primary mt-0.5">•</span>
                   <span>可复制Mermaid代码进行二次编辑</span>
                 </li>
               </ul>
@@ -2694,49 +2678,51 @@ function App() {
 
           {/* 右侧：架构图生成器 */}
           <div className="lg:col-span-2">
-            <ArchitectureDiagram 
-              documentContent={diagramDocContent}
-              documentName={diagramDocName}
-            />
+            <div className="bg-white rounded-xl shadow-claude border border-claude-border overflow-hidden">
+              <ArchitectureDiagram 
+                documentContent={diagramDocContent}
+                documentName={diagramDocName}
+              />
+            </div>
           </div>
         </div>
       )}
 
       {/* 文档预览弹窗 */}
       {showPreview && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl m-4 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-500" />
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-all duration-300">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl m-4 max-h-[90vh] flex flex-col border border-claude-border">
+            <div className="flex items-center justify-between p-4 border-b border-claude-border bg-claude-bg-warm rounded-t-xl">
+              <h2 className="text-lg font-serif font-bold text-claude-text-primary flex items-center gap-2">
+                <FileText className="w-5 h-5 text-claude-accent-primary" />
                 文档预览: {documentName}
               </h2>
               <button
                 onClick={() => setShowPreview(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-claude-bg-cream rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-claude-text-muted" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono bg-gray-50 p-4 rounded-lg">
+            <div className="flex-1 overflow-y-auto p-6 bg-white">
+              <pre className="whitespace-pre-wrap text-sm text-claude-text-secondary font-mono bg-claude-bg-warm p-4 rounded-lg border border-claude-border-warm">
                 {documentContent}
               </pre>
             </div>
-            <div className="p-4 border-t flex justify-end gap-3">
+            <div className="p-4 border-t border-claude-border bg-claude-bg-warm rounded-b-xl flex justify-end gap-3">
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(documentContent);
                   alert('文档内容已复制到剪贴板');
                 }}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2"
+                className="px-4 py-2 bg-white border border-claude-border text-claude-text-secondary rounded-lg hover:bg-claude-bg-cream hover:text-claude-text-primary flex items-center gap-2 transition-all shadow-sm"
               >
                 <Copy className="w-4 h-4" />
                 复制内容
               </button>
               <button
                 onClick={() => setShowPreview(false)}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                className="px-4 py-2 bg-claude-accent-primary text-white rounded-lg hover:bg-claude-accent-hover shadow-sm transition-all"
               >
                 关闭
               </button>
@@ -2747,68 +2733,69 @@ function App() {
 
       {/* 表格预览弹窗 */}
       {showTableView && tableData.length > 0 && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl m-4 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <Table className="w-5 h-5 text-blue-500" />
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-all duration-300">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl m-4 max-h-[90vh] flex flex-col border border-claude-border">
+            <div className="flex items-center justify-between p-4 border-b border-claude-border bg-claude-bg-warm rounded-t-xl">
+              <h2 className="text-lg font-serif font-bold text-claude-text-primary flex items-center gap-2">
+                <Table className="w-5 h-5 text-claude-accent-primary" />
                 Cosmic拆分结果表格 ({tableData.length} 条记录)
               </h2>
               <button
                 onClick={() => setShowTableView(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-claude-bg-cream rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-claude-text-muted" />
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-4">
+            <div className="flex-1 overflow-auto p-4 bg-white">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="bg-blue-500 text-white">
-                    <th className="border border-blue-600 px-3 py-2 text-left">功能用户</th>
-                    <th className="border border-blue-600 px-3 py-2 text-left">触发事件</th>
-                    <th className="border border-blue-600 px-3 py-2 text-left">功能过程</th>
-                    <th className="border border-blue-600 px-3 py-2 text-left">子过程描述</th>
-                    <th className="border border-blue-600 px-3 py-2 text-center w-20">类型</th>
-                    <th className="border border-blue-600 px-3 py-2 text-left">数据组</th>
-                    <th className="border border-blue-600 px-3 py-2 text-left">数据属性</th>
+                  <tr className="bg-claude-bg-cream text-claude-text-primary">
+                    <th className="border border-claude-border-warm px-3 py-2 text-left font-serif font-semibold">功能用户</th>
+                    <th className="border border-claude-border-warm px-3 py-2 text-left font-serif font-semibold">触发事件</th>
+                    <th className="border border-claude-border-warm px-3 py-2 text-left font-serif font-semibold">功能过程</th>
+                    <th className="border border-claude-border-warm px-3 py-2 text-left font-serif font-semibold">子过程描述</th>
+                    <th className="border border-claude-border-warm px-3 py-2 text-center w-20 font-serif font-semibold">类型</th>
+                    <th className="border border-claude-border-warm px-3 py-2 text-left font-serif font-semibold">数据组</th>
+                    <th className="border border-claude-border-warm px-3 py-2 text-left font-serif font-semibold">数据属性</th>
                   </tr>
                 </thead>
                 <tbody>
                   {tableData.map((row, idx) => (
-                    <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="border border-gray-200 px-3 py-2">{row.functionalUser}</td>
-                      <td className="border border-gray-200 px-3 py-2">{row.triggerEvent}</td>
-                      <td className="border border-gray-200 px-3 py-2">{row.functionalProcess}</td>
-                      <td className="border border-gray-200 px-3 py-2">{row.subProcessDesc}</td>
-                      <td className="border border-gray-200 px-3 py-2 text-center">
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${row.dataMovementType === 'E' ? 'bg-green-100 text-green-700' :
+                    <tr key={idx} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-claude-bg-warm'} hover:bg-claude-bg-light transition-colors`}>
+                      <td className="border border-claude-border-warm px-3 py-2 text-claude-text-secondary">{row.functionalUser}</td>
+                      <td className="border border-claude-border-warm px-3 py-2 text-claude-text-secondary">{row.triggerEvent}</td>
+                      <td className="border border-claude-border-warm px-3 py-2 text-claude-text-secondary">{row.functionalProcess}</td>
+                      <td className="border border-claude-border-warm px-3 py-2 text-claude-text-secondary">{row.subProcessDesc}</td>
+                      <td className="border border-claude-border-warm px-3 py-2 text-center">
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                            row.dataMovementType === 'E' ? 'bg-green-100 text-green-700' :
                             row.dataMovementType === 'R' ? 'bg-blue-100 text-blue-700' :
-                              row.dataMovementType === 'W' ? 'bg-orange-100 text-orange-700' :
-                                row.dataMovementType === 'X' ? 'bg-purple-100 text-purple-700' :
-                                  'bg-gray-100 text-gray-700'
+                            row.dataMovementType === 'W' ? 'bg-orange-100 text-orange-700' :
+                            row.dataMovementType === 'X' ? 'bg-purple-100 text-purple-700' :
+                            'bg-gray-100 text-gray-700'
                           }`}>
                           {row.dataMovementType}
                         </span>
                       </td>
-                      <td className="border border-gray-200 px-3 py-2">{row.dataGroup}</td>
-                      <td className="border border-gray-200 px-3 py-2">{row.dataAttributes}</td>
+                      <td className="border border-claude-border-warm px-3 py-2 text-claude-text-secondary">{row.dataGroup}</td>
+                      <td className="border border-claude-border-warm px-3 py-2 text-claude-text-secondary">{row.dataAttributes}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div className="p-4 border-t flex justify-end gap-3">
+            <div className="p-4 border-t border-claude-border bg-claude-bg-warm rounded-b-xl flex justify-end gap-3">
               <button
                 onClick={exportExcel}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2"
+                className="px-4 py-2 bg-claude-accent-primary text-white rounded-lg hover:bg-claude-accent-hover flex items-center gap-2 shadow-sm transition-all"
               >
                 <FileSpreadsheet className="w-4 h-4" />
                 导出Excel
               </button>
               <button
                 onClick={() => setShowTableView(false)}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                className="px-4 py-2 bg-white border border-claude-border text-claude-text-secondary rounded-lg hover:bg-claude-bg-cream hover:text-claude-text-primary transition-all shadow-sm"
               >
                 关闭
               </button>
@@ -2819,42 +2806,42 @@ function App() {
       
       {/* 图片预览弹窗 */}
       {showImagePreview && extractedImages.length > 0 && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl m-4 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-all duration-300">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl m-4 max-h-[90vh] flex flex-col border border-claude-border">
+            <div className="flex items-center justify-between p-4 border-b border-claude-border bg-claude-bg-warm rounded-t-xl">
+              <h2 className="text-lg font-serif font-bold text-claude-text-primary flex items-center gap-2">
                 🖼️ 文档图片预览 ({extractedImages.length} 张)
               </h2>
               <button
                 onClick={() => setShowImagePreview(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-claude-bg-cream rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-claude-text-muted" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <p className="text-sm text-gray-500 mb-4">
+            <div className="flex-1 overflow-y-auto p-6 bg-white">
+              <p className="text-sm text-claude-text-muted mb-4 bg-claude-bg-warm p-3 rounded-lg border border-claude-border-warm">
                 以下图片已从原文档中提取，将在导出Word时自动添加到附录中。
                 AI生成内容时可使用 [插入图片: img_X] 标记来引用这些图片。
               </p>
               <div className="grid grid-cols-2 gap-4">
                 {extractedImages.map((img, idx) => (
-                  <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
-                    <div className="bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 flex items-center justify-between">
+                  <div key={idx} className="border border-claude-border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                    <div className="bg-claude-bg-cream px-3 py-2 text-sm font-medium text-claude-text-secondary flex items-center justify-between border-b border-claude-border-warm">
                       <span>图片 {idx + 1}: {img.filename || '未命名'}</span>
-                      <span className="text-xs text-gray-500">[插入图片: img_{idx + 1}]</span>
+                      <span className="text-xs text-claude-text-muted">[插入图片: img_{idx + 1}]</span>
                     </div>
-                    <div className="p-2 bg-white">
+                    <div className="p-4 bg-white flex items-center justify-center h-48">
                       <img 
                         src={img.dataUrl} 
                         alt={`图片${idx + 1}`}
-                        className="w-full h-auto max-h-64 object-contain"
+                        className="w-full h-full object-contain"
                         onError={(e) => {
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'block';
                         }}
                       />
-                      <div className="hidden text-center py-8 text-gray-400">
+                      <div className="hidden text-center py-8 text-claude-text-muted">
                         <p>图片无法显示</p>
                         <p className="text-xs">{img.mimeType}</p>
                       </div>
@@ -2863,10 +2850,10 @@ function App() {
                 ))}
               </div>
             </div>
-            <div className="p-4 border-t flex justify-end">
+            <div className="p-4 border-t border-claude-border bg-claude-bg-warm rounded-b-xl flex justify-end">
               <button
                 onClick={() => setShowImagePreview(false)}
-                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+                className="px-4 py-2 bg-claude-accent-primary text-white rounded-lg hover:bg-claude-accent-hover shadow-sm transition-all"
               >
                 关闭
               </button>

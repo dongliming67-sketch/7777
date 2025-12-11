@@ -1,13 +1,13 @@
 {
-  "id": "template_1765033841098_zgcnl4v7k",
+  "id": "template_1765258587271_x04o4eh7d",
   "filename": "需求规格说明书模板v1.0(1).docx",
   "fileSize": 444589,
-  "uploadTime": "2025-12-06T15:10:41.099Z",
+  "uploadTime": "2025-12-09T05:36:27.273Z",
   "sectionCount": 27,
   "sections": [
     {
       "number": "1",
-      "title": "引言",
+      "title": "引言\t1",
       "level": 1,
       "lineIndex": 142,
       "contentSnippet": "",
@@ -18,7 +18,7 @@
     },
     {
       "number": "1.1",
-      "title": "基本信息",
+      "title": "基本信息\t1",
       "level": 2,
       "lineIndex": 144,
       "contentSnippet": "",
@@ -29,7 +29,7 @@
     },
     {
       "number": "1.2",
-      "title": "目的",
+      "title": "目的\t1",
       "level": 2,
       "lineIndex": 146,
       "contentSnippet": "",
@@ -40,7 +40,7 @@
     },
     {
       "number": "1.3",
-      "title": "适用范围",
+      "title": "适用范围\t1",
       "level": 2,
       "lineIndex": 148,
       "contentSnippet": "",
@@ -51,7 +51,7 @@
     },
     {
       "number": "1.4",
-      "title": "术语和缩略语",
+      "title": "术语和缩略语\t1",
       "level": 2,
       "lineIndex": 150,
       "contentSnippet": "",
@@ -62,7 +62,7 @@
     },
     {
       "number": "1.5",
-      "title": "参考文档",
+      "title": "参考文档\t2",
       "level": 2,
       "lineIndex": 152,
       "contentSnippet": "",
@@ -73,7 +73,7 @@
     },
     {
       "number": "2",
-      "title": "软件概述",
+      "title": "软件概述\t2",
       "level": 1,
       "lineIndex": 154,
       "contentSnippet": "",
@@ -84,7 +84,7 @@
     },
     {
       "number": "2.1",
-      "title": "产品描述",
+      "title": "产品描述\t2",
       "level": 2,
       "lineIndex": 156,
       "contentSnippet": "",
@@ -95,7 +95,7 @@
     },
     {
       "number": "2.2",
-      "title": "用户角色定义",
+      "title": "用户角色定义\t2",
       "level": 2,
       "lineIndex": 158,
       "contentSnippet": "",
@@ -106,7 +106,7 @@
     },
     {
       "number": "2.3",
-      "title": "业务流程说明",
+      "title": "业务流程说明\t3",
       "level": 2,
       "lineIndex": 160,
       "contentSnippet": "",
@@ -117,7 +117,7 @@
     },
     {
       "number": "2.4",
-      "title": "系统边界描述",
+      "title": "系统边界描述\t4",
       "level": 2,
       "lineIndex": 162,
       "contentSnippet": "",
@@ -128,7 +128,7 @@
     },
     {
       "number": "2.5",
-      "title": "功能划分说明",
+      "title": "功能划分说明\t4",
       "level": 2,
       "lineIndex": 164,
       "contentSnippet": "",
@@ -139,7 +139,7 @@
     },
     {
       "number": "3",
-      "title": "功能需求",
+      "title": "功能需求\t5",
       "level": 1,
       "lineIndex": 166,
       "contentSnippet": "",
@@ -150,7 +150,7 @@
     },
     {
       "number": "3.1",
-      "title": "营销管理子系统",
+      "title": "营销管理子系统\t5",
       "level": 2,
       "lineIndex": 168,
       "contentSnippet": "",
@@ -161,7 +161,7 @@
     },
     {
       "number": "3.1.1",
-      "title": "媒介精细化管理",
+      "title": "媒介精细化管理\t5",
       "level": 3,
       "lineIndex": 170,
       "contentSnippet": "",
@@ -172,7 +172,7 @@
     },
     {
       "number": "4",
-      "title": "数据库概要说明",
+      "title": "数据库概要说明\t10",
       "level": 1,
       "lineIndex": 172,
       "contentSnippet": "",
@@ -183,7 +183,7 @@
     },
     {
       "number": "4.1",
-      "title": "数据库E-R图",
+      "title": "数据库E-R图\t10",
       "level": 2,
       "lineIndex": 174,
       "contentSnippet": "",
@@ -194,7 +194,7 @@
     },
     {
       "number": "4.2",
-      "title": "表说明",
+      "title": "表说明\t12",
       "level": 2,
       "lineIndex": 176,
       "contentSnippet": "",
@@ -205,7 +205,7 @@
     },
     {
       "number": "5",
-      "title": "接口（外部逻辑文件）需求",
+      "title": "接口（外部逻辑文件）需求\t13",
       "level": 1,
       "lineIndex": 178,
       "contentSnippet": "",
@@ -216,7 +216,7 @@
     },
     {
       "number": "6",
-      "title": "工作量调整因子",
+      "title": "工作量调整因子\t16",
       "level": 1,
       "lineIndex": 180,
       "contentSnippet": "",
@@ -227,7 +227,7 @@
     },
     {
       "number": "6.1",
-      "title": "规模变更因子",
+      "title": "规模变更因子\t16",
       "level": 2,
       "lineIndex": 182,
       "contentSnippet": "",
@@ -238,7 +238,7 @@
     },
     {
       "number": "6.2",
-      "title": "应用类型",
+      "title": "应用类型\t16",
       "level": 2,
       "lineIndex": 184,
       "contentSnippet": "",
@@ -249,7 +249,7 @@
     },
     {
       "number": "6.3",
-      "title": "非功能性特征",
+      "title": "非功能性特征\t17",
       "level": 2,
       "lineIndex": 186,
       "contentSnippet": "",
@@ -260,7 +260,7 @@
     },
     {
       "number": "6.4",
-      "title": "开发平台/开发语言",
+      "title": "开发平台/开发语言\t17",
       "level": 2,
       "lineIndex": 188,
       "contentSnippet": "",
@@ -271,7 +271,7 @@
     },
     {
       "number": "6.5",
-      "title": "开发团队背景",
+      "title": "开发团队背景\t18",
       "level": 2,
       "lineIndex": 190,
       "contentSnippet": "",
@@ -282,7 +282,7 @@
     },
     {
       "number": "6.6",
-      "title": "软件完整性级别",
+      "title": "软件完整性级别\t18",
       "level": 2,
       "lineIndex": 192,
       "contentSnippet": "",
@@ -293,7 +293,7 @@
     },
     {
       "number": "7",
-      "title": "假设与约束条件",
+      "title": "假设与约束条件\t18",
       "level": 1,
       "lineIndex": 194,
       "contentSnippet": "引言\n\n基本信息\n\n项目名称：\n\n自有媒介营销管理平台二期开发服务项目\n\n项目类型：\n\n新开发项目\n\n二次开发项目\n\n上期项目名称：\n\n项目所属系统类别\n\n业务支撑系统（BSS） □ 网管支撑系统（OSS） □ 管理信息系统（MSS）\n\n编写说明：项目类型中，如果选择二次开发项目，请列示上期项目的名称，并需提供该项目的需求规格说明书。\n\n目的\n\n说明编写本文档的目的和背景，对项目的背景应有比较详细的描述。\n\n【样例：自营销二期项目的建设目标着眼于拓展营销执行渠道、建设实时场景营销能力，对接“精益营销平台”和“营销分析管理平台(CMP)”，为营销闭环提供营销执行的支撑；对自有媒介分类及数量进行精细化分析，建立媒介特征库，全盘掌握营销资源；打通与BI系统及OA系统的接口，实现一体化营销活动管理支撑。】\n\n适用范围\n\n说明本文档的覆盖范围（可裁剪）。\n\n【示例：本需求说明书中涉及规范和各个模块对支撑系统的需求仅适用于自有媒介营销管理平台开发】\n\n术语和缩略语\n\n说明文档中涉及的术语定义。\n\n术语\n\n解释\n\n营销方案\n\n用于描述营销人员发起的营销策划信息，包含营销预算、产品描述、目标客户群描述",

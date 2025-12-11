@@ -24,20 +24,20 @@ import {
   BarChart3
 } from 'lucide-react';
 
-// 严重程度配置
+// 严重程度配置 - Claude风格
 const SEVERITY_CONFIG = {
-  critical: { label: '严重', color: 'bg-red-100 text-red-700 border-red-200', icon: XCircle },
-  major: { label: '重要', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: AlertTriangle },
-  minor: { label: '一般', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: Info },
-  suggestion: { label: '建议', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Info }
+  critical: { label: '严重', color: 'bg-red-50 text-red-700 border-red-200', icon: XCircle },
+  major: { label: '重要', color: 'bg-orange-50 text-orange-700 border-orange-200', icon: AlertTriangle },
+  minor: { label: '一般', color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: Info },
+  suggestion: { label: '建议', color: 'bg-blue-50 text-blue-700 border-blue-200', icon: Info }
 };
 
-// 风险等级配置
+// 风险等级配置 - Claude风格
 const RISK_CONFIG = {
-  critical: { label: '极高', color: 'text-red-600', bgColor: 'bg-red-50' },
-  high: { label: '高', color: 'text-orange-600', bgColor: 'bg-orange-50' },
-  medium: { label: '中', color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-  low: { label: '低', color: 'text-green-600', bgColor: 'bg-green-50' }
+  critical: { label: '极高', color: 'text-red-700', bgColor: 'bg-red-50' },
+  high: { label: '高', color: 'text-orange-700', bgColor: 'bg-orange-50' },
+  medium: { label: '中', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
+  low: { label: '低', color: 'text-green-700', bgColor: 'bg-green-50' }
 };
 
 // 维度图标配置
@@ -287,55 +287,61 @@ function RequirementReview({ apiStatus, setShowSettings }) {
       {/* 左侧：文件上传和模式选择 */}
       <div className="lg:col-span-1 space-y-4">
         {/* 评审模式选择 */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Search className="w-5 h-5 text-indigo-500" />
+        <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 transition-all duration-300 hover:shadow-claude-lg">
+          <h2 className="text-lg font-serif font-bold text-claude-text-primary mb-4 flex items-center gap-2">
+            <Search className="w-5 h-5 text-claude-accent-primary" />
             评审模式
           </h2>
           
           <div className="space-y-2">
             <button
               onClick={() => setReviewMode('full')}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+              className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
                 reviewMode === 'full'
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-claude-accent-primary bg-claude-bg-warm text-claude-text-primary shadow-sm'
+                  : 'border-claude-border-warm hover:border-claude-border hover:bg-claude-bg-warm'
               }`}
             >
-              <BarChart3 className="w-5 h-5" />
+              <div className={`p-2 rounded-lg ${reviewMode === 'full' ? 'bg-claude-accent-primary text-white' : 'bg-claude-bg-cream text-claude-text-muted'}`}>
+                <BarChart3 className="w-5 h-5" />
+              </div>
               <div className="text-left">
-                <div className="font-medium">完整评审</div>
-                <div className="text-xs text-gray-500">六维度深度分析</div>
+                <div className="font-medium text-claude-text-primary">完整评审</div>
+                <div className="text-xs text-claude-text-secondary">六维度深度分析</div>
               </div>
             </button>
             
             <button
               onClick={() => setReviewMode('quick')}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+              className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
                 reviewMode === 'quick'
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-claude-accent-primary bg-claude-bg-warm text-claude-text-primary shadow-sm'
+                  : 'border-claude-border-warm hover:border-claude-border hover:bg-claude-bg-warm'
               }`}
             >
-              <Zap className="w-5 h-5" />
+              <div className={`p-2 rounded-lg ${reviewMode === 'quick' ? 'bg-claude-accent-primary text-white' : 'bg-claude-bg-cream text-claude-text-muted'}`}>
+                <Zap className="w-5 h-5" />
+              </div>
               <div className="text-left">
-                <div className="font-medium">快速评审</div>
-                <div className="text-xs text-gray-500">识别关键问题</div>
+                <div className="font-medium text-claude-text-primary">快速评审</div>
+                <div className="text-xs text-claude-text-secondary">识别关键问题</div>
               </div>
             </button>
             
             <button
               onClick={() => setReviewMode('compare')}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+              className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
                 reviewMode === 'compare'
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-claude-accent-primary bg-claude-bg-warm text-claude-text-primary shadow-sm'
+                  : 'border-claude-border-warm hover:border-claude-border hover:bg-claude-bg-warm'
               }`}
             >
-              <GitCompare className="w-5 h-5" />
+              <div className={`p-2 rounded-lg ${reviewMode === 'compare' ? 'bg-claude-accent-primary text-white' : 'bg-claude-bg-cream text-claude-text-muted'}`}>
+                <GitCompare className="w-5 h-5" />
+              </div>
               <div className="text-left">
-                <div className="font-medium">对比评审</div>
-                <div className="text-xs text-gray-500">版本变更分析</div>
+                <div className="font-medium text-claude-text-primary">对比评审</div>
+                <div className="text-xs text-claude-text-secondary">版本变更分析</div>
               </div>
             </button>
           </div>
@@ -343,17 +349,17 @@ function RequirementReview({ apiStatus, setShowSettings }) {
 
         {/* 文件上传区 */}
         {reviewMode !== 'compare' ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <Upload className="w-5 h-5 text-indigo-500" />
+          <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 transition-all duration-300 hover:shadow-claude-lg">
+            <h2 className="text-lg font-serif font-bold text-claude-text-primary mb-4 flex items-center gap-2">
+              <Upload className="w-5 h-5 text-claude-accent-primary" />
               上传需求文档
             </h2>
             
             <div
               className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${
                 isDragging
-                  ? 'border-indigo-500 bg-indigo-50'
-                  : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'
+                  ? 'border-claude-accent-primary bg-claude-accent-light'
+                  : 'border-claude-border-warm hover:border-claude-accent-primary hover:bg-claude-bg-warm'
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -367,22 +373,24 @@ function RequirementReview({ apiStatus, setShowSettings }) {
                 className="hidden"
                 onChange={(e) => handleFileUpload(e.target.files[0], setDocumentContent, setDocumentName)}
               />
-              <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 mb-1">拖拽文件到此处或点击上传</p>
-              <p className="text-xs text-gray-400">支持 .docx, .doc, .txt, .md</p>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3 bg-claude-bg-cream text-claude-text-muted">
+                <Upload className="w-6 h-6" />
+              </div>
+              <p className="text-claude-text-primary font-medium mb-1">拖拽文件到此处或点击上传</p>
+              <p className="text-xs text-claude-text-muted">支持 .docx, .doc, .txt, .md</p>
             </div>
 
             {documentName && (
-              <div className="mt-4 p-3 bg-indigo-50 rounded-lg flex items-center gap-3">
-                <FileText className="w-5 h-5 text-indigo-500" />
-                <span className="text-sm text-indigo-700 truncate flex-1">{documentName}</span>
+              <div className="mt-4 p-3 bg-claude-bg-cream border border-claude-border-warm rounded-lg flex items-center gap-3">
+                <FileText className="w-5 h-5 text-claude-accent-primary" />
+                <span className="text-sm text-claude-text-primary truncate flex-1">{documentName}</span>
                 <button
                   onClick={() => {
                     setDocumentName('');
                     setDocumentContent('');
                     if (fileInputRef.current) fileInputRef.current.value = '';
                   }}
-                  className="text-indigo-500 hover:text-indigo-700"
+                  className="text-claude-text-muted hover:text-red-500 transition-colors"
                 >
                   <XCircle className="w-4 h-4" />
                 </button>
@@ -391,30 +399,30 @@ function RequirementReview({ apiStatus, setShowSettings }) {
 
             {/* 或者直接输入文本 */}
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-claude-text-secondary mb-2">
                 或直接粘贴需求内容
               </label>
               <textarea
                 value={documentContent.startsWith('[文件已上传') ? '' : documentContent}
                 onChange={(e) => setDocumentContent(e.target.value)}
                 placeholder="在此粘贴需求文档内容..."
-                className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                className="w-full h-32 p-3 border border-claude-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-claude-accent-primary/20 focus:border-claude-accent-primary text-sm bg-claude-bg-warm"
               />
             </div>
           </div>
         ) : (
           /* 对比评审的双文件上传 */
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <GitCompare className="w-5 h-5 text-indigo-500" />
+          <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 space-y-4 transition-all duration-300 hover:shadow-claude-lg">
+            <h2 className="text-lg font-serif font-bold text-claude-text-primary mb-4 flex items-center gap-2">
+              <GitCompare className="w-5 h-5 text-claude-accent-primary" />
               上传对比文档
             </h2>
             
             {/* 旧版本 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">旧版本</label>
+              <label className="block text-sm font-medium text-claude-text-secondary mb-2">旧版本</label>
               <div
-                className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer hover:border-gray-400"
+                className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer border-claude-border-warm hover:border-claude-accent-primary hover:bg-claude-bg-warm transition-all"
                 onClick={() => oldFileInputRef.current?.click()}
               >
                 <input
@@ -425,21 +433,21 @@ function RequirementReview({ apiStatus, setShowSettings }) {
                   onChange={(e) => handleFileUpload(e.target.files[0], setOldDocContent, setOldDocName)}
                 />
                 {oldDocName ? (
-                  <div className="flex items-center justify-center gap-2 text-gray-700">
-                    <FileText className="w-4 h-4" />
+                  <div className="flex items-center justify-center gap-2 text-claude-text-primary">
+                    <FileText className="w-4 h-4 text-claude-accent-primary" />
                     <span className="text-sm truncate">{oldDocName}</span>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">点击上传旧版本</p>
+                  <p className="text-sm text-claude-text-muted">点击上传旧版本</p>
                 )}
               </div>
             </div>
 
             {/* 新版本 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">新版本</label>
+              <label className="block text-sm font-medium text-claude-text-secondary mb-2">新版本</label>
               <div
-                className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer hover:border-gray-400"
+                className="border-2 border-dashed rounded-xl p-4 text-center cursor-pointer border-claude-border-warm hover:border-claude-accent-primary hover:bg-claude-bg-warm transition-all"
                 onClick={() => newFileInputRef.current?.click()}
               >
                 <input
@@ -450,12 +458,12 @@ function RequirementReview({ apiStatus, setShowSettings }) {
                   onChange={(e) => handleFileUpload(e.target.files[0], setNewDocContent, setNewDocName)}
                 />
                 {newDocName ? (
-                  <div className="flex items-center justify-center gap-2 text-gray-700">
-                    <FileText className="w-4 h-4" />
+                  <div className="flex items-center justify-center gap-2 text-claude-text-primary">
+                    <FileText className="w-4 h-4 text-claude-accent-primary" />
                     <span className="text-sm truncate">{newDocName}</span>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">点击上传新版本</p>
+                  <p className="text-sm text-claude-text-muted">点击上传新版本</p>
                 )}
               </div>
             </div>
@@ -470,7 +478,7 @@ function RequirementReview({ apiStatus, setShowSettings }) {
             else runCompareReview();
           }}
           disabled={isReviewing || !apiStatus.hasApiKey}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-medium hover:from-indigo-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-claude-accent-primary text-white rounded-xl font-medium hover:bg-claude-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
         >
           {isReviewing ? (
             <>
@@ -486,14 +494,14 @@ function RequirementReview({ apiStatus, setShowSettings }) {
         </button>
 
         {!apiStatus.hasApiKey && (
-          <p className="text-center text-sm text-yellow-600">
-            请先<button onClick={() => setShowSettings(true)} className="underline">配置API密钥</button>
+          <p className="text-center text-sm text-amber-600">
+            请先<button onClick={() => setShowSettings(true)} className="underline hover:text-amber-700">配置API密钥</button>
           </p>
         )}
 
         {/* 错误提示 */}
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+          <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-700 text-sm">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               {error}
@@ -503,34 +511,34 @@ function RequirementReview({ apiStatus, setShowSettings }) {
       </div>
 
       {/* 右侧：评审结果 */}
-      <div className="lg:col-span-2 space-y-4">
+      <div className="lg:col-span-2 space-y-6">
         {/* 进度显示 */}
         {isReviewing && reviewMode === 'full' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 transition-all duration-300">
             <div className="flex items-center gap-3 mb-4">
-              <Loader2 className="w-5 h-5 text-indigo-500 animate-spin" />
-              <span className="font-medium text-gray-800">正在评审...</span>
+              <Loader2 className="w-5 h-5 text-claude-accent-primary animate-spin" />
+              <span className="font-medium text-claude-text-primary">正在评审...</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+            <div className="w-full bg-claude-bg-cream rounded-full h-2 mb-2">
               <div
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                className="bg-claude-accent-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${reviewProgress}%` }}
               />
             </div>
-            <p className="text-sm text-gray-600">{progressMessage}</p>
+            <p className="text-sm text-claude-text-secondary">{progressMessage}</p>
           </div>
         )}
 
         {/* 完整评审结果 */}
         {reviewReport && reviewMode === 'full' && (
-          <div className="space-y-4">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
             {/* 总览卡片 */}
-            <div className={`bg-white rounded-2xl shadow-sm border p-6 ${getScoreBg(reviewReport.overallScore)}`}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-800">评审报告</h2>
+            <div className={`bg-white rounded-xl shadow-claude border p-6 ${getScoreBg(reviewReport.overallScore)}`}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-serif font-bold text-claude-text-primary">评审报告</h2>
                 <button
                   onClick={exportReport}
-                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-claude-border rounded-lg text-sm hover:bg-claude-bg-cream hover:text-claude-text-primary transition-all shadow-sm"
                 >
                   <Download className="w-4 h-4" />
                   导出报告
@@ -539,42 +547,42 @@ function RequirementReview({ apiStatus, setShowSettings }) {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* 总分 */}
-                <div className="text-center p-4 bg-white rounded-xl border">
-                  <div className={`text-4xl font-bold ${getScoreColor(reviewReport.overallScore)}`}>
+                <div className="text-center p-4 bg-white/50 rounded-xl border border-claude-border-warm backdrop-blur-sm">
+                  <div className={`text-4xl font-bold mb-1 ${getScoreColor(reviewReport.overallScore)}`}>
                     {reviewReport.overallScore}
                   </div>
-                  <div className="text-sm text-gray-500 mt-1">总分</div>
+                  <div className="text-sm text-claude-text-secondary">总分</div>
                 </div>
 
                 {/* 问题数 */}
-                <div className="text-center p-4 bg-white rounded-xl border">
-                  <div className="text-4xl font-bold text-gray-800">
+                <div className="text-center p-4 bg-white/50 rounded-xl border border-claude-border-warm backdrop-blur-sm">
+                  <div className="text-4xl font-bold text-claude-text-primary mb-1">
                     {reviewReport.issues?.length || 0}
                   </div>
-                  <div className="text-sm text-gray-500 mt-1">发现问题</div>
+                  <div className="text-sm text-claude-text-secondary">发现问题</div>
                 </div>
 
                 {/* 严重问题 */}
-                <div className="text-center p-4 bg-white rounded-xl border">
-                  <div className="text-4xl font-bold text-red-600">
+                <div className="text-center p-4 bg-white/50 rounded-xl border border-claude-border-warm backdrop-blur-sm">
+                  <div className="text-4xl font-bold text-red-600 mb-1">
                     {reviewReport.summary?.criticalCount || 0}
                   </div>
-                  <div className="text-sm text-gray-500 mt-1">严重问题</div>
+                  <div className="text-sm text-claude-text-secondary">严重问题</div>
                 </div>
 
                 {/* 风险等级 */}
-                <div className="text-center p-4 bg-white rounded-xl border">
-                  <div className={`text-2xl font-bold ${RISK_CONFIG[reviewReport.riskAnalysis?.overallRiskLevel]?.color || 'text-gray-600'}`}>
+                <div className="text-center p-4 bg-white/50 rounded-xl border border-claude-border-warm backdrop-blur-sm">
+                  <div className={`text-2xl font-bold mb-1 pt-1.5 ${RISK_CONFIG[reviewReport.riskAnalysis?.overallRiskLevel]?.color || 'text-claude-text-secondary'}`}>
                     {RISK_CONFIG[reviewReport.riskAnalysis?.overallRiskLevel]?.label || '未知'}
                   </div>
-                  <div className="text-sm text-gray-500 mt-1">风险等级</div>
+                  <div className="text-sm text-claude-text-secondary">风险等级</div>
                 </div>
               </div>
             </div>
 
             {/* 维度得分 */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">维度评分</h3>
+            <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6">
+              <h3 className="text-lg font-serif font-bold text-claude-text-primary mb-4">维度评分</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {Object.entries(reviewReport.dimensions || {}).map(([key, dim]) => {
                   const Icon = DIMENSION_ICONS[key] || Target;
@@ -585,13 +593,13 @@ function RequirementReview({ apiStatus, setShowSettings }) {
                       onClick={() => toggleSection(`dim-${key}`)}
                     >
                       <div className="flex items-center gap-2 mb-2">
-                        <Icon className="w-5 h-5 text-gray-600" />
-                        <span className="font-medium text-gray-800">{dim.dimensionName}</span>
+                        <Icon className="w-5 h-5 text-claude-text-secondary" />
+                        <span className="font-medium text-claude-text-primary">{dim.dimensionName}</span>
                       </div>
-                      <div className={`text-2xl font-bold ${getScoreColor(dim.score)}`}>
+                      <div className={`text-2xl font-bold mb-1 ${getScoreColor(dim.score)}`}>
                         {dim.score}分
                       </div>
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{dim.summary}</p>
+                      <p className="text-xs text-claude-text-secondary mt-1 line-clamp-2">{dim.summary}</p>
                     </div>
                   );
                 })}
@@ -600,16 +608,16 @@ function RequirementReview({ apiStatus, setShowSettings }) {
 
             {/* 问题列表 */}
             {reviewReport.issues?.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6">
                 <div
                   className="flex items-center justify-between cursor-pointer"
                   onClick={() => toggleSection('issues')}
                 >
-                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <h3 className="text-lg font-serif font-bold text-claude-text-primary flex items-center gap-2">
                     <AlertTriangle className="w-5 h-5 text-orange-500" />
                     发现的问题 ({reviewReport.issues.length})
                   </h3>
-                  {expandedSections['issues'] ? <ChevronUp /> : <ChevronDown />}
+                  {expandedSections['issues'] ? <ChevronUp className="text-claude-text-muted" /> : <ChevronDown className="text-claude-text-muted" />}
                 </div>
 
                 {expandedSections['issues'] && (
@@ -620,14 +628,14 @@ function RequirementReview({ apiStatus, setShowSettings }) {
                       return (
                         <div
                           key={idx}
-                          className={`p-4 rounded-xl border ${config.color}`}
+                          className={`p-4 rounded-xl border ${config.color.replace('bg-', 'bg-opacity-10 ')}`}
                         >
                           <div className="flex items-start gap-3">
                             <Icon className="w-5 h-5 mt-0.5 flex-shrink-0" />
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="font-medium">{issue.title}</span>
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-white/50">
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-white/50 border border-black/5">
                                   {issue.dimension}
                                 </span>
                               </div>
@@ -636,7 +644,7 @@ function RequirementReview({ apiStatus, setShowSettings }) {
                                 <p className="text-xs mt-1 opacity-75">位置: {issue.location}</p>
                               )}
                               {issue.recommendation && (
-                                <p className="text-sm mt-2 p-2 bg-white/50 rounded-lg">
+                                <p className="text-sm mt-2 p-2 bg-white/50 rounded-lg border border-black/5">
                                   💡 {issue.recommendation}
                                 </p>
                               )}
@@ -652,22 +660,22 @@ function RequirementReview({ apiStatus, setShowSettings }) {
 
             {/* 风险分析 */}
             {reviewReport.riskAnalysis?.risks?.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6">
                 <div
                   className="flex items-center justify-between cursor-pointer"
                   onClick={() => toggleSection('risks')}
                 >
-                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <h3 className="text-lg font-serif font-bold text-claude-text-primary flex items-center gap-2">
                     <Shield className="w-5 h-5 text-red-500" />
                     风险分析 ({reviewReport.riskAnalysis.risks.length})
                   </h3>
-                  {expandedSections['risks'] ? <ChevronUp /> : <ChevronDown />}
+                  {expandedSections['risks'] ? <ChevronUp className="text-claude-text-muted" /> : <ChevronDown className="text-claude-text-muted" />}
                 </div>
 
                 {expandedSections['risks'] && (
                   <div className="mt-4 space-y-3">
                     {reviewReport.riskAnalysis.risks.map((risk, idx) => (
-                      <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <div key={idx} className="p-4 bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="font-medium text-gray-800">{risk.title}</span>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -687,7 +695,7 @@ function RequirementReview({ apiStatus, setShowSettings }) {
                         </div>
                         <p className="text-sm text-gray-600">{risk.description}</p>
                         {risk.mitigation && (
-                          <p className="text-sm mt-2 p-2 bg-blue-50 rounded-lg text-blue-700">
+                          <p className="text-sm mt-2 p-2 bg-blue-50 rounded-lg text-blue-700 border border-blue-100">
                             缓解措施: {risk.mitigation}
                           </p>
                         )}
@@ -700,8 +708,8 @@ function RequirementReview({ apiStatus, setShowSettings }) {
 
             {/* 改进建议 */}
             {reviewReport.suggestions?.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6">
+                <h3 className="text-lg font-serif font-bold text-claude-text-primary mb-4 flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-green-500" />
                   改进建议
                 </h3>
@@ -734,7 +742,7 @@ function RequirementReview({ apiStatus, setShowSettings }) {
             )}
 
             {/* 评审元数据 */}
-            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-500 flex items-center gap-4">
+            <div className="bg-claude-bg-cream rounded-xl p-4 text-sm text-claude-text-secondary flex items-center gap-4 border border-claude-border-warm">
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
                 耗时: {((reviewReport.metadata?.reviewTime || 0) / 1000).toFixed(1)}秒
@@ -749,9 +757,9 @@ function RequirementReview({ apiStatus, setShowSettings }) {
 
         {/* 快速评审结果 */}
         {quickResult && reviewMode === 'quick' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+          <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 space-y-4 animate-in fade-in slide-in-from-bottom-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-800">快速评审结果</h2>
+              <h2 className="text-xl font-serif font-bold text-claude-text-primary">快速评审结果</h2>
               <div className={`text-3xl font-bold ${getScoreColor(quickResult.quickScore)}`}>
                 {quickResult.quickScore}分
               </div>
@@ -760,12 +768,12 @@ function RequirementReview({ apiStatus, setShowSettings }) {
             {/* 主要问题 */}
             {quickResult.topIssues?.length > 0 && (
               <div>
-                <h3 className="font-medium text-gray-700 mb-2">主要问题</h3>
+                <h3 className="font-medium text-claude-text-primary mb-2">主要问题</h3>
                 <div className="space-y-2">
                   {quickResult.topIssues.map((issue, idx) => {
                     const config = SEVERITY_CONFIG[issue.severity] || SEVERITY_CONFIG.minor;
                     return (
-                      <div key={idx} className={`p-3 rounded-lg border ${config.color}`}>
+                      <div key={idx} className={`p-3 rounded-lg border ${config.color.replace('bg-', 'bg-opacity-10 ')}`}>
                         <div className="font-medium">{issue.title}</div>
                         <div className="text-sm opacity-90">{issue.description}</div>
                       </div>
@@ -778,11 +786,11 @@ function RequirementReview({ apiStatus, setShowSettings }) {
             {/* 缺失内容 */}
             {quickResult.missingContent?.length > 0 && (
               <div>
-                <h3 className="font-medium text-gray-700 mb-2">缺失内容</h3>
+                <h3 className="font-medium text-claude-text-primary mb-2">缺失内容</h3>
                 <ul className="space-y-1">
                   {quickResult.missingContent.map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
-                      <AlertCircle className="w-4 h-4 text-yellow-500" />
+                    <li key={idx} className="flex items-center gap-2 text-sm text-claude-text-secondary">
+                      <AlertCircle className="w-4 h-4 text-amber-500" />
                       {item}
                     </li>
                   ))}
@@ -810,9 +818,9 @@ function RequirementReview({ apiStatus, setShowSettings }) {
 
         {/* 对比评审结果 */}
         {compareResult && reviewMode === 'compare' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+          <div className="bg-white rounded-xl shadow-claude border border-claude-border p-6 space-y-4 animate-in fade-in slide-in-from-bottom-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-800">版本对比结果</h2>
+              <h2 className="text-xl font-serif font-bold text-claude-text-primary">版本对比结果</h2>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                 compareResult.overallImpact === 'high' ? 'bg-red-100 text-red-700' :
                 compareResult.overallImpact === 'medium' ? 'bg-yellow-100 text-yellow-700' :
@@ -864,22 +872,22 @@ function RequirementReview({ apiStatus, setShowSettings }) {
             {/* 修改需求 */}
             {compareResult.modifiedRequirements?.length > 0 && (
               <div>
-                <h3 className="font-medium text-yellow-700 mb-2 flex items-center gap-2">
+                <h3 className="font-medium text-amber-700 mb-2 flex items-center gap-2">
                   <Info className="w-4 h-4" />
                   修改需求 ({compareResult.modifiedRequirements.length})
                 </h3>
                 <div className="space-y-2">
                   {compareResult.modifiedRequirements.map((req, idx) => (
-                    <div key={idx} className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                      <div className="font-medium text-yellow-800">{req.title}</div>
+                    <div key={idx} className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <div className="font-medium text-amber-800">{req.title}</div>
                       <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
-                        <div className="p-2 bg-white rounded">
-                          <div className="text-xs text-gray-500 mb-1">旧版本</div>
-                          <div className="text-gray-700">{req.oldVersion}</div>
+                        <div className="p-2 bg-white/50 rounded border border-amber-100">
+                          <div className="text-xs text-amber-600 mb-1">旧版本</div>
+                          <div className="text-amber-900">{req.oldVersion}</div>
                         </div>
-                        <div className="p-2 bg-white rounded">
-                          <div className="text-xs text-gray-500 mb-1">新版本</div>
-                          <div className="text-gray-700">{req.newVersion}</div>
+                        <div className="p-2 bg-white/50 rounded border border-amber-100">
+                          <div className="text-xs text-amber-600 mb-1">新版本</div>
+                          <div className="text-amber-900">{req.newVersion}</div>
                         </div>
                       </div>
                     </div>
@@ -907,11 +915,13 @@ function RequirementReview({ apiStatus, setShowSettings }) {
 
         {/* 空状态 */}
         {!isReviewing && !reviewReport && !quickResult && !compareResult && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
-            <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-600 mb-2">准备开始评审</h3>
-            <p className="text-gray-400">
-              上传需求文档，选择评审模式，点击开始评审
+          <div className="bg-white rounded-xl shadow-claude border border-claude-border p-12 text-center h-full flex flex-col items-center justify-center">
+            <div className="w-20 h-20 rounded-3xl bg-claude-bg-warm border border-claude-border shadow-sm flex items-center justify-center mb-6">
+              <Search className="w-10 h-10 text-claude-text-light" />
+            </div>
+            <h3 className="text-xl font-serif font-medium text-claude-text-primary mb-2">准备开始评审</h3>
+            <p className="text-claude-text-secondary max-w-xs mx-auto">
+              上传需求文档，选择评审模式，点击开始评审。AI将从完整性、一致性等维度为您分析文档质量。
             </p>
           </div>
         )}

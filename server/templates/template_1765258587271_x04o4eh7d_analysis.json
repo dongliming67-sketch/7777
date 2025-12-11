@@ -1,0 +1,874 @@
+{
+  "documentStyle": "文档风格描述",
+  "numberFormat": "1.、1.1.、1.1.1.",
+  "titleSeparator": "空格",
+  "mainChapters": [
+    {
+      "number": "1",
+      "title": "引言",
+      "level": 1,
+      "purpose": "介绍文档的基本信息和目的"
+    },
+    {
+      "number": "1.1",
+      "title": "基本信息",
+      "level": 2,
+      "purpose": "提供项目的详细信息，如项目名称、类型等"
+    },
+    {
+      "number": "1.2",
+      "title": "目的",
+      "level": 2,
+      "purpose": "说明编写文档的目的和背景"
+    },
+    {
+      "number": "1.3",
+      "title": "适用范围",
+      "level": 2,
+      "purpose": "说明文档的覆盖范围"
+    },
+    {
+      "number": "1.4",
+      "title": "术语和缩略语",
+      "level": 2,
+      "purpose": "定义文档中使用的术语和缩略语"
+    },
+    {
+      "number": "1.5",
+      "title": "参考文档",
+      "level": 2,
+      "purpose": "列出文档参考的其他文档"
+    },
+    {
+      "number": "2",
+      "title": "软件概述",
+      "level": 1,
+      "purpose": "概述软件的基本信息"
+    },
+    {
+      "number": "2.1",
+      "title": "产品描述",
+      "level": 2,
+      "purpose": "描述产品的各方面指标要求"
+    },
+    {
+      "number": "2.2",
+      "title": "用户角色定义",
+      "level": 2,
+      "purpose": "定义使用系统的用户角色和业务说明"
+    },
+    {
+      "number": "2.3",
+      "title": "业务流程说明",
+      "level": 2,
+      "purpose": "详细阐述系统的主要业务流程"
+    },
+    {
+      "number": "2.4",
+      "title": "系统边界描述",
+      "level": 2,
+      "purpose": "描述系统与其他系统或用户的交互关系"
+    },
+    {
+      "number": "2.5",
+      "title": "功能划分说明",
+      "level": 2,
+      "purpose": "说明系统的功能模块结构及各模块划分"
+    },
+    {
+      "number": "3",
+      "title": "功能需求",
+      "level": 1,
+      "purpose": "详细描述系统的功能需求"
+    },
+    {
+      "number": "3.1",
+      "title": "营销管理子系统",
+      "level": 2,
+      "purpose": "描述营销管理子系统的功能需求"
+    },
+    {
+      "number": "3.1.1",
+      "title": "媒介精细化管理",
+      "level": 3,
+      "purpose": "描述媒介精细化管理功能的具体需求"
+    },
+    {
+      "number": "4",
+      "title": "数据库概要说明",
+      "level": 1,
+      "purpose": "说明数据库的基本信息"
+    },
+    {
+      "number": "4.1",
+      "title": "数据库E-R图",
+      "level": 2,
+      "purpose": "展示数据库的E-R图"
+    },
+    {
+      "number": "4.2",
+      "title": "表说明",
+      "level": 2,
+      "purpose": "说明数据库中使用的表"
+    },
+    {
+      "number": "5",
+      "title": "接口（外部逻辑文件）需求",
+      "level": 1,
+      "purpose": "说明系统使用的外部接口需求"
+    },
+    {
+      "number": "6",
+      "title": "工作量调整因子",
+      "level": 1,
+      "purpose": "说明工作量调整的相关因素"
+    },
+    {
+      "number": "6.1",
+      "title": "规模变更因子",
+      "level": 2,
+      "purpose": "说明规模变更对工作量的影响"
+    },
+    {
+      "number": "6.2",
+      "title": "应用类型",
+      "level": 2,
+      "purpose": "说明应用类型对工作量的影响"
+    },
+    {
+      "number": "6.3",
+      "title": "非功能性特征",
+      "level": 2,
+      "purpose": "说明非功能性特征对工作量的影响"
+    },
+    {
+      "number": "6.4",
+      "title": "开发平台/开发语言",
+      "level": 2,
+      "purpose": "说明开发平台和语言对工作量的影响"
+    },
+    {
+      "number": "6.5",
+      "title": "开发团队背景",
+      "level": 2,
+      "purpose": "说明开发团队背景对工作量的影响"
+    },
+    {
+      "number": "6.6",
+      "title": "软件完整性级别",
+      "level": 2,
+      "purpose": "说明软件完整性级别对工作量的影响"
+    },
+    {
+      "number": "7",
+      "title": "假设与约束条件",
+      "level": 1,
+      "purpose": "说明项目的假设和约束条件"
+    }
+  ],
+  "functionalChapterNumber": "3",
+  "functionalChapterTitle": "功能需求",
+  "functionalChapter": {
+    "number": "3",
+    "title": "功能需求",
+    "hierarchyLevels": 2,
+    "processContentTemplate": {
+      "sections": [
+        "3",
+        "3.1",
+        "3.1.1"
+      ],
+      "sectionsDetailed": [
+        {
+          "name": "3",
+          "purpose": "功能需求章节的顶级标题",
+          "format": "text",
+          "sampleContent": "这是模板中功能需求章节的内容："
+        },
+        {
+          "name": "3.1",
+          "purpose": "功能需求章节的二级标题",
+          "format": "text",
+          "sampleContent": "### 3.1"
+        },
+        {
+          "name": "3.1.1",
+          "purpose": "功能需求章节的三级标题",
+          "format": "text",
+          "sampleContent": "### 3.1.1"
+        }
+      ],
+      "dataTableHeaders": [
+        "字段名",
+        "类型",
+        "长度",
+        "说明",
+        "是否必填"
+      ],
+      "numberSeparator": "."
+    }
+  },
+  "headerChapterNumbers": [
+    "1",
+    "2"
+  ],
+  "footerChapterNumbers": [
+    "4",
+    "5",
+    "6",
+    "7"
+  ],
+  "specialFeatures": [
+    "文档包含详细的数据库E-R图和表说明",
+    "包含工作量调整因子分析"
+  ],
+  "hierarchyLevels": 2,
+  "hierarchyStructure": {
+    "level1": {
+      "name": "功能需求",
+      "numberFormat": "3"
+    },
+    "level2": {
+      "name": "功能过程",
+      "numberFormat": "3.1"
+    }
+  },
+  "processContentTemplate": {
+    "sections": [
+      "3",
+      "3.1",
+      "3.1.1"
+    ],
+    "sectionsDetailed": [
+      {
+        "name": "3",
+        "purpose": "功能需求章节的顶级标题",
+        "format": "text",
+        "sampleContent": "这是模板中功能需求章节的内容："
+      },
+      {
+        "name": "3.1",
+        "purpose": "功能需求章节的二级标题",
+        "format": "text",
+        "sampleContent": "### 3.1"
+      },
+      {
+        "name": "3.1.1",
+        "purpose": "功能需求章节的三级标题",
+        "format": "text",
+        "sampleContent": "### 3.1.1"
+      }
+    ],
+    "dataTableHeaders": [
+      "字段名",
+      "类型",
+      "长度",
+      "说明",
+      "是否必填"
+    ],
+    "numberSeparator": "."
+  },
+  "fullProcessExample": "3.1.1 XXX功能",
+  "writingGuidelines": "使用清晰、简洁的语言描述功能需求，确保每个子节都有明确的编号和内容格式。",
+  "originalTemplateText": "\n\n\n\n\n\n\n\n2025年江西移动客户感知优化平台扩容项目\n\n需求规格说明书\n\n\n\n                \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n2025年04月01日\n\n\n\n\n\n\n\n\n\n\n\n文档修订记录\n\n版本号\n\n日期\n\n修订页/修订描述\n\n作者\n\n审批人\n\nV1.0版\n\n20250401\n\n初版编写\n\nxxxx\n\nXxx（江西移动项目经理）\n\nV1.1版\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n目   录\n\n\n\n1.\t引言\t1\n\n1.1.\t基本信息\t1\n\n1.2.\t目的\t1\n\n1.3.\t适用范围\t1\n\n1.4.\t术语和缩略语\t1\n\n1.5.\t参考文档\t2\n\n2.\t软件概述\t2\n\n2.1.\t产品描述\t2\n\n2.2.\t用户角色定义\t2\n\n2.3.\t业务流程说明\t3\n\n2.4.\t系统边界描述\t4\n\n2.5.\t功能划分说明\t4\n\n3.\t功能需求\t5\n\n3.1.\t营销管理子系统\t5\n\n3.1.1.\t媒介精细化管理\t5\n\n4.\t数据库概要说明\t10\n\n4.1.\t数据库E-R图\t10\n\n4.2.\t表说明\t12\n\n5.\t接口（外部逻辑文件）需求\t13\n\n6.\t工作量调整因子\t16\n\n6.1.\t规模变更因子\t16\n\n6.2.\t应用类型\t16\n\n6.3.\t非功能性特征\t17\n\n6.4.\t开发平台/开发语言\t17\n\n6.5.\t开发团队背景\t18\n\n6.6.\t软件完整性级别\t18\n\n7.\t假设与约束条件\t18\n\n\n\n引言\n\n基本信息\n\n项目名称：\n\n自有媒介营销管理平台二期开发服务项目\n\n项目类型：\n\n新开发项目\n\n二次开发项目\n\n上期项目名称：\n\n项目所属系统类别\n\n业务支撑系统（BSS） □ 网管支撑系统（OSS） □ 管理信息系统（MSS）\n\n编写说明：项目类型中，如果选择二次开发项目，请列示上期项目的名称，并需提供该项目的需求规格说明书。\n\n目的\n\n说明编写本文档的目的和背景，对项目的背景应有比较详细的描述。\n\n【样例：自营销二期项目的建设目标着眼于拓展营销执行渠道、建设实时场景营销能力，对接“精益营销平台”和“营销分析管理平台(CMP)”，为营销闭环提供营销执行的支撑；对自有媒介分类及数量进行精细化分析，建立媒介特征库，全盘掌握营销资源；打通与BI系统及OA系统的接口，实现一体化营销活动管理支撑。】\n\n适用范围\n\n说明本文档的覆盖范围（可裁剪）。\n\n【示例：本需求说明书中涉及规范和各个模块对支撑系统的需求仅适用于自有媒介营销管理平台开发】\n\n术语和缩略语\n\n说明文档中涉及的术语定义。\n\n术语\n\n解释\n\n营销方案\n\n用于描述营销人员发起的营销策划信息，包含营销预算、产品描述、目标客户群描述等重要信息，一个营销方案中可以包括多个产品描述\n\n*注：有别于现网CRM中的营销方案概念\n\n营销案\n\n原精益平台使用的概念，在营销一体化支撑平台中使用产品代替\n\n在原精益平台中，营销案包含了营销案流水号、营销案编码信息，通常对应现网CRM的产品包\n\n渠道\n\n具备与客户交互的能力，可以向客户推送营销信息的系统，如：网厅、短厅、营业厅、客服、主动下发（10086055）等\n\n\n\n参考文档\n\n说明本文档的参考文档名称，如集团规范、行业标准以及其他相关系统文档等。\n\n软件概述\n\n2\n\n产品描述\n\n简要描述产品的各方面指标要求，产品开发涉及的部门，产品涉及的关联系统，产品面向的用户群等。用户群的详细说明可参见2.2节用户角色定义\n\n【示例：营销一体化支撑的目标在于打通系统之间的接口，整合已有的营销能力，统一营销管理流程。需要整合的系统包括：营销管理阶段的精益平台、产品配置阶段的NGCRM、营销策划和评估阶段的CMP、营销执行阶段的自营销平台。通过增强营销过程系统间的交互，实现流程一体化、感知一体化、数据一体化、以及渠道管理一体化，更好地支撑业务部门流量经营、客户经营、终端营销等方面的营销需求。】\n\n用户角色定义\n\n简要说明使用本系统的用户角色和其相关的业务说明，可按组织级、部门级和业务级分别说明。\n\n【示例：\n\n编号\n\n角色\n\n所在部门\n\n相关的业务活动说明\n\n1001\n\n营销策划人员\n\n业务部\n\n营销方案、活动管理\n\n1002\n\n营销审批人员\n\n业务部\n\n营销审批\n\n1003\n\n效果分析人员\n\n业务部\n\n营销效果评估\n\n1004\n\n系统管理员\n\n业务部\n\n营销系统维护、管理\n\n业务流程说明\n\n详细阐述系统的主要业务流程，可用文字结合图表的方式描述。\n\n【示例：\n\n\n\n系统基本上由三个主要流程构成，在设计和实现中必须以这三个流程为核心：\n\n营销方案制定：分为需求申请及需求审批两个阶段，营销人员策划营销方案并提出上架申请，管理人员审批营销方案，最终将营销方案配置上架\n\n营销方案执行：由各外围系统与自营销平台协作完成，外围系统负责将媒介消息上报给自营销平台，自营销平台进行营销匹配，选择最适合的营销内容，完成追尾操作，最终请求相关外围系统将短信下发给目标客户\n\n营销效果评估：通过收集用户查看详细、办理业务的数据，产生相关的各种统计，进行营销效果的评估。（注：由CMP系统实现营销效果评估功能）】\n\n系统边界描述\n\n描述所有相关用户及其他系统（包含软件系统、硬件设备、其他终端等）与本系统的交互关系。\n\n【示例：\n\n】\n\n功能划分说明\n\n通过功能模块结构图说明本系统的功能模块结构及各模块划分，如该系统是二次开发项目，则需在图中标明哪些是本次开发所涉及的模块。\n\n【示例:\n\n】\n\n功能需求\n\n按照2.5章节功能模块划分说明中列出的本项目需改造的功能逐级（即按子系统、一级功能、二级功能……结构）描述功能需求。\n\n3\n\n营销管理子系统\n\n媒介精细化管理\n\n场景说明：对“媒介精细化管理”场景进行概要说明。\n\n添加客户信息（新增）\n\n功能描述：对该功能进行简要的描述。\n\n系统界面：（粘贴功能界面截图。若是没有功能界面截图，是系统与系统之间的数据交换，请画出共享数据使用情况示意图，见下面例图）\n\n\n\n输入：客户信息{白名单名称、类型、源地址、目的地址} ；用户联系方式{用户名、用户证件号、用户号码}\n\n（说明：列出该功能所涉及的逻辑文件中的输入属性，属性放在{}中，逻辑文件名放在{}前。注意如果有多个逻辑文件，请不要分段写，用中文分号隔开。该输入属性是指从系统外部输入的数据或控制信息。具体格式见上例。）    \n\n输出：客户信息{白名单名称}；用户联系方式{用户名、用户号码}\n\n（说明：列出该功能所涉及的逻辑文件中的输出属性，属性放在{}中，逻辑文件名放在{}前。注意如果有多个逻辑文件，请不要分段写，用中文分号隔开。该输出属性是指从本系统向用户或其他系统输出的数据或控制信息。具体格式见上例。）\n\n处理过程： \n\n从数据传递和加工的角度描述功能的处理过程，此过程不包含任何有关实现的内容，只是从最上层对有关内容加以描述。如果系统交互对象是人，则处理过程要体现出系统交互对象、交互界面、交互过程，以及系统內部业务处理逻辑（该逻辑处理是以用户指定的某种方法获取所需的结果，而非是研发人员通过某种技术所实现的结果）。处理过程不要分段填写，只用一段话写。如果系统交互对象是其他系统，就要描述清楚它们是如何交互数据的，例如：本系统定期从逻辑文件“客户信息”中提取数据(记为“客户信息摘录”)，然后将其分发给其他应用程序使用。“客户信息摘录”在于应用程序A的边界之外，见上面示意图。请不要分段写。\n\n\n\n本事务功能涉及到的数据文件（即FTR/RET）\n\n本事务功能预计涉及到xx个内部逻辑文件，xx个外部逻辑文件\n\n本期新增的内部逻辑文件：（列出名称）\n\n本期变更的内部逻辑文件：（列出名称）\n\n本期涉及原有但没修改的内部逻辑文件：（列出名称）\n\n本期新增的外部逻辑文件：（列出名称）\n\n本期变更的外部逻辑文件：（列出名称）\n\n本期涉及原有但没修改的外部逻辑文件：（列出名称）\n\n\n\n\n\n\n\n添加客户信息（修改）\n\n原有功能描述：对原有功能进行简要的描述。\n\n变更后功能描述：对变更后功能进行简要的描述。\n\n原有系统界面：（粘贴功能界面截图。若是没有功能界面截图，是系统与系统之间的数据交换，请画出共享数据使用情况示意图，见下面例图）\n\n变更后系统界面：（粘贴功能界面截图。若是没有功能界面截图，是系统与系统之间的数据交换，请画出共享数据使用情况示意图，见下面例图）\n\n\n\n\n\n\n\n系统界面变更说明：请详细说明系统界面变更信息。\n\n原有输入：客户信息{白名单名称、类型、源地址、目的地址} ；用户联系方式{用户名、用户证件号、用户号码、国家代码}\n\n本期新增输入属性：客户信息{年龄}；用户联系方式{性别、家庭住址}\n\n本期修改输入属性：客户信息{白名单名称}；用户联系方式{用户名}（白名单名称：由原来字母类型变成纯数字类型。用户名字段长度发生变化，由原来5个字节长度变成7个字节长度。）\n\n（说明属性变更信息，比如长度变更，由原有xx长度现变成xx长度；或数据类型改变，由原有字母、数字类型变成纯数字类型；或小数点位数变更，由原来xx变成xx。）\n\n本期删除输入属性：客户信息{类型}；用户联系方式{国家代码}\n\n变更后输入：客户信息{白名单名称、源地址、目的地址} ；用户联系方式{用户名、性别、用户证件号、家庭住址、用户号码}\n\n（说明：列出该功能所涉及的逻辑文件中的输入属性，属性放在{}中，逻辑文件名放在{}前。注意如果有多个逻辑文件，请不要分段写，用中文分号隔开。该输入属性是指从系统外部输入的数据或控制信息。具体格式见上例。）    \n\n原有输出：客户信息{白名单名称、类型}；用户联系方式{用户名、用户号码}\n\n本期新增输出属性：用户联系方式{性别、家庭住址}\n\n本期修改输出属性：客户信息{白名单名称}；用户联系方式{用户名}（白名单名称：由原来字母类型变成纯数字类型。用户名字段长度发生变化，由原来5个字节长度变成7个字节长度。）\n\n（说明属性变更信息，比如长度变更，由原有xx长度现变成xx长度；或数据类型改变，由原有字母、数字类型变成纯数字类型；或小数点位数变更，由原来xx变成xx。）\n\n本期删除输出属性：客户信息{类型}\n\n变更后输出：客户信息{白名单名称}；用户联系方式{用户名、用户号码、性别、家庭住址}\n\n（说明：列出该功能所涉及的逻辑文件中的输出属性，属性放在{}中，逻辑文件名放在{}前。注意如果有多个逻辑文件，请不要分段写，用中文分号隔开。该输出属性是指从本系统向用户或其他系统输出的数据或控制信息。具体格式见上例。）\n\n原有处理过程：从数据传递和加工的角度描述功能的处理过程，此过程不包含任何有关实现的内容，只是从最上层对有关内容加以描述。如果系统交互对象是人，则处理过程要体现出系统交互对象、交互界面、交互过程，以及系统內部业务处理逻辑（该逻辑处理是以用户指定的某种方法获取所需的结果，而非是研发人员通过某种技术所实现的结果）。处理过程不要分段填写，只用一段话写。如果系统交互对象是其他系统，就要描述清楚它们是如何交互数据的，例如：本系统定期从逻辑文件“客户信息”中提取数据(记为“客户信息摘录”)，然后将其分发给其他应用程序使用。“客户信息摘录”在于应用程序A的边界之外，见上面示意图。请不要分段写。\n\n变更后处理过程：如果有变更，请详细说明变更信息。请不要分段写。\n\n\n\n本事务功能涉及到的数据文件（即FTR/RET）\n\n本事务功能预计涉及到xx个内部逻辑文件，xx个外部逻辑文件\n\n原有內部逻辑文件：客户信息、用户联系方式\n\n本期新增的内部逻辑文件：（列出名称）\n\n本期修改的内部逻辑文件：客户信息、用户联系方式\n\n本期删除的内部逻辑文件：（列出名称）\n\n变更后內部逻辑文件：客户信息、用户联系方式\n\n原有外部逻辑文件：（列出名称）\n\n本期新增的外部逻辑文件：（列出名称）\n\n本期修改的外部逻辑文件：（列出名称）\n\n本期删除的外部逻辑文件：（列出名称）\n\n变更后外部逻辑文件：（列出名称）\n\n\n\n\n\n\n\n添加客户信息（删除）\n\n原有功能描述：对该功能进行简要的描述。\n\n原有系统界面：（粘贴功能界面截图。若是没有功能界面截图，是系统与系统之间的数据交换，请画出共享数据使用情况示意图，见下面例图）\n\n\n\n原有输入：客户信息{白名单名称、类型、源地址、目的地址} ；用户联系方式{用户名、用户证件号、用户号码}\n\n（说明：列出该功能所涉及的逻辑文件中的输入属性，属性放在{}中，逻辑文件名放在{}前。注意如果有多个逻辑文件，请不要分段写，用中文分号隔开。该输入属性是指从系统外部输入的数据或控制信息。具体格式见上例。）    \n\n原有输出：客户信息{白名单名称}；用户联系方式{用户名、用户号码}\n\n（说明：列出该功能所涉及的逻辑文件中的输出属性，属性放在{}中，逻辑文件名放在{}前。注意如果有多个逻辑文件，请不要分段写，用中文分号隔开。该输出属性是指从本系统向用户或其他系统输出的数据或控制信息。具体格式见上例。）\n\n原有处理过程： \n\n从数据传递和加工的角度描述功能的处理过程，此过程不包含任何有关实现的内容，只是从最上层对有关内容加以描述。如果系统交互对象是人，则处理过程要体现出系统交互对象、交互界面、交互过程，以及系统內部业务处理逻辑（该逻辑处理是以用户指定的某种方法获取所需的结果，而非是研发人员通过某种技术所实现的结果）。处理过程不要分段填写，只用一段话写。如果系统交互对象是其他系统，就要描述清楚它们是如何交互数据的，例如：本系统定期从逻辑文件“客户信息”中提取数据(记为“客户信息摘录”)，然后将其分发给其他应用程序使用。“客户信息摘录”在于应用程序A的边界之外，见上面示意图。请不要分段写。\n\n\n\n本事务功能涉及到的数据文件（即FTR/RET）\n\n本事务功能预计涉及到xx个内部逻辑文件，xx个外部逻辑文件\n\n原有内部逻辑文件：（列出名称）\n\n原有外部逻辑文件：（列出名称）\n\n\n\n\n\n\n\n\n\n数据库概要说明\n\n4\n\n数据库E-R图\n\n要体现新增或原有或修改或删除后的E-R图\n\n采用Crow’s Foot数据库表示法描述实体之间关系，以及各实体属性。示例图如下：\n\n\n\n\n\n可采用Visio软件的Crow’s Foot数据库表示法来画此图。可将画好的图作为附件附在word里。\n\n\n\n\n\n\n\n实体之间关系连线如下：\n\n\n\n序号\n\n內部逻辑文件名称\n\n对应的实体名称\n\n属性（即字段）\n\n其中：主键\n\n其中：外键\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n实体名称\n\n属性\n\n注解\n\n类型\n\n最大长度\n\n值域\n\n可否为空\n\n是否主键\n\n是否外键\n\n备注\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n表说明\n\n汇总列示出本软件中将使用或涉及到的物理表名称、所保存的数据内容及对与该表相关的系统功能模块、表字段数量等等；\n\n实体名称\n\n內部逻辑文件名称\n\n保存内容\n\n涉及的一级功能模块\n\n依赖实体名称\n\n本系统相关操作\n\n字段数量\n\n新增/变更/无改动\n\n改动内容（注：只有变更才填，则需描述删除xx个字段、新增xx个字段、修改xx个字段）\n\n用户是否能维护该逻辑文件（注：维护是指增、删、改）\n\n人员信息\n\n人员信息\n\n人员基础信息\n\n系统管理\n\n\n\n读、写\n\n20\n\n无改动\n\n\n\n\n\n操作员信息\n\n操作员信息\n\n操作员的个人资料\n\n系统管理\n\n人员信息\n\n读、写\n\n20\n\n变更\n\n新增10个字段\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n如果有外部逻辑文件转化为內部逻辑文件，请填写下表：\n\n序号\n\n原有外部逻辑文件名称\n\n转变为內部逻辑文件名称\n\n请详细说明转化信息\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n如果原有內部逻辑文件有变更的，请填写下表：\n\n序号\n\n內部逻辑文件名称\n\n对应的实体名称\n\n原有属性\n\n变更后属性\n\n变更后所有属性\n\n其中新增属性\n\n其中变更属性\n\n其中删除属性\n\n请详细说明变更属性信息\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n如果原有內部逻辑文件有删除的，请填写下表：\n\n序号\n\n删除的內部逻辑文件名称\n\n删除的对应的实体名称\n\n删除的属性\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n接口（外部逻辑文件）需求\n\n汇总列示出本软件中将使用或涉及到的外部逻辑文件名称、数据内容及对与该文件相关的系统功能模块、字段数量等等\n\n\n\n【示例：其中维护是指增、删、改。】\n\n外部逻辑文件名称\n\n外部接口名称\n\n外部系统名称\n\n本系统相关一级功能模块\n\n本系统是否维护该外部逻辑文件（注：维护是指增、删、改）\n\n外部逻辑文件字段数量\n\n本系统对外部逻辑文件相关操作（新增/变更/无改动）\n\n改动内容（注：只有变更才填，则需描述删除xx个字段、新增xx个字段、修改xx个字段）\n\nxxx表\n\n经分主库接口\n\n经分系统\n\n系统管理\n\n否\n\n20\n\n无改动\n\n\n\nxxx表\n\n话单接口\n\nBOSS系统\n\n系统管理\n\n否\n\n20\n\n变更\n\n新增10个字段\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n序号\n\n外部逻辑文件名称\n\n对应的实体名称\n\n属性（即字段）\n\n其中：主键\n\n其中：外键\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n实体名称\n\n属性\n\n注解\n\n类型\n\n最大长度\n\n值域\n\n可否为空\n\n是否主键\n\n是否外键\n\n备注\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n如果有內部逻辑文件转化为外部逻辑文件，请填写下表：\n\n序号\n\n原有內部逻辑文件名称\n\n转变为外部逻辑文件名称\n\n请详细说明转化信息\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n如果原有外部逻辑文件有变更的，请填写下表：\n\n序号\n\n外部逻辑文件名称\n\n对应的实体名称\n\n原有属性\n\n变更后属性\n\n变更后所有属性\n\n其中新增属性\n\n其中变更属性\n\n其中删除属性\n\n请详细说明变更属性信息\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n如果原有外部逻辑文件有删除的，请填写下表：\n\n序号\n\n删除的外部逻辑文件名称\n\n删除的对应的实体名称\n\n删除的属性\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n工作量调整因子\n\n请在需求规格说明书中明确以下关键点。\n\n5\n\n规模变更因子\n\n一般情况下，按照项目完成阶段来取对应系数。\n\n规模变更因子\n\n项目早期\n\n概算、预算阶段\n\n1.39\n\n项目中期\n\n投标、项目计划阶段\n\n1.21\n\n项目晚期\n\n需求分析阶段\n\n1.10\n\n项目完成\n\n项目交付后及运维阶段\n\n1.00\n\n\n\n示例（需求规格说明书中明确描述）：本项目为“项目完成”阶段。\n\n\n\n应用类型\n\n请说明本项目涉及到的应用类型领域。\n\n应用类型\n\n描述\n\n调整因子\n\n业务处理\n\n办公自动化系统：人事、会计、工资、销售等经营管理及业务处理用软件等\n\n1.0 \n\n科技\n\n科学计算、模拟、统计分析等\n\n1.2 \n\n多媒体\n\n图形、影像、声音等多媒体应用领域；地理信息系统；教育和娱乐等\n\n1.3 \n\n智能信息\n\n自然语言处理、大模型、计算机视觉、智能决策、专家系统等\n\n1.5 \n\n基础软件/支撑软件\n\n操作系统、数据库系统、集成开发环境、自动化开发/设计工具等\n\n1.7 \n\n通信控制\n\n通信协议、仿真、交换机软件、全球定位系统等\n\n1.9 \n\n流程控制\n\n实时系统控制、机器人控制、嵌入式软件等\n\n2.0 \n\n\n\n示例（需求规格说明书中明确描述）：\n\n本项目主要完成XXXXXX，与业务处理类似，故应用类型为业务处理。\n\n请按实际情况填写下表：\n\n编号\n\n子系统\n\n对应的应用领域\n\n对应的描述\n\n自然排序\n\n（业务需求说明书的大标题“XX项目需求”）\n\n（七选一）\n\n（点对点描述小类）\n\n1\n\nXX项目\n\n业务处理\n\n业务处理\n\n2\n\nXX项目\n\n业务处理\n\n销售经营管理\n\n3\n\nXX项目\n\n业务处理\n\n人事经营管理\n\n\n\n\n\n非功能性特征\n\n请说明本项目所涉及到的非功能性特征。\n\n调整因子\n\n判断标准\n\n影响度\n\n分布式处理\n\n指计算机系统能够在各组成要素之间传输数据\n\n没有明示对分布式处理的需求事项\n\n-1\n\n通过网络进行客户端/服务器及网络基础计算机系统分布处理和传输\n\n0\n\n在多个服务器及处理器上同时相互执行计算机系统中的处理功能\n\n1\n\n性能\n\n指用户对应答时间或处理率的需求水平\n\n没有明示对性能的特别需求事项或活动，因此提供基本性能\n\n-1\n\n应答时间或处理率对高峰时间或所有业务时间都很重要，对连动系统结束处理时间有限制\n\n0\n\n为满足性能需求事项，要求设计阶段进行性能分析，或在设计、开发阶段使用分析工具\n\n1\n\n可靠性\n\n指发生故障的影响程度\n\n没有明示对可靠性的特别需求事项或活动，因此提供基本的可靠性\n\n-1\n\n发生故障时可轻易修复，带来一定不便或经济损失\n\n0\n\n发生故障时很难修复，发生重大经济损失或有生命危害\n\n1\n\n多重站点\n\n指能够支持不同硬件和软件环境\n\n在相同用途的硬件或软件环境下运行\n\n-1\n\n在用途类似的硬件或软件环境下运行\n\n0\n\n在不同用途的硬件或软件环境下运行\n\n1\n\n备注：如项目中没有对该部分做描述或系统未对该部分做要求时请在对应的描述中写“无”。\n\n示例（需求规格说明书中明确描述）：\n\n调整因子\n\n判断标准\n\n影响度\n\n分布式处理\n\n指计算机系统能够在各组成要素之间传输数据\n\n通过网络进行客户端/服务器及网络基础计算机系统分布处理和传输\n\n0\n\n性能\n\n指用户对应答时间或处理率的需求水平\n\n应答时间或处理率对高峰时间或所有业务时间都很重要，对连动系统结束处理时间有限制\n\n0\n\n可靠性\n\n指发生故障的影响程度\n\n发生故障时可轻易修复，带来一定不便或经济损失\n\n0\n\n多重站点\n\n指能够支持不同硬件和软件环境\n\n在用途类似的硬件或软件环境下运行\n\n0\n\n\n\n开发平台/开发语言\n\n请说明本项目对应的开发语言。\n\n开发平台\n\n调整因子\n\nC及其他同级别语言/平台\n\n1.2 \n\nJAVA、C++、C#及其他同级别语言/平台\n\n1.0 \n\nPowerBuilder、ASP及其他同级别语言/平台\n\n0.8 \n\n示例（需求规格说明书中明确描述）：本项目采用C/JAVA/PowerBuilder/...开发语言。\n\n\n\n开发团队背景\n\n请说明本项目的开发团队背景。\n\n开发团队背景\n\n影响度\n\n为本行业开发过类似的软件\n\n0.8 \n\n为其他行业开发过类似的软件，或为本行业开发过不同但相关的软件\n\n1.0 \n\n没有同类项目的背景\n\n1.2 \n\n示例（需求规格说明书中明确描述）：明确描述开发团队背景，若有类似背景承诺可随时提供合同佐证。\n\n\n\n软件完整性级别\n\n请说明本项目的软件完整性级别。按经验值，一般取D级。如有差异，请提供详细证明材料。\n\n软件完整性级别\n\n调整因子\n\n没有明确的完整性级别或等级为C/D\n\n1.0\n\n完整性级别为A/B同时为达成完整性级别要求采取了特殊的设计及实现方式\n\n1.1\n\n完整性级别为A同时为达成完整性级别要求在软件开发全生命周期均采取了特定、明确的措施\n\n1.3\n\n示例（需求规格说明书中明确描述）：本项目的软件完整性级别为D级，风险等级微小。\n\n\n\n\n\n\n\n\n\n假设与约束条件\n\n按照实际情况填写。\n\n",
+  "sections": [
+    {
+      "number": "1",
+      "title": "引言\t1",
+      "level": 1,
+      "lineIndex": 142,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "1.1",
+      "title": "基本信息\t1",
+      "level": 2,
+      "lineIndex": 144,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "1.2",
+      "title": "目的\t1",
+      "level": 2,
+      "lineIndex": 146,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "1.3",
+      "title": "适用范围\t1",
+      "level": 2,
+      "lineIndex": 148,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "1.4",
+      "title": "术语和缩略语\t1",
+      "level": 2,
+      "lineIndex": 150,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "1.5",
+      "title": "参考文档\t2",
+      "level": 2,
+      "lineIndex": 152,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2",
+      "title": "软件概述\t2",
+      "level": 1,
+      "lineIndex": 154,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2.1",
+      "title": "产品描述\t2",
+      "level": 2,
+      "lineIndex": 156,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2.2",
+      "title": "用户角色定义\t2",
+      "level": 2,
+      "lineIndex": 158,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2.3",
+      "title": "业务流程说明\t3",
+      "level": 2,
+      "lineIndex": 160,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2.4",
+      "title": "系统边界描述\t4",
+      "level": 2,
+      "lineIndex": 162,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2.5",
+      "title": "功能划分说明\t4",
+      "level": 2,
+      "lineIndex": 164,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "3",
+      "title": "功能需求\t5",
+      "level": 1,
+      "lineIndex": 166,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "3.1",
+      "title": "营销管理子系统\t5",
+      "level": 2,
+      "lineIndex": 168,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "3.1.1",
+      "title": "媒介精细化管理\t5",
+      "level": 3,
+      "lineIndex": 170,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "4",
+      "title": "数据库概要说明\t10",
+      "level": 1,
+      "lineIndex": 172,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "4.1",
+      "title": "数据库E-R图\t10",
+      "level": 2,
+      "lineIndex": 174,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "4.2",
+      "title": "表说明\t12",
+      "level": 2,
+      "lineIndex": 176,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "5",
+      "title": "接口（外部逻辑文件）需求\t13",
+      "level": 1,
+      "lineIndex": 178,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6",
+      "title": "工作量调整因子\t16",
+      "level": 1,
+      "lineIndex": 180,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.1",
+      "title": "规模变更因子\t16",
+      "level": 2,
+      "lineIndex": 182,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.2",
+      "title": "应用类型\t16",
+      "level": 2,
+      "lineIndex": 184,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.3",
+      "title": "非功能性特征\t17",
+      "level": 2,
+      "lineIndex": 186,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.4",
+      "title": "开发平台/开发语言\t17",
+      "level": 2,
+      "lineIndex": 188,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.5",
+      "title": "开发团队背景\t18",
+      "level": 2,
+      "lineIndex": 190,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.6",
+      "title": "软件完整性级别\t18",
+      "level": 2,
+      "lineIndex": 192,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "7",
+      "title": "假设与约束条件\t18",
+      "level": 1,
+      "lineIndex": 194,
+      "contentSnippet": "引言\n\n基本信息\n\n项目名称：\n\n自有媒介营销管理平台二期开发服务项目\n\n项目类型：\n\n新开发项目\n\n二次开发项目\n\n上期项目名称：\n\n项目所属系统类别\n\n业务支撑系统（BSS） □ 网管支撑系统（OSS） □ 管理信息系统（MSS）\n\n编写说明：项目类型中，如果选择二次开发项目，请列示上期项目的名称，并需提供该项目的需求规格说明书。\n\n目的\n\n说明编写本文档的目的和背景，对项目的背景应有比较详细的描述。\n\n【样例：自营销二期项目的建设目标着眼于拓展营销执行渠道、建设实时场景营销能力，对接“精益营销平台”和“营销分析管理平台(CMP)”，为营销闭环提供营销执行的支撑；对自有媒介分类及数量进行精细化分析，建立媒介特征库，全盘掌握营销资源；打通与BI系统及OA系统的接口，实现一体化营销活动管理支撑。】\n\n适用范围\n\n说明本文档的覆盖范围（可裁剪）。\n\n【示例：本需求说明书中涉及规范和各个模块对支撑系统的需求仅适用于自有媒介营销管理平台开发】\n\n术语和缩略语\n\n说明文档中涉及的术语定义。\n\n术语\n\n解释\n\n营销方案\n\n用于描述营销人员发起的营销策划信息，包含营销预算、产品描述、目标客户群描述",
+      "contentLength": 9552,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    }
+  ],
+  "allChapters": [
+    {
+      "number": "1",
+      "title": "引言\t1",
+      "level": 1,
+      "lineIndex": 142,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "1.1",
+      "title": "基本信息\t1",
+      "level": 2,
+      "lineIndex": 144,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "1.2",
+      "title": "目的\t1",
+      "level": 2,
+      "lineIndex": 146,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "1.3",
+      "title": "适用范围\t1",
+      "level": 2,
+      "lineIndex": 148,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "1.4",
+      "title": "术语和缩略语\t1",
+      "level": 2,
+      "lineIndex": 150,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "1.5",
+      "title": "参考文档\t2",
+      "level": 2,
+      "lineIndex": 152,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2",
+      "title": "软件概述\t2",
+      "level": 1,
+      "lineIndex": 154,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2.1",
+      "title": "产品描述\t2",
+      "level": 2,
+      "lineIndex": 156,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2.2",
+      "title": "用户角色定义\t2",
+      "level": 2,
+      "lineIndex": 158,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2.3",
+      "title": "业务流程说明\t3",
+      "level": 2,
+      "lineIndex": 160,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2.4",
+      "title": "系统边界描述\t4",
+      "level": 2,
+      "lineIndex": 162,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "2.5",
+      "title": "功能划分说明\t4",
+      "level": 2,
+      "lineIndex": 164,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "3",
+      "title": "功能需求\t5",
+      "level": 1,
+      "lineIndex": 166,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "3.1",
+      "title": "营销管理子系统\t5",
+      "level": 2,
+      "lineIndex": 168,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "3.1.1",
+      "title": "媒介精细化管理\t5",
+      "level": 3,
+      "lineIndex": 170,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "4",
+      "title": "数据库概要说明\t10",
+      "level": 1,
+      "lineIndex": 172,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "4.1",
+      "title": "数据库E-R图\t10",
+      "level": 2,
+      "lineIndex": 174,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "4.2",
+      "title": "表说明\t12",
+      "level": 2,
+      "lineIndex": 176,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "5",
+      "title": "接口（外部逻辑文件）需求\t13",
+      "level": 1,
+      "lineIndex": 178,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6",
+      "title": "工作量调整因子\t16",
+      "level": 1,
+      "lineIndex": 180,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.1",
+      "title": "规模变更因子\t16",
+      "level": 2,
+      "lineIndex": 182,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.2",
+      "title": "应用类型\t16",
+      "level": 2,
+      "lineIndex": 184,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.3",
+      "title": "非功能性特征\t17",
+      "level": 2,
+      "lineIndex": 186,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.4",
+      "title": "开发平台/开发语言\t17",
+      "level": 2,
+      "lineIndex": 188,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.5",
+      "title": "开发团队背景\t18",
+      "level": 2,
+      "lineIndex": 190,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "6.6",
+      "title": "软件完整性级别\t18",
+      "level": 2,
+      "lineIndex": 192,
+      "contentSnippet": "",
+      "contentLength": 0,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    },
+    {
+      "number": "7",
+      "title": "假设与约束条件\t18",
+      "level": 1,
+      "lineIndex": 194,
+      "contentSnippet": "引言\n\n基本信息\n\n项目名称：\n\n自有媒介营销管理平台二期开发服务项目\n\n项目类型：\n\n新开发项目\n\n二次开发项目\n\n上期项目名称：\n\n项目所属系统类别\n\n业务支撑系统（BSS） □ 网管支撑系统（OSS） □ 管理信息系统（MSS）\n\n编写说明：项目类型中，如果选择二次开发项目，请列示上期项目的名称，并需提供该项目的需求规格说明书。\n\n目的\n\n说明编写本文档的目的和背景，对项目的背景应有比较详细的描述。\n\n【样例：自营销二期项目的建设目标着眼于拓展营销执行渠道、建设实时场景营销能力，对接“精益营销平台”和“营销分析管理平台(CMP)”，为营销闭环提供营销执行的支撑；对自有媒介分类及数量进行精细化分析，建立媒介特征库，全盘掌握营销资源；打通与BI系统及OA系统的接口，实现一体化营销活动管理支撑。】\n\n适用范围\n\n说明本文档的覆盖范围（可裁剪）。\n\n【示例：本需求说明书中涉及规范和各个模块对支撑系统的需求仅适用于自有媒介营销管理平台开发】\n\n术语和缩略语\n\n说明文档中涉及的术语定义。\n\n术语\n\n解释\n\n营销方案\n\n用于描述营销人员发起的营销策划信息，包含营销预算、产品描述、目标客户群描述",
+      "contentLength": 9552,
+      "hasTable": false,
+      "hasList": false,
+      "hasCode": false
+    }
+  ],
+  "analysisTime": "2025-12-09T05:37:16.696Z",
+  "analysisVersion": "3.0"
+}
