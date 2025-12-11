@@ -8458,9 +8458,14 @@ ${writingGuidelines}
                 } else if (section.includes('规则') || section.includes('业务规则') || section.includes('模型') || section.includes('算法')) {
                   singleProcessPrompt += `${sectionTitle}
 
-1. 业务规则1：具体描述
-2. 业务规则2：具体描述
-（列出具体业务规则、模型和算法）
+**业务规则：**
+规则1：所有绘制的轮廓必须合法描述。
+规则2：场景名称、所属区域、绘制人等信息必须完整填写。
+规则3：系统需对输入数据进行校验，确保数据的准确性和完整性。
+规则4：只有授权用户才能访问和修改重保场景轮廓数据。
+
+**模型和算法：**
+（如有相关的数据模型、计算模型或算法，在此详细描述）
 
 `;
                 } else if (section.includes('接口')) {
