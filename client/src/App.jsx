@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import mermaid from 'mermaid';
 import ArchitectureDiagram from './ArchitectureDiagram';
 import CosmicToSpec from './CosmicToSpec';
@@ -466,28 +467,39 @@ function App() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
+        while (true) {
+          const eventEnd = buffer.indexOf('\n\n');
+          if (eventEnd === -1) break;
 
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                fullContent += parsed.content;
-                setStreamingContent(fullContent);
-              }
-            } catch (e) {
-              // 忽略解析错误
+          const rawEvent = buffer.slice(0, eventEnd);
+          buffer = buffer.slice(eventEnd + 2);
+
+          const dataLines = rawEvent
+            .split('\n')
+            .filter(l => l.startsWith('data:'))
+            .map(l => l.replace(/^data:\s?/, ''));
+
+          if (dataLines.length === 0) continue;
+
+          const data = dataLines.join('\n');
+          if (data === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.content) {
+              fullContent += parsed.content;
+              setStreamingContent(fullContent);
             }
+          } catch (e) {
+            // 忽略解析错误
           }
         }
       }
@@ -607,46 +619,57 @@ function App() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
+        while (true) {
+          const eventEnd = buffer.indexOf('\n\n');
+          if (eventEnd === -1) break;
 
-            try {
-              const parsed = JSON.parse(data);
-              
-              if (parsed.phase === 'analysis') {
-                setSpecAnalysisJson(parsed.content);
-                setSpecPhase('generation');
-                setSpecMessages(prev => {
-                  const filtered = prev.filter(m => !m.content.startsWith('🔄'));
-                  return [...filtered, {
-                    role: 'system',
-                    content: '✅ 阶段1完成：结构化分析已完成\n🔄 阶段2：正在生成完整需求规格书...'
-                  }];
-                });
-                continue;
-              }
-              
-              if (parsed.content) {
-                fullContent += parsed.content;
-                setSpecStreamingContent(fullContent);
-              }
-              if (parsed.error) {
-                throw new Error(parsed.error);
-              }
-            } catch (e) {
-              if (e.message && !e.message.includes('JSON')) {
-                throw e;
-              }
+          const rawEvent = buffer.slice(0, eventEnd);
+          buffer = buffer.slice(eventEnd + 2);
+
+          const dataLines = rawEvent
+            .split('\n')
+            .filter(l => l.startsWith('data:'))
+            .map(l => l.replace(/^data:\s?/, ''));
+
+          if (dataLines.length === 0) continue;
+
+          const data = dataLines.join('\n');
+          if (data === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(data);
+
+            if (parsed.phase === 'analysis') {
+              setSpecAnalysisJson(parsed.content);
+              setSpecPhase('generation');
+              setSpecMessages(prev => {
+                const filtered = prev.filter(m => !m.content.startsWith('🔄'));
+                return [...filtered, {
+                  role: 'system',
+                  content: '✅ 阶段1完成：结构化分析已完成\n🔄 阶段2：正在生成完整需求规格书...'
+                }];
+              });
+              continue;
+            }
+
+            if (parsed.content) {
+              fullContent += parsed.content;
+              setSpecStreamingContent(fullContent);
+            }
+            if (parsed.error) {
+              throw new Error(parsed.error);
+            }
+          } catch (e) {
+            if (e.message && !e.message.includes('JSON')) {
+              throw e;
             }
           }
         }
@@ -864,62 +887,70 @@ function App() {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let chapterContent = '';
+        let buffer = '';
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+          buffer += decoder.decode(value, { stream: true });
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
+          while (true) {
+            const eventEnd = buffer.indexOf('\n\n');
+            if (eventEnd === -1) break;
 
-              try {
-                const parsed = JSON.parse(data);
-                
-                // 处理深度思考阶段的消息
-                if (parsed.phase === 'thinking' || parsed.phase === 'thinking_complete') {
-                  setSpecMessages(prev => {
-                    const filtered = prev.filter(m => !m.content.includes('深度思考') && !m.content.includes('图片分析'));
-                    return [...filtered, {
-                      role: 'system',
-                      content: parsed.message
-                    }];
-                  });
-                  if (parsed.analyzedImages) {
-                    analyzedImagesRef = parsed.analyzedImages;
-                  }
-                  continue;
+            const rawEvent = buffer.slice(0, eventEnd);
+            buffer = buffer.slice(eventEnd + 2);
+
+            const dataLines = rawEvent
+              .split('\n')
+              .filter(l => l.startsWith('data:'))
+              .map(l => l.replace(/^data:\s?/, ''));
+
+            if (dataLines.length === 0) continue;
+
+            const data = dataLines.join('\n');
+            if (data === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(data);
+
+              if (parsed.phase === 'thinking' || parsed.phase === 'thinking_complete') {
+                setSpecMessages(prev => {
+                  const filtered = prev.filter(m => !m.content.includes('深度思考') && !m.content.includes('图片分析'));
+                  return [...filtered, {
+                    role: 'system',
+                    content: parsed.message
+                  }];
+                });
+                if (parsed.analyzedImages) {
+                  analyzedImagesRef = parsed.analyzedImages;
                 }
-                
-                // 处理章节生成/完善阶段的消息
-                if (parsed.phase === 'generating_chapter' || parsed.phase === 'enhancing_chapter') {
-                  const label = parsed.isEnhancePhase ? '🔧 完善' : '📝 生成';
-                  setSpecMessages(prev => {
-                    const filtered = prev.filter(m => !m.content.includes('正在'));
-                    return [...filtered, {
-                      role: 'system',
-                      content: `${label} ${parsed.chapterName}... (${parsed.round}/${parsed.totalRounds})`
-                    }];
-                  });
-                  continue;
-                }
-                
-                if (parsed.content) {
-                  chapterContent += parsed.content;
-                  // 实时预览
-                  const previewContent = integrateChapters({
-                    ...chapterContents,
-                    [chapterInfo.key]: chapterContent
-                  });
-                  setSpecStreamingContent(previewContent);
-                }
-              } catch (e) {
-                // 忽略解析错误
+                continue;
               }
+
+              if (parsed.phase === 'generating_chapter' || parsed.phase === 'enhancing_chapter') {
+                const label = parsed.isEnhancePhase ? '🔧 完善' : '📝 生成';
+                setSpecMessages(prev => {
+                  const filtered = prev.filter(m => !m.content.includes('正在'));
+                  return [...filtered, {
+                    role: 'system',
+                    content: `${label} ${parsed.chapterName}... (${parsed.round}/${parsed.totalRounds})`
+                  }];
+                });
+                continue;
+              }
+
+              if (parsed.content) {
+                chapterContent += parsed.content;
+                const previewContent = integrateChapters({
+                  ...chapterContents,
+                  [chapterInfo.key]: chapterContent
+                });
+                setSpecStreamingContent(previewContent);
+              }
+            } catch (e) {
+              // 忽略解析错误
             }
           }
         }
@@ -991,28 +1022,39 @@ function App() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let additionalContent = '';
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
+        while (true) {
+          const eventEnd = buffer.indexOf('\n\n');
+          if (eventEnd === -1) break;
 
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                additionalContent += parsed.content;
-                setSpecStreamingContent(previousContent + '\n\n' + additionalContent);
-              }
-            } catch (e) {
-              // 忽略解析错误
+          const rawEvent = buffer.slice(0, eventEnd);
+          buffer = buffer.slice(eventEnd + 2);
+
+          const dataLines = rawEvent
+            .split('\n')
+            .filter(l => l.startsWith('data:'))
+            .map(l => l.replace(/^data:\s?/, ''));
+
+          if (dataLines.length === 0) continue;
+
+          const data = dataLines.join('\n');
+          if (data === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.content) {
+              additionalContent += parsed.content;
+              setSpecStreamingContent(previousContent + '\n\n' + additionalContent);
             }
+          } catch (e) {
+            // 忽略解析错误
           }
         }
       }
@@ -1517,7 +1559,7 @@ function App() {
           return <MermaidChart key={idx} code={parts.mermaidBlocks[blockIndex]} />;
         }
         return (
-          <ReactMarkdown key={idx} remarkPlugins={[remarkGfm]}>
+          <ReactMarkdown key={idx} remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
             {segment}
           </ReactMarkdown>
         );
@@ -1920,7 +1962,7 @@ function App() {
                         }`}>
                         {msg.role === 'assistant' ? (
                           <div className="markdown-content">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                               {msg.content}
                             </ReactMarkdown>
                           </div>
@@ -1950,7 +1992,7 @@ function App() {
                     <div className="max-w-[85%]">
                       <div className="inline-block p-4 rounded-xl bg-transparent text-claude-text-primary">
                         <div className="markdown-content">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                             {streamingContent}
                           </ReactMarkdown>
                         </div>

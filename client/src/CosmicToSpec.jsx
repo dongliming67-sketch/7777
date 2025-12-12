@@ -416,74 +416,84 @@ function CosmicToSpec({ apiStatus, setShowSettings }) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let fullContent = '';
+      let buffer = '';
       
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            
-            try {
-              const parsed = JSON.parse(data);
+        buffer += decoder.decode(value, { stream: true });
+
+        while (true) {
+          const eventEnd = buffer.indexOf('\n\n');
+          if (eventEnd === -1) break;
+
+          const rawEvent = buffer.slice(0, eventEnd);
+          buffer = buffer.slice(eventEnd + 2);
+
+          const dataLines = rawEvent
+            .split('\n')
+            .filter(l => l.startsWith('data:'))
+            .map(l => l.replace(/^data:\s?/, ''));
+
+          if (dataLines.length === 0) continue;
+
+          const data = dataLines.join('\n');
+          if (data === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(data);
               
-              if (parsed.phase === 'analyzing_template') {
-                setGenerationPhase(parsed.message);
-                setCurrentStep(parsed.currentStep || 1);
-                setTotalSteps(parsed.totalSteps || 5);
-                setGenerationProgress(5);
-              } else if (parsed.phase === 'template_analyzed') {
-                setGenerationPhase(parsed.message);
-                setTemplateAnalysis(parsed.templateAnalysis);
-                setGenerationProgress(8);
-              } else if (parsed.phase === 'classifying_processes') {
-                setGenerationPhase(parsed.message);
-                setCurrentStep(parsed.currentStep || 2);
-                setTotalSteps(parsed.totalSteps || 5);
-                setGenerationProgress(10);
-              } else if (parsed.phase === 'processes_classified') {
-                setGenerationPhase(parsed.message);
-                setProcessClassification(parsed.classification);
-                setGenerationProgress(15);
-              } else if (parsed.phase === 'generating_header') {
-                setGenerationPhase(parsed.message);
-                setCurrentStep(parsed.currentStep || 3);
-                setTotalSteps(parsed.totalSteps || 5);
-                setGenerationProgress(18);
-              } else if (parsed.phase === 'generating_functions') {
-                setGenerationPhase(parsed.message);
-                setCurrentStep(parsed.currentStep || 3);
-                setTotalSteps(parsed.totalSteps || 5);
-                setBatchInfo(parsed.batchInfo);
-                // 根据批次计算进度
-                if (parsed.batchInfo) {
-                  const progress = 20 + (parsed.batchInfo.end / parsed.batchInfo.total) * 60;
-                  setGenerationProgress(Math.min(80, progress));
-                }
-              } else if (parsed.phase === 'generating_footer') {
-                setGenerationPhase(parsed.message);
-                setCurrentStep(parsed.currentStep);
-                setTotalSteps(parsed.totalSteps);
-                setGenerationProgress(85);
-              } else if (parsed.phase === 'complete') {
-                setGenerationPhase('✅ 生成完成');
-                setGenerationProgress(100);
-              } else if (parsed.content) {
-                fullContent += parsed.content;
-                latestContentRef.current = fullContent; // 同步更新ref
-                setStreamingContent(fullContent);
-              } else if (parsed.error) {
-                throw new Error(parsed.error);
+            if (parsed.phase === 'analyzing_template') {
+              setGenerationPhase(parsed.message);
+              setCurrentStep(parsed.currentStep || 1);
+              setTotalSteps(parsed.totalSteps || 5);
+              setGenerationProgress(5);
+            } else if (parsed.phase === 'template_analyzed') {
+              setGenerationPhase(parsed.message);
+              setTemplateAnalysis(parsed.templateAnalysis);
+              setGenerationProgress(8);
+            } else if (parsed.phase === 'classifying_processes') {
+              setGenerationPhase(parsed.message);
+              setCurrentStep(parsed.currentStep || 2);
+              setTotalSteps(parsed.totalSteps || 5);
+              setGenerationProgress(10);
+            } else if (parsed.phase === 'processes_classified') {
+              setGenerationPhase(parsed.message);
+              setProcessClassification(parsed.classification);
+              setGenerationProgress(15);
+            } else if (parsed.phase === 'generating_header') {
+              setGenerationPhase(parsed.message);
+              setCurrentStep(parsed.currentStep || 3);
+              setTotalSteps(parsed.totalSteps || 5);
+              setGenerationProgress(18);
+            } else if (parsed.phase === 'generating_functions') {
+              setGenerationPhase(parsed.message);
+              setCurrentStep(parsed.currentStep || 3);
+              setTotalSteps(parsed.totalSteps || 5);
+              setBatchInfo(parsed.batchInfo);
+              if (parsed.batchInfo) {
+                const progress = 20 + (parsed.batchInfo.end / parsed.batchInfo.total) * 60;
+                setGenerationProgress(Math.min(80, progress));
               }
-            } catch (e) {
-              if (e.message && !e.message.includes('JSON')) {
-                throw e;
-              }
+            } else if (parsed.phase === 'generating_footer') {
+              setGenerationPhase(parsed.message);
+              setCurrentStep(parsed.currentStep);
+              setTotalSteps(parsed.totalSteps);
+              setGenerationProgress(85);
+            } else if (parsed.phase === 'complete') {
+              setGenerationPhase('✅ 生成完成');
+              setGenerationProgress(100);
+            } else if (parsed.content) {
+              fullContent += parsed.content;
+              latestContentRef.current = fullContent;
+              setStreamingContent(fullContent);
+            } else if (parsed.error) {
+              throw new Error(parsed.error);
+            }
+          } catch (e) {
+            if (e.message && !e.message.includes('JSON')) {
+              throw e;
             }
           }
         }
