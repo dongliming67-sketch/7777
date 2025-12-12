@@ -16,6 +16,8 @@ import {
   Brain
 } from 'lucide-react';
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
 function ChatAgent({ apiStatus, setShowSettings }) {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -25,12 +27,12 @@ function ChatAgent({ apiStatus, setShowSettings }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [aiInfo, setAiInfo] = useState(null);
   const [showInfo, setShowInfo] = useState(false);
-  
+
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/chat/info')
+    fetch(`${API_BASE}/api/chat/info`)
       .then(res => res.json())
       .then(data => setAiInfo(data))
       .catch(err => console.error('获取AI信息失败:', err));
@@ -49,7 +51,7 @@ function ChatAgent({ apiStatus, setShowSettings }) {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
 
     try {
-      const response = await fetch('http://localhost:3001/api/chat/stream', {
+      const response = await fetch(`${API_BASE}/api/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, message: userMessage })
@@ -103,7 +105,7 @@ function ChatAgent({ apiStatus, setShowSettings }) {
     setMessages([]);
     setStreamingContent('');
     try {
-      await fetch('http://localhost:3001/api/chat/clear', {
+      await fetch(`${API_BASE}/api/chat/clear`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId })

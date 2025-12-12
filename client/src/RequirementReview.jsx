@@ -24,6 +24,8 @@ import {
   BarChart3
 } from 'lucide-react';
 
+ const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
 // 严重程度配置 - Claude风格
 const SEVERITY_CONFIG = {
   critical: { label: '严重', color: 'bg-red-50 text-red-700 border-red-200', icon: XCircle },
@@ -131,7 +133,7 @@ function RequirementReview({ apiStatus, setShowSettings }) {
         formData.append('content', documentContent);
       }
 
-      const response = await fetch('http://localhost:3001/api/review/full', {
+      const response = await fetch(`${API_BASE}/api/review/full`, {
         method: 'POST',
         body: formData
       });
@@ -198,7 +200,7 @@ function RequirementReview({ apiStatus, setShowSettings }) {
         formData.append('content', documentContent);
       }
 
-      const response = await axios.post('http://localhost:3001/api/review/quick', formData);
+      const response = await axios.post(`${API_BASE}/api/review/quick`, formData);
       setQuickResult(response.data.result);
     } catch (err) {
       setError('快速评审失败: ' + (err.response?.data?.error || err.message));
@@ -233,7 +235,7 @@ function RequirementReview({ apiStatus, setShowSettings }) {
         formData.append('newContent', newDocContent);
       }
 
-      const response = await axios.post('http://localhost:3001/api/review/compare', formData);
+      const response = await axios.post(`${API_BASE}/api/review/compare`, formData);
       setCompareResult(response.data.result);
     } catch (err) {
       setError('对比评审失败: ' + (err.response?.data?.error || err.message));

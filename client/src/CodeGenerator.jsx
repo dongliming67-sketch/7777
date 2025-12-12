@@ -46,7 +46,7 @@ import {
 } from 'lucide-react';
 
 // API基础URL
-const API_BASE = 'http://localhost:3001';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
 /**
  * 编程智能体组件
